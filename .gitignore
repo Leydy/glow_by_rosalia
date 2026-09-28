@@ -1,0 +1,10 @@
+node_modules
+dist
+*.local
+.DS_Store
+.env
+server/.env
+
+# Imágenes subidas desde el panel (datos, no código).
+server/uploads/*
+!server/uploads/.gitkeep

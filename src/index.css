@@ -1,0 +1,394 @@
+/* Tipografías de la marca: Cormorant Garamond (serif elegante para títulos)
+   y Manrope (limpia, para el cuerpo y la interfaz). */
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap");
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Manrope", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+input,
+select,
+button,
+textarea {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* ---------- Catálogo responsivo ----------
+   Los estilos que cambian según el ancho de pantalla viven aquí (los estilos
+   en línea de React no admiten @media). */
+.glow-wrap {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding-left: clamp(12px, 3vw, 40px);
+  padding-right: clamp(12px, 3vw, 40px);
+}
+
+.glow-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.glow-cats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.glow-cats > button {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.glow-search {
+  position: relative;
+  width: 260px;
+}
+.glow-search input {
+  width: 100%;
+}
+
+.glow-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+}
+.glow-card-img {
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+.glow-card-body {
+  padding: 14px;
+}
+.glow-card-name {
+  font-size: 20px;
+}
+.glow-card-desc {
+  font-size: 13px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.glow-card-price {
+  font-size: 20px;
+}
+
+.glow-brand {
+  font-size: 24px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+  .glow-filters {
+    display: block;
+  }
+  /* Categorías en una sola fila deslizable con el dedo */
+  .glow-cats {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+    scrollbar-width: none;
+    margin: 0 -12px;
+    padding: 0 12px 2px;
+  }
+  .glow-cats::-webkit-scrollbar {
+    display: none;
+  }
+  .glow-search {
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  /* Dos productos por fila */
+  .glow-grid {
+    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .glow-card-pad {
+    padding: 6px !important;
+  }
+  .glow-card-body {
+    padding: 8px 10px 10px;
+  }
+  .glow-card-name {
+    font-size: 16px;
+  }
+  .glow-card-desc {
+    font-size: 12px;
+    -webkit-line-clamp: 2;
+  }
+  .glow-card-price {
+    font-size: 17px;
+  }
+  .glow-card-btn {
+    font-size: 13px !important;
+    padding: 9px 0 !important;
+  }
+  .glow-card-btn .glow-btn-long {
+    display: none;
+  }
+  .glow-badge {
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+  }
+
+  .glow-header {
+    padding: 10px 12px !important;
+  }
+  .glow-brand {
+    font-size: 19px;
+  }
+}
+
+@media (min-width: 641px) {
+  .glow-card-btn .glow-btn-short {
+    display: none;
+  }
+}
+
+/* Pantallas muy angostas: el selector Tienda/Administración solo con íconos */
+@media (max-width: 420px) {
+  .glow-mode-label {
+    display: none;
+  }
+}
+
+
+/* ---------- Portada (slider con fotos reales) ---------- */
+.glow-hero {
+  position: relative;
+  overflow: hidden;
+  height: clamp(380px, 52vh, 480px);
+  border-bottom: 1px solid #f0e3ea;
+}
+.glow-hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.7s ease;
+}
+.glow-hero-slide.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.glow-hero-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.7;
+  pointer-events: none;
+}
+.glow-hero-blob.is-1 {
+  width: 420px;
+  height: 420px;
+  right: 8%;
+  top: -120px;
+}
+.glow-hero-blob.is-2 {
+  width: 320px;
+  height: 320px;
+  left: -80px;
+  bottom: -140px;
+}
+.glow-hero-inner {
+  position: relative;
+  height: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 clamp(56px, 7vw, 110px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 40px;
+}
+.glow-hero-text {
+  max-width: 520px;
+  transform: translateY(14px);
+  opacity: 0;
+  transition: transform 0.7s ease 0.1s, opacity 0.7s ease 0.1s;
+}
+.is-active .glow-hero-text {
+  transform: none;
+  opacity: 1;
+}
+.glow-hero-eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.glow-hero-title {
+  margin: 6px 0 12px;
+  font-family: "Cormorant Garamond", serif;
+  font-weight: 600;
+  font-size: clamp(38px, 4.6vw, 64px);
+  line-height: 1;
+}
+.glow-hero-desc {
+  margin: 0 0 24px;
+  font-size: 16px;
+  line-height: 1.55;
+  opacity: 0.78;
+}
+.glow-hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 13px 26px;
+  border: none;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  transition: transform 0.2s ease;
+}
+.glow-hero-cta:hover {
+  transform: translateY(-2px);
+}
+
+/* Collage: foto grande + dos pequeñas superpuestas */
+.glow-hero-collage {
+  position: relative;
+  height: 82%;
+  aspect-ratio: 1 / 1;
+  justify-self: center;
+  transform: scale(0.96);
+  transition: transform 0.9s ease;
+}
+.is-active .glow-hero-collage {
+  transform: none;
+}
+.glow-hero-photo {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 5px solid #fff;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(214, 53, 127, 0.18);
+}
+.glow-hero-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.glow-hero-photo.is-main {
+  inset: 0 18% 12% 6%;
+  transform: rotate(-2deg);
+}
+.glow-hero-photo.is-a {
+  width: 40%;
+  aspect-ratio: 1 / 1;
+  right: 0;
+  top: 6%;
+  transform: rotate(4deg);
+}
+.glow-hero-photo.is-b {
+  width: 36%;
+  aspect-ratio: 1 / 1;
+  right: 10%;
+  bottom: 0;
+  transform: rotate(-3deg);
+}
+
+.glow-hero-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 5;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  background: #ffffffd9;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+.glow-hero-arrow.is-left {
+  left: 16px;
+}
+.glow-hero-arrow.is-right {
+  right: 16px;
+}
+.glow-hero-dots {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.glow-hero-dots button {
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+@media (max-width: 760px) {
+  .glow-hero {
+    height: 500px;
+  }
+  /* Fotos arriba, texto abajo */
+  .glow-hero-inner {
+    grid-template-columns: 1fr;
+    grid-template-rows: 250px auto;
+    align-content: center;
+    gap: 18px;
+    padding: 16px 20px 40px;
+    text-align: center;
+  }
+  .glow-hero-collage {
+    order: -1;
+    height: 100%;
+  }
+  .glow-hero-text {
+    max-width: none;
+  }
+  .glow-hero-title {
+    font-size: 36px;
+    margin: 4px 0 8px;
+  }
+  .glow-hero-desc {
+    font-size: 14px;
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .glow-hero-cta {
+    padding: 11px 22px;
+    font-size: 14px;
+  }
+  /* En el celular se desliza con el dedo */
+  .glow-hero-arrow {
+    display: none;
+  }
+}
