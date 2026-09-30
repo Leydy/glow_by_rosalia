@@ -93,7 +93,7 @@ export async function initSchema() {
     ALTER TABLE customers ADD COLUMN IF NOT EXISTS birthday  DATE;
     ALTER TABLE customers ADD COLUMN IF NOT EXISTS welcome_sent_at TIMESTAMPTZ;
 
-    -- Gatupuntos: libro de movimientos. "ref" evita dar dos veces el mismo
+    -- Michipuntos: libro de movimientos. "ref" evita dar dos veces el mismo
     -- bono (registro, cumple-2026, pedido-12, canje-12…).
     CREATE TABLE IF NOT EXISTS points (
       id          SERIAL PRIMARY KEY,
@@ -107,7 +107,7 @@ export async function initSchema() {
     );
     CREATE UNIQUE INDEX IF NOT EXISTS points_email_ref_key ON points (email, ref);
 
-    -- Pedidos: subtotal, descuento canjeado con gatupuntos.
+    -- Pedidos: subtotal, descuento canjeado con Michipuntos.
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS subtotal      NUMERIC;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount      NUMERIC NOT NULL DEFAULT 0;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS reward_points INTEGER NOT NULL DEFAULT 0;
@@ -120,7 +120,7 @@ export async function initSchema() {
     -- true cuando el pedido descontó stock (se devuelve si se rechaza).
     ALTER TABLE orders   ADD COLUMN IF NOT EXISTS stock_taken BOOLEAN NOT NULL DEFAULT false;
 
-    -- Reseñas de productos comprados (dan gatupuntos al aprobarlas).
+    -- Reseñas de productos comprados (dan Michipuntos al aprobarlas).
     CREATE TABLE IF NOT EXISTS reviews (
       id          SERIAL PRIMARY KEY,
       email       TEXT NOT NULL,
@@ -152,7 +152,7 @@ export async function initSchema() {
     CREATE UNIQUE INDEX IF NOT EXISTS credits_order_key ON credits (order_id, note);
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS credit_used NUMERIC NOT NULL DEFAULT 0;
 
-    -- Productos con ×2 gatupuntos (para rotar stock).
+    -- Productos con ×2 Michipuntos (para rotar stock).
     ALTER TABLE products ADD COLUMN IF NOT EXISTS double_points BOOLEAN NOT NULL DEFAULT false;
   `);
 }

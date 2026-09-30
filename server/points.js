@@ -1,9 +1,9 @@
-// Gatupuntos: reglas y cálculo del saldo.
+// Michipuntos: reglas y cálculo del saldo.
 //
 // Idea: números grandes para la clienta y costo pequeño para la tienda.
-//  • Se gana 1.25 gatupunto por cada S/ 1 pagado (×1.25 o ×1.5 según nivel,
+//  • Se gana 1.25 Michipunto por cada S/ 1 pagado (×1.25 o ×1.5 según nivel,
 //    ×2 en productos marcados), solo cuando el pago está verificado.
-//  • 100 gatupuntos ≈ S/ 1. Canjes en escalones con compra mínima; el
+//  • 100 Michipuntos ≈ S/ 1. Canjes en escalones con compra mínima; el
 //    descuento nunca supera el 20% del carrito. Un canje por pedido.
 //  • Los puntos vencen a los 12 meses (se gastan primero los más antiguos).
 import { pool } from "./db.js";
@@ -100,7 +100,7 @@ export function levelFor(spend) {
   return [...RULES.levels].reverse().find((l) => spend >= l.min);
 }
 
-// Gatupuntos que da un pedido (sobre lo pagado de verdad, tras el descuento).
+// Michipuntos que da un pedido (sobre lo pagado de verdad, tras el descuento).
 export function orderPoints(order, mult) {
   const items = Array.isArray(order.items) ? order.items : [];
   const subtotal = items.reduce((s, l) => s + l.qty * l.price, 0);

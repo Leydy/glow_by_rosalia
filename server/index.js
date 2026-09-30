@@ -21,7 +21,7 @@
 //   PUT    /api/me                → guarda mi perfil              (requiere sesión)
 //   GET    /api/me/orders         → mis pedidos                   (requiere sesión)
 //   PUT    /api/me/favorites      → guarda mis favoritos          (requiere sesión)
-//   GET    /api/me/points         → mis gatupuntos, nivel y canjes (requiere sesión)
+//   GET    /api/me/points         → mis Michipuntos, nivel y canjes (requiere sesión)
 //   GET    /api/me/credits        → mi Michi-crédito               (requiere sesión)
 //   POST   /api/me/credits/:id/claim → reclamar un crédito        (requiere sesión)
 //   GET    /api/me/reviews        → mis reseñas                   (requiere sesión)
@@ -226,7 +226,7 @@ app.get("/api/me/points", requireCustomer, async (req, res, next) => {
 
 /* ---------- Reseñas ----------
    Solo de productos comprados en pedidos con pago confirmado (una por producto
-   y pedido). Los gatupuntos se dan cuando la administradora la aprueba. */
+   y pedido). Los Michipuntos se dan cuando la administradora la aprueba. */
 app.get("/api/me/credits", requireCustomer, async (req, res, next) => {
   try {
     res.json(await wallet(req.customerEmail));
@@ -521,7 +521,7 @@ function genId() {
   return "p" + crypto.randomUUID().slice(0, 12);
 }
 
-// Marca opcional "×2 gatupuntos" de un producto.
+// Marca opcional "×2 Michipuntos" de un producto.
 async function saveDoublePoints(row, p) {
   if (!("doublePoints" in p)) return row;
   const { rows } = await pool.query("UPDATE products SET double_points=$2 WHERE id=$1 RETURNING *", [row.id, !!p.doublePoints]);
@@ -655,7 +655,7 @@ app.post("/api/orders", async (req, res, next) => {
   try {
     const { items, yapeOp, capture, reward, delivery, useCredit } = req.body || {};
     const test = TEST_MODE_ON && !!req.body?.test; // al publicar, nadie puede crear pedidos "de prueba"
-    if (reward && useCredit) return res.status(400).json({ error: "Elige un solo beneficio por pedido: Michi-crédito o gatupuntos." });
+    if (reward && useCredit) return res.status(400).json({ error: "Elige un solo beneficio por pedido: Michi-crédito o Michipuntos." });
     const customerEmail = readSession(req.get("x-customer-token"));
     const op = String(yapeOp || "").replace(/\D/g, "");
     if (op.length < 4 || op.length > 14)
@@ -674,14 +674,14 @@ app.post("/api/orders", async (req, res, next) => {
     }
     const subtotal = lines.reduce((s, l) => s + l.qty * l.price, 0);
 
-    // Canje de gatupuntos (opcional, uno por pedido, con compra mínima).
+    // Canje de Michipuntos (opcional, uno por pedido, con compra mínima).
     let tier = null;
     if (reward) {
       tier = RULES.rewards.find((r) => r.key === reward);
       if (!tier || !customerEmail) return res.status(400).json({ error: "Ese canje no está disponible." });
       if (subtotal < tier.min) return res.status(400).json({ error: `Ese canje es para compras desde S/ ${tier.min}.` });
       if ((await balance(customerEmail)).balance < tier.points)
-        return res.status(400).json({ error: "No tienes gatupuntos suficientes para ese canje." });
+        return res.status(400).json({ error: "No tienes Michipuntos suficientes para ese canje." });
     }
     const discount = tier ? tier.value : 0;
 
@@ -832,7 +832,7 @@ app.put("/api/orders/:id", requirePin, async (req, res, next) => {
     const cur = await pool.query("SELECT status FROM orders WHERE id=$1", [id]);
     if (!cur.rows.length) return res.status(404).json({ error: "Pedido no encontrado." });
     if (cur.rows[0].status === "rechazado" && status !== "rechazado")
-      return res.status(400).json({ error: "Un pedido rechazado no se puede reabrir (sus gatupuntos ya se devolvieron)." });
+      return res.status(400).json({ error: "Un pedido rechazado no se puede reabrir (sus Michipuntos ya se devolvieron)." });
     const { rows } = await pool.query("UPDATE orders SET status=$1 WHERE id=$2 RETURNING *", [status, id]);
     const o = rows[0];
     const code = "#GLW-" + String(id).padStart(4, "0");
@@ -843,7 +843,7 @@ app.put("/api/orders/:id", requirePin, async (req, res, next) => {
     }
     if (o.customer_email) {
       if (status === "verificado" || status === "enviado") {
-        // pago confirmado → gana gatupuntos (una sola vez por pedido)
+        // pago confirmado → gana Michipuntos (una sola vez por pedido)
         await grantCredit(o); // Michi-crédito por reclamar (una vez por pedido)
         if (!(await hasRef(o.customer_email, `pedido-${id}`))) {
           const mult = levelFor(await yearSpend(o.customer_email, id)).mult;

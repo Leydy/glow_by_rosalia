@@ -5,7 +5,7 @@
 //    múltiplos de S/ 0.50, máximo S/ 5 por compra (menos de S/ 0.50 → nada).
 //  • Hay que reclamarlo en 48 h; luego vence a los 10 días.
 //  • Solo se usa en compras desde S/ 30 y cubre como máximo el 20% del carrito.
-//  • Un beneficio por pedido: Michi-crédito o canje de gatupuntos.
+//  • Un beneficio por pedido: Michi-crédito o canje de Michipuntos.
 import { pool } from "./db.js";
 
 export const CREDIT = { rate: 0.03, step: 0.5, max: 5, claimHours: 48, validDays: 10, minPurchase: 30, maxShare: 0.2 };

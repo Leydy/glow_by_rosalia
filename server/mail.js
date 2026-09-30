@@ -39,7 +39,7 @@ export function welcomeEmail({ name, points = 100 }) {
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light"><title>Bienvenida al club de Rosalía</title></head>
 <body style="margin:0;padding:0;background:#FFF1F7">
-<div style="display:none;max-height:0;overflow:hidden">¡Te regalamos ${points} gatupuntos por unirte! 🐾</div>
+<div style="display:none;max-height:0;overflow:hidden">¡Te regalamos ${points} Michipuntos por unirte! 🐾</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF1F7">
   <!-- franja berenjena de lado a lado; la tarjeta blanca empieza encima -->
   <tr><td align="center" style="background:#3B2146;padding:30px 12px 0">
@@ -62,7 +62,7 @@ export function welcomeEmail({ name, points = 100 }) {
           <tr><td align="center" style="padding:20px 16px">
             <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:2px;color:#A8741A;font-weight:bold">TU REGALO DE BIENVENIDA</div>
             <div style="font-family:Georgia,'Times New Roman',serif;font-size:52px;font-weight:bold;color:#3B2146;line-height:1.1;padding-top:4px">${points}</div>
-            <div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#A8741A;font-weight:bold">gatupuntos 🧶</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#A8741A;font-weight:bold">Michipuntos 🧶</div>
             <div style="font-family:Arial,Helvetica,sans-serif;font-size:13.5px;color:#6B5A63;padding-top:8px">Ya están en tu cesto. ¡Junta 500 y canjéalos por S/ 5 de descuento!</div>
           </td></tr>
         </table>
@@ -71,7 +71,7 @@ export function welcomeEmail({ name, points = 100 }) {
         <div style="font-family:Georgia,'Times New Roman',serif;font-size:21px;font-weight:bold;color:#3B2146;padding:6px 0 4px">Lo que te espera en el club</div>
       </td></tr>
       <tr><td align="center" style="padding:0 20px 6px;font-size:0">
-        ${perk("🧶", "Gatupuntos en cada compra", "Ganas 1.25 por cada S/ 1 y los canjeas por descuentos.")}${perk("💰", "Michi-crédito", "Al confirmar tu pago te devolvemos crédito para tu próxima compra.")}${perk("⭐", "Reseñas que premian", "Cuéntanos qué te pareció tu compra y gana hasta +60 gatupuntos.")}${perk("🎂", "Regalo de cumpleaños", "Agrega tu cumpleaños en Mi perfil y recibe +50 gatupuntos.")}${perk("🎁", "¡Sorpresas misteriosas!", "Canjea tus gatupuntos por un regalo sorpresa en tu pedido.")}${perk("📍", "Entrega gratis en Juliaca", "Y envíos por Shalom a todo el Perú.")}
+        ${perk("🧶", "Michipuntos en cada compra", "Ganas 1.25 por cada S/ 1 y los canjeas por descuentos.")}${perk("💰", "Michi-crédito", "Al confirmar tu pago te devolvemos crédito para tu próxima compra.")}${perk("⭐", "Reseñas que premian", "Cuéntanos qué te pareció tu compra y gana hasta +60 Michipuntos.")}${perk("🎂", "Regalo de cumpleaños", "Agrega tu cumpleaños en Mi perfil y recibe +50 Michipuntos.")}${perk("🎁", "¡Sorpresas misteriosas!", "Canjea tus Michipuntos por un regalo sorpresa en tu pedido.")}${perk("📍", "Entrega gratis en Juliaca", "Y envíos por Shalom a todo el Perú.")}
       </td></tr>
       <tr><td align="center" style="padding:18px 28px 32px">
         <a href="${url}" style="display:inline-block;background:#FF3D8B;color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-weight:bold;font-size:17px;text-decoration:none;padding:15px 40px;border-radius:999px">Ir a la tienda 🐾</a>
@@ -85,8 +85,8 @@ export function welcomeEmail({ name, points = 100 }) {
   </td></tr>
 </table>
 </body></html>`;
-  const text = `¡Holiiii, ${first}! Bienvenida al club de Rosalía.\n\nTe regalamos ${points} gatupuntos por unirte. Junta 500 y canjéalos por S/ 5 de descuento.\n\nIr a la tienda: ${url}\n\nCon cariño, Rosalía`;
-  return { subject: `🐾✨ ¡Bienvenida al club de Rosalía, ${first}! 🎁 ${points} gatupuntos para ti 😻`, html, text };
+  const text = `¡Holiiii, ${first}! Bienvenida al club de Rosalía.\n\nTe regalamos ${points} Michipuntos por unirte. Junta 500 y canjéalos por S/ 5 de descuento.\n\nIr a la tienda: ${url}\n\nCon cariño, Rosalía`;
+  return { subject: `🐾✨ ¡Bienvenida al club de Rosalía, ${first}! 🎁 ${points} Michipuntos para ti 😻`, html, text };
 }
 
 export async function sendMail({ to, name, subject, html, text }) {

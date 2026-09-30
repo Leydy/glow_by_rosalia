@@ -324,7 +324,7 @@ function AccountMenu({ customer, onPick, onLogout, onClose }) {
         <CatAvatar customer={customer} size={40} />
         <div><b>{customer.name}</b><small>{customer.email}</small></div>
       </div>
-      {item("cuenta", <span className="glow-menu-basket"><YarnBasket points={300} size={22} /></span>, "Mi cuenta · gatupuntos")}
+      {item("cuenta", <span className="glow-menu-basket"><YarnBasket points={300} size={22} /></span>, "Mi cuenta · Michipuntos")}
       {item("perfil", <SettingsIcon size={17} />, "Mi perfil")}
       {item("pedidos", <Package size={17} />, "Mis pedidos")}
       {item("favoritos", <HeartIcon size={17} />, "Mis favoritos")}
@@ -434,7 +434,7 @@ function ProfileForm({ customer, onCustomer }) {
       <Field label="Celular (para coordinar tu envío)"><Inp value={f.phone} onChange={(v) => set("phone", v.replace(/[^\d+ ]/g, ""))} placeholder="987 654 321" /></Field>
       <Field label="Distrito"><Inp value={f.district} onChange={(v) => set("district", v)} placeholder="Ej. Miraflores" /></Field>
       <Field label="Dirección de envío"><Inp value={f.address} onChange={(v) => set("address", v)} placeholder="Calle, número, referencia" /></Field>
-      <Field label={customer.birthday ? "Tu cumpleaños 🎂" : "Tu cumpleaños 🎂 (+50 gatupuntos en tu mes)"}>
+      <Field label={customer.birthday ? "Tu cumpleaños 🎂" : "Tu cumpleaños 🎂 (+50 Michipuntos en tu mes)"}>
         <input
           type="date"
           className="glow-date"
@@ -495,8 +495,8 @@ function MyOrders() {
               {o.items.map((l) => (l.image ? <img key={l.id} src={l.image} alt={l.name} title={l.name} /> : null))}
               <div>{o.items.reduce((n, l) => n + l.qty, 0)} producto(s)<b>{money(o.total)}</b></div>
             </div>
-            {o.pointsEarned > 0 && <span className="glow-acc-plus">🧶 +{fmtPts(o.pointsEarned)} gatupuntos</span>}
-            {o.pointsPending > 0 && <span className="glow-acc-plus is-pend">⏳ +{fmtPts(o.pointsPending)} gatupuntos al confirmar</span>}
+            {o.pointsEarned > 0 && <span className="glow-acc-plus">🧶 +{fmtPts(o.pointsEarned)} Michipuntos</span>}
+            {o.pointsPending > 0 && <span className="glow-acc-plus is-pend">⏳ +{fmtPts(o.pointsPending)} Michipuntos al confirmar</span>}
             <div className="glow-my-order-bottom">
               <span className="glow-chip" style={{ color: st.color, background: st.bg }}>{st.label}</span>
               <button onClick={() => setOpen(o)} style={{ color: C.yape }}>Ver notita</button>
@@ -517,10 +517,10 @@ function MyOrders() {
   );
 }
 
-/* ---------- Gatupuntos ---------- */
+/* ---------- Michipuntos ---------- */
 const fmtPts = (n) => Number(n || 0).toLocaleString("es-PE");
 
-// Cesto de mimbre con pelotitas de lana: una pelotita por cada 100 gatupuntos
+// Cesto de mimbre con pelotitas de lana: una pelotita por cada 100 Michipuntos
 // (hasta 15). Caen al cesto una tras otra.
 const BALL_COLORS = ["#F26D9C", "#B892FF", "#F0B429", "#7FD1C7", "#FF8A65", "#9FC5FF", "#E58FD8"];
 const BALL_SPOTS = [
@@ -543,7 +543,7 @@ function YarnBall({ x, y, color, delay }) {
 function YarnBasket({ points = 0, size = 150 }) {
   const n = Math.min(BALL_SPOTS.length, Math.ceil(points / 100));
   return (
-    <svg className="glow-basket" viewBox="0 0 176 150" width={size} aria-label={`${fmtPts(points)} gatupuntos`} role="img">
+    <svg className="glow-basket" viewBox="0 0 176 150" width={size} aria-label={`${fmtPts(points)} Michipuntos`} role="img">
       {/* asa */}
       <path d="M34 92 C34 20 142 20 142 92" fill="none" stroke="#B9824A" strokeWidth="7" strokeLinecap="round" />
       <path d="M34 92 C34 20 142 20 142 92" fill="none" stroke="#D9A566" strokeWidth="3" strokeLinecap="round" strokeDasharray="6 6" />
@@ -683,7 +683,7 @@ function RewardPicker({ info, subtotal, value, onChange, wallet }) {
     <div className="glow-rw-pick">
       <div className="glow-rw-pick-head">
         <YarnBasket points={info.balance} size={42} />
-        <div><b>🎁 Tu beneficio para este pedido</b><small>Elige uno · tienes {fmtPts(info.balance)} gatupuntos{wallet?.balance ? ` y ${money(wallet.balance)} de Michi-crédito` : ""}</small></div>
+        <div><b>🎁 Tu beneficio para este pedido</b><small>Elige uno · tienes {fmtPts(info.balance)} Michipuntos{wallet?.balance ? ` y ${money(wallet.balance)} de Michi-crédito` : ""}</small></div>
       </div>
       {wallet?.balance > 0 && (
         <button
@@ -710,7 +710,7 @@ function RewardPicker({ info, subtotal, value, onChange, wallet }) {
             onClick={() => onChange(on ? "" : r.key)}
           >
             <span className="glow-rw-dot" />
-            <span>{r.surprise ? <b>🎁 ¡Sorpresa!</b> : <b>−S/ {r.value}</b>} · {fmtPts(r.points)} gatupuntos</span>
+            <span>{r.surprise ? <b>🎁 ¡Sorpresa!</b> : <b>−S/ {r.value}</b>} · {fmtPts(r.points)} Michipuntos</span>
             <small>{!okPts ? `te faltan ${fmtPts(r.points - info.balance)}` : !okMin ? `compra desde S/ ${r.min}` : on ? "aplicado ✓" : "usar"}</small>
           </button>
         );
@@ -792,9 +792,9 @@ function ReviewModal({ order, item, onClose, onSent }) {
         {state && state !== "sending" && <p className="glow-err">{state}</p>}
         <button className="glow-pay-btn" disabled={text.trim().length < 15 || state === "sending"} onClick={send}
           style={{ background: text.trim().length < 15 ? C.line : C.aubergine, marginTop: 12 }}>
-          {state === "sending" ? "Enviando…" : `Enviar reseña · +${pts} gatupuntos`}
+          {state === "sending" ? "Enviando…" : `Enviar reseña · +${pts} Michipuntos`}
         </button>
-        <p className="glow-hint" style={{ textAlign: "center" }}>Los gatupuntos se suman cuando revisemos tu reseña.</p>
+        <p className="glow-hint" style={{ textAlign: "center" }}>Los Michipuntos se suman cuando revisemos tu reseña.</p>
       </div>
     </div>
   );
@@ -807,7 +807,7 @@ function OrderReviews({ order, reviews, onReviewed }) {
   const items = order.items.filter((l, i, a) => a.findIndex((x) => x.id === l.id) === i);
   return (
     <div className="glow-order-reviews">
-      <p>⭐ Reseña y gana hasta <b>+{REVIEW_PTS.photo} gatupuntos</b> por producto</p>
+      <p>⭐ Reseña y gana hasta <b>+{REVIEW_PTS.photo} Michipuntos</b> por producto</p>
       {items.map((l) => {
         const r = reviews.find((x) => x.orderId === order.id && x.productId === l.id);
         return (
@@ -854,11 +854,11 @@ function ProductReviews({ product, onClose, reviewOrder, customer, onWrite }) {
         )}
         {reviewOrder ? (
           <button className="glow-pay-btn" style={{ background: C.aubergine, margin: "4px 0 10px" }} onClick={() => onWrite(product, reviewOrder)}>
-            ✍️ Escribir mi reseña · hasta +{REVIEW_PTS.photo} gatupuntos
+            ✍️ Escribir mi reseña · hasta +{REVIEW_PTS.photo} Michipuntos
           </button>
         ) : (
           <p className="glow-hint" style={{ margin: "0 0 10px" }}>
-            {customer ? "Podrás reseñar este producto cuando lo compres y confirmemos tu pago." : "Únete y compra este producto para dejar tu reseña y ganar gatupuntos."}
+            {customer ? "Podrás reseñar este producto cuando lo compres y confirmemos tu pago." : "Únete y compra este producto para dejar tu reseña y ganar Michipuntos."}
           </p>
         )}
         {!list && <p style={{ color: C.inkSoft }}>Cargando…</p>}
@@ -908,29 +908,29 @@ function markSeen(id) {
   }
 }
 
-// Reglas de gatupuntos explicadas a la clienta.
+// Reglas de Michipuntos explicadas a la clienta.
 function PointsHelp({ info, onClose }) {
   return (
     <div className="glow-modal-bg" onClick={onClose}>
-      <div className="glow-ship glow-help" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Cómo funcionan los gatupuntos">
+      <div className="glow-ship glow-help" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Cómo funcionan los Michipuntos">
         <button className="glow-join-x" onClick={onClose} aria-label="Cerrar"><X size={20} /></button>
-        <div className="glow-help-head"><YarnBasket points={600} size={64} /><h3>¿Cómo funcionan los gatupuntos?</h3></div>
+        <div className="glow-help-head"><YarnBasket points={600} size={64} /><h3>¿Cómo funcionan los Michipuntos?</h3></div>
 
         <div className="glow-ship-sec">
           <h4>🧶 Cómo los ganas</h4>
           <ul className="glow-help-list">
-            <li>Ganas <b>{info.perSol} gatupuntos por cada S/ 1</b> de tus compras.</li>
+            <li>Ganas <b>{info.perSol} Michipuntos por cada S/ 1</b> de tus compras.</li>
             <li>Se suman a tu cesto cuando <b>confirmamos tu pago</b>.</li>
-            <li>Los productos con la etiqueta <b>×2 gatupuntos</b> te dan el doble.</li>
+            <li>Los productos con la etiqueta <b>×2 Michipuntos</b> te dan el doble.</li>
             <li><b>+{info.welcome}</b> de regalo al unirte al club y <b>+{info.birthday}</b> en tu mes de cumpleaños 🎂</li>
             <li>⭐ Reseña lo que compraste: <b>+{info.reviewText}</b> con texto y <b>+{info.reviewPhoto}</b> si subes una foto con tu producto (se suman al aprobar la reseña).</li>
-            <li>El costo de envío no suma gatupuntos.</li>
+            <li>El costo de envío no suma Michipuntos.</li>
           </ul>
         </div>
 
         <div className="glow-ship-sec">
           <h4>👑 Tu nivel</h4>
-          <p className="glow-ship-sub">Mientras más compras en el año, más gatupuntos ganas en cada compra:</p>
+          <p className="glow-ship-sub">Mientras más compras en el año, más Michipuntos ganas en cada compra:</p>
           <div className="glow-help-levels">
             {info.levels.map((l) => (
               <div key={l.key} className={info.level.key === l.key ? "is-on" : ""}>
@@ -959,8 +959,8 @@ function PointsHelp({ info, onClose }) {
         <div className="glow-ship-sec">
           <h4>⏳ Importante</h4>
           <ul className="glow-help-list">
-            <li>Tus gatupuntos vencen a los <b>{info.expiryMonths} meses</b> de ganarlos (se usan primero los más antiguos).</li>
-            <li>Si un pago no se puede confirmar, esos gatupuntos no se suman y el canje se te devuelve.</li>
+            <li>Tus Michipuntos vencen a los <b>{info.expiryMonths} meses</b> de ganarlos (se usan primero los más antiguos).</li>
+            <li>Si un pago no se puede confirmar, esos Michipuntos no se suman y el canje se te devuelve.</li>
           </ul>
         </div>
       </div>
@@ -975,8 +975,8 @@ function HelpModal({ settings, onClose, onPoints }) {
     ["¿Cómo pago?", `Por Yape al ${(settings.yapeNumber || "").replace(/(\d{3})(?=\d)/g, "$1 ")}. Subes la captura de tu comprobante y nosotras confirmamos el pago.`],
     ["¿Hacen entregas en Juliaca?", "Sí, gratis. Eliges el punto de encuentro, el día y la hora exacta al pagar."],
     ["¿Envían a otras ciudades?", "Sí, por Shalom a todo el Perú. Recoges en la agencia que elijas con tu DNI. El costo depende del departamento."],
-    ["¿Qué son los gatupuntos?", "Puntos que ganas con cada compra y que canjeas por descuentos o una sorpresa."],
-    ["¿Qué es el Michi-crédito?", "Cuando confirmamos tu pago te devolvemos hasta S/ 5 en crédito. Reclámalo en 48 horas y úsalo en los siguientes 10 días en una compra desde S/ 30. Es un beneficio por pedido: crédito o gatupuntos."],
+    ["¿Qué son los Michipuntos?", "Puntos que ganas con cada compra y que canjeas por descuentos o una sorpresa."],
+    ["¿Qué es el Michi-crédito?", "Cuando confirmamos tu pago te devolvemos hasta S/ 5 en crédito. Reclámalo en 48 horas y úsalo en los siguientes 10 días en una compra desde S/ 30. Es un beneficio por pedido: crédito o Michipuntos."],
     ["¿Dónde veo mi pedido?", "En Mi cuenta → Mis compras. Ahí ves si tu pago está en verificación, confirmado o enviado."],
   ];
   return (
@@ -988,7 +988,7 @@ function HelpModal({ settings, onClose, onPoints }) {
           <details key={q} className="glow-faq">
             <summary>{q}</summary>
             <p>{a}</p>
-            {q.includes("gatupuntos") && <button className="glow-link-btn" style={{ color: C.yape, justifyContent: "flex-start" }} onClick={onPoints}>Ver cómo funcionan ›</button>}
+            {q.includes("Michipuntos") && <button className="glow-link-btn" style={{ color: C.yape, justifyContent: "flex-start" }} onClick={onPoints}>Ver cómo funcionan ›</button>}
           </details>
         ))}
         <a className="glow-pay-btn" style={{ background: "#25D366", marginTop: 14, textDecoration: "none" }}
@@ -1033,7 +1033,7 @@ function AccountPage({ customer, favs, products, onToggleFav, onAdd, onPanel, se
             <h1 className="glow-acc-hello">Holiiii, <b>{customer.name}</b></h1>
             {info && (
               <span className="glow-level">
-                <i>🐱</i>Nivel {info.level.name}{info.level.mult > 1 ? ` · ganas ×${info.level.mult} gatupuntos` : ""}
+                <i>🐱</i>Nivel {info.level.name}{info.level.mult > 1 ? ` · ganas ×${info.level.mult} Michipuntos` : ""}
               </span>
             )}
           </div>
@@ -1041,7 +1041,7 @@ function AccountPage({ customer, favs, products, onToggleFav, onAdd, onPanel, se
             <YarnBasket points={info?.balance || 0} />
             <div className="glow-pts-info">
               <small>Tienes para canjear</small>
-              <div className="glow-pts-big"><b>{info ? fmtPts(info.balance) : "…"}</b><span>gatupuntos</span></div>
+              <div className="glow-pts-big"><b>{info ? fmtPts(info.balance) : "…"}</b><span>Michipuntos</span></div>
               {info && (
                 <p className="glow-pts-eq">
                   {bestReward
@@ -1090,8 +1090,8 @@ function AccountPage({ customer, favs, products, onToggleFav, onAdd, onPanel, se
                     <small>#{o.code} · {new Date(o.createdAt).toLocaleDateString("es-PE", { day: "numeric", month: "short" })} · {money(o.total)}</small>
                   </div>
                 </div>
-                {o.pointsEarned > 0 && <span className="glow-acc-plus">🧶 +{fmtPts(o.pointsEarned)} gatupuntos ganados</span>}
-                {o.pointsPending > 0 && <span className="glow-acc-plus is-pend">⏳ +{fmtPts(o.pointsPending)} gatupuntos al confirmar</span>}
+                {o.pointsEarned > 0 && <span className="glow-acc-plus">🧶 +{fmtPts(o.pointsEarned)} Michipuntos ganados</span>}
+                {o.pointsPending > 0 && <span className="glow-acc-plus is-pend">⏳ +{fmtPts(o.pointsPending)} Michipuntos al confirmar</span>}
                 <OrderReviews order={o} reviews={myReviews} onReviewed={(r) => setMyReviews((x) => [r, ...x])} />
               </div>
             );
@@ -1101,7 +1101,7 @@ function AccountPage({ customer, favs, products, onToggleFav, onAdd, onPanel, se
 
       {info && (
         <section className="glow-acc-sec">
-          <div className="glow-acc-sec-h"><h2>Canjea tus gatupuntos</h2><button onClick={() => setModal("puntos")}>¿Cómo funciona? ›</button></div>
+          <div className="glow-acc-sec-h"><h2>Canjea tus Michipuntos</h2><button onClick={() => setModal("puntos")}>¿Cómo funciona? ›</button></div>
           <div className="glow-acc-rewards">
             {info.rewards.map((r, k) => {
               const ok = info.balance >= r.points;
@@ -1117,14 +1117,14 @@ function AccountPage({ customer, favs, products, onToggleFav, onAdd, onPanel, se
                   ) : (
                     <><h3>S/ {r.value}</h3><p>de descuento en compras desde S/ {r.min}</p></>
                   )}
-                  <span className="glow-acc-rw-cost">{fmtPts(r.points)} gatupuntos</span>
+                  <span className="glow-acc-rw-cost">{fmtPts(r.points)} Michipuntos</span>
                   <div className="glow-acc-rw-state">{ok ? "Disponible · elígelo en el carrito al pagar" : `Te faltan ${fmtPts(r.points - info.balance)}`}</div>
                 </div>
               );
             })}
           </div>
           <p className="glow-acc-how">
-            Ganas <b>{info.perSol} gatupuntos por cada S/ 1</b> cuando confirmamos tu pago · +{info.welcome} al unirte ·
+            Ganas <b>{info.perSol} Michipuntos por cada S/ 1</b> cuando confirmamos tu pago · +{info.welcome} al unirte ·
             +{info.birthday} en tu cumpleaños · +{info.reviewPhoto} por reseña con foto · vencen a los {info.expiryMonths} meses.{" "}
             <button className="glow-inline-link" onClick={() => setModal("puntos")}>Ver todas las reglas</button>
           </p>
@@ -1142,7 +1142,7 @@ function AccountPage({ customer, favs, products, onToggleFav, onAdd, onPanel, se
                 <div style={{ position: "relative" }}>
                   <Thumb src={p.images?.[0]} alt={p.name} size={"100%"} />
                   <FavButton active onClick={() => onToggleFav(p.id)} style={{ top: 8, right: 8 }} />
-                  {p.doublePoints && <span className="glow-x2">×2 gatupuntos</span>}
+                  {p.doublePoints && <span className="glow-x2">×2 Michipuntos</span>}
                 </div>
                 <b className="glow-name" style={{ color: C.aubergine }}>{p.name}</b>
                 <span>{money(p.price)}</span>
@@ -1181,7 +1181,7 @@ function AccountPage({ customer, favs, products, onToggleFav, onAdd, onPanel, se
 
       {info?.history?.length > 0 && (
         <section className="glow-acc-sec">
-          <div className="glow-acc-sec-h"><h2>Movimientos de gatupuntos</h2></div>
+          <div className="glow-acc-sec-h"><h2>Movimientos de Michipuntos</h2></div>
           <div className="glow-acc-hist">
             {info.history.map((h, k) => (
               <div key={k}>
@@ -1735,7 +1735,7 @@ function ShippingInfo({ settings, onClose }) {
               </div>
             ))}
           </div>
-          <p className="glow-ship-sub" style={{ marginTop: 10 }}>El envío se suma al total al pagar. Los gatupuntos se calculan sin el envío.</p>
+          <p className="glow-ship-sub" style={{ marginTop: 10 }}>El envío se suma al total al pagar. Los Michipuntos se calculan sin el envío.</p>
         </div>
       </div>
     </div>
@@ -2700,7 +2700,7 @@ function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, cust
                   <div className="glow-card-img" style={{ position: "relative", overflow: "hidden", display: "grid", placeItems: "center", borderRadius: 14, background: `linear-gradient(135deg, ${C.blush}, ${C.bg})`, border: "2px solid #fff", boxShadow: `0 0 0 2px ${C.blush}` }}>
                     <ProductGallery images={p.images} alt={p.name} />
                     <FavButton active={favs.includes(p.id)} onClick={() => onToggleFav(p.id)} style={{ bottom: 8, right: 8 }} />
-                    {p.doublePoints && <span className="glow-x2 is-card">×2 gatupuntos</span>}
+                    {p.doublePoints && <span className="glow-x2 is-card">×2 Michipuntos</span>}
                     {p.bestSeller && (
                       <span className="glow-badge" style={{ position: "absolute", top: 8, left: 8, padding: "3px 9px", borderRadius: 999, fontSize: 11, fontWeight: 700, background: "#fff", color: C.roseDeep, boxShadow: "0 1px 4px rgba(0,0,0,0.12)" }}>
                         Más vendido
@@ -2782,7 +2782,7 @@ function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, cust
           order={writing.order}
           item={writing.order.items.find((l) => l.id === writing.product.id)}
           onClose={() => setWriting(null)}
-          onSent={() => { setWriting(null); loadMine(); alert("¡Gracias por tu reseña! 💕 Sumarás tus gatupuntos cuando la revisemos."); }}
+          onSent={() => { setWriting(null); loadMine(); alert("¡Gracias por tu reseña! 💕 Sumarás tus Michipuntos cuando la revisemos."); }}
         />
       )}
       {panel && (
@@ -2905,7 +2905,7 @@ const NoteLetter = React.forwardRef(function NoteLetter({ order }, ref) {
         </div>
       ))}
       {order.discount > 0 && (
-        <div className="glow-letter-disc"><span>Gatupuntos canjeados</span><span>−{money(order.discount)}</span></div>
+        <div className="glow-letter-disc"><span>Michipuntos canjeados</span><span>−{money(order.discount)}</span></div>
       )}
       {order.creditUsed > 0 && (
         <div className="glow-letter-disc"><span>Michi-crédito</span><span>−{money(order.creditUsed)}</span></div>
@@ -2942,7 +2942,7 @@ const NoteLetter = React.forwardRef(function NoteLetter({ order }, ref) {
 
 // Pago con Yape en 5 pasos: pagar → subir captura → leerla → revisar → notita.
 // Paso 1 del pago: cómo recibe su pedido (gratis en Juliaca o envío Shalom).
-function DeliveryStep({ settings, customer, value, onChange, itemsTotal, discount, discountLabel = "Gatupuntos", onNext, onBack }) {
+function DeliveryStep({ settings, customer, value, onChange, itemsTotal, discount, discountLabel = "Michipuntos", onNext, onBack }) {
   const [deps, setDeps] = useState([]);
   useEffect(() => {
     getConfig().then((c) => setDeps(c.departments || [])).catch(() => {});
@@ -3149,7 +3149,7 @@ function DeliveryStep({ settings, customer, value, onChange, itemsTotal, discoun
   );
 }
 
-function YapeCheckout({ settings, lines, total: itemsTotal, discount = 0, discountLabel = "Gatupuntos", reward = "", useCredit = false, willEarn = 0, customer, onBack, onDone, order }) {
+function YapeCheckout({ settings, lines, total: itemsTotal, discount = 0, discountLabel = "Michipuntos", reward = "", useCredit = false, willEarn = 0, customer, onBack, onDone, order }) {
   const [step, setStep] = useState(order ? "done" : "entrega");
   const [delivery, setDelivery] = useState({ type: "" });
   const [shipping, setShipping] = useState(0);
@@ -3371,7 +3371,7 @@ function YapeCheckout({ settings, lines, total: itemsTotal, discount = 0, discou
             );
           })()}
           <NoteLetter order={order} ref={noteRef} />
-          {willEarn > 0 && <p className="glow-earn" style={{ marginTop: 14 }}>🧶 Cuando confirmemos tu pago sumarás <b>{fmtPts(willEarn)} gatupuntos</b></p>}
+          {willEarn > 0 && <p className="glow-earn" style={{ marginTop: 14 }}>🧶 Cuando confirmemos tu pago sumarás <b>{fmtPts(willEarn)} Michipuntos</b></p>}
           <button className="glow-pay-btn" onClick={download} style={{ background: C.primary, boxShadow: "none", marginTop: 16 }}>Descargar mi notita</button>
           <button className="glow-pay-btn is-ghost" onClick={whatsapp} style={{ color: C.yape, borderColor: C.yape, marginTop: 8 }}>
             <MessageCircle size={18} /> Enviar a la tienda por WhatsApp
@@ -3385,8 +3385,8 @@ function YapeCheckout({ settings, lines, total: itemsTotal, discount = 0, discou
 function CartDrawer({ lines, total: subtotal, onClose, onSetQty, onClear, onOrder, settings, customer, onJoin }) {
   const [step, setStep] = useState("cart"); // 'cart' | 'yape'
   const [order, setOrder] = useState(null); // pedido ya registrado (muestra la notita)
-  const [pts, setPts] = useState(null); // gatupuntos de la clienta
-  const [reward, setReward] = useState(""); // clave del canje de gatupuntos o "credito"
+  const [pts, setPts] = useState(null); // Michipuntos de la clienta
+  const [reward, setReward] = useState(""); // clave del canje de Michipuntos o "credito"
   const [wallet, setWallet] = useState(null); // Michi-crédito
   useEffect(() => {
     if (!customer?.token) return;
@@ -3400,7 +3400,7 @@ function CartDrawer({ lines, total: subtotal, onClose, onSetQty, onClear, onOrde
     if ((tier && subtotal < tier.min) || (reward === "credito" && subtotal < CREDIT_MIN)) setReward("");
   }, [subtotal, tier, reward]);
   const discount = reward === "credito" ? creditAmt : tier ? tier.value : 0;
-  const discountLabel = reward === "credito" ? "Michi-crédito" : "Gatupuntos";
+  const discountLabel = reward === "credito" ? "Michi-crédito" : "Michipuntos";
   const total = subtotal - discount;
   const weighted = lines.reduce((s, l) => s + l.qty * l.price * (l.doublePoints ? 2 : 1), 0);
   const willEarn = subtotal ? Math.floor(weighted * (total / subtotal) * (pts?.perSol || 1.25) * (pts?.level.mult || 1)) : 0;
@@ -3486,9 +3486,9 @@ function CartDrawer({ lines, total: subtotal, onClose, onSetQty, onClear, onOrde
           </div>
           {lines.length > 0 && <p style={{ margin: "0 0 8px", fontSize: 12, color: C.inkSoft }}>📍 Entrega gratis en Juliaca · 🚚 envío Shalom al resto del Perú</p>}
           {lines.length > 0 && (customer ? (
-            <p className="glow-earn">🧶 Con esta compra ganarás <b>{fmtPts(willEarn)} gatupuntos</b></p>
+            <p className="glow-earn">🧶 Con esta compra ganarás <b>{fmtPts(willEarn)} Michipuntos</b></p>
           ) : onJoin ? (
-            <button className="glow-earn is-join" onClick={onJoin}>🧶 Únete y gana <b>{fmtPts(Math.floor(weighted * 1.25) + 100)} gatupuntos</b> con esta compra</button>
+            <button className="glow-earn is-join" onClick={onJoin}>🧶 Únete y gana <b>{fmtPts(Math.floor(weighted * 1.25) + 100)} Michipuntos</b> con esta compra</button>
           ) : null)}
           {yapeReady && (
             <button
@@ -3895,7 +3895,7 @@ function ProductForm({ initial, busy, onSave, onClose }) {
         <label className="glow-switch" style={{ marginBottom: 12 }}>
           <input type="checkbox" checked={!!f.doublePoints} onChange={(e) => set("doublePoints", e.target.checked)} />
           <span />
-          <div><b>×2 gatupuntos</b><small>Da el doble de gatupuntos: úsalo para rotar productos que se venden lento.</small></div>
+          <div><b>×2 Michipuntos</b><small>Da el doble de Michipuntos: úsalo para rotar productos que se venden lento.</small></div>
         </label>
 
         {f.cost !== "" && f.price !== "" && (
@@ -3989,7 +3989,7 @@ function OrdersPanel() {
               )}
               <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "baseline" }}>
                 <b style={{ fontSize: 18 }}>{money(o.total)}</b>
-                {o.discount > 0 && <span style={{ fontSize: 12, color: C.antique, fontWeight: 700 }}>(canjeó {o.rewardPoints} gatupuntos · −{money(o.discount)})</span>}
+                {o.discount > 0 && <span style={{ fontSize: 12, color: C.antique, fontWeight: 700 }}>(canjeó {o.rewardPoints} Michipuntos · −{money(o.discount)})</span>}
                 {o.creditUsed > 0 && <span style={{ fontSize: 12, color: C.antique, fontWeight: 700 }}>(usó Michi-crédito −{money(o.creditUsed)})</span>}
                 <span style={{ fontSize: 13 }}>Yape op. <b style={{ fontFamily: "monospace", color: C.yape }}>{o.yapeOp}</b></span>
               </div>
@@ -3997,7 +3997,7 @@ function OrdersPanel() {
                 {o.status === "pendiente" && (
                   <>
                     <button className="glow-admin-ok" onClick={() => change(o.id, "verificado")}>✓ Confirmar pago</button>
-                    <button className="glow-admin-no" onClick={() => confirm(`¿Rechazar el pago del pedido #${o.code}? Se devolverán sus gatupuntos canjeados.`) && change(o.id, "rechazado")}>✗ Rechazar</button>
+                    <button className="glow-admin-no" onClick={() => confirm(`¿Rechazar el pago del pedido #${o.code}? Se devolverán sus Michipuntos canjeados.`) && change(o.id, "rechazado")}>✗ Rechazar</button>
                   </>
                 )}
                 {o.status === "verificado" && (
@@ -4202,7 +4202,7 @@ function CustomersPanel() {
                 <div className="glow-cust-sub">{c.email}{c.phone ? ` · ${c.phone}` : ""}{c.district ? ` · ${c.district}` : ""}</div>
                 <div className="glow-cust-nums">
                   <span>🛍️ <b>{c.orders}</b> pedido{c.orders === 1 ? "" : "s"} · {money(c.spent)}</span>
-                  <span>🧶 <b>{fmtPts(c.points)}</b> gatupuntos</span>
+                  <span>🧶 <b>{fmtPts(c.points)}</b> Michipuntos</span>
                   {c.credit > 0 && <span>💰 <b>{money(c.credit)}</b> crédito</span>}
                   {c.birthday && <span>🎂 {new Date(c.birthday + "T12:00").toLocaleDateString("es-PE", { day: "numeric", month: "long" })}</span>}
                 </div>
@@ -4223,7 +4223,7 @@ function CustomersPanel() {
   );
 }
 
-// Reseñas por revisar: al aprobar, la clienta recibe sus gatupuntos.
+// Reseñas por revisar: al aprobar, la clienta recibe sus Michipuntos.
 function ReviewsPanel() {
   const [list, setList] = useState(null);
   const [err, setErr] = useState("");
@@ -4245,7 +4245,7 @@ function ReviewsPanel() {
   return (
     <div className="glow-orders">
       <p style={{ margin: 0, color: C.inkSoft, fontSize: 13 }}>
-        Aprueba solo reseñas reales. Con foto del producto: +{REVIEW_PTS.photo} gatupuntos · solo texto: +{REVIEW_PTS.text}. Las aprobadas se muestran en la tienda.
+        Aprueba solo reseñas reales. Con foto del producto: +{REVIEW_PTS.photo} Michipuntos · solo texto: +{REVIEW_PTS.text}. Las aprobadas se muestran en la tienda.
       </p>
       {list.map((r) => (
         <div key={r.id} className="glow-order" style={{ background: C.surface, border: `1px solid ${C.line}` }}>
