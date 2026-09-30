@@ -54,6 +54,105 @@ export async function initSchema() {
       tagline    TEXT,
       CONSTRAINT settings_single_row CHECK (id = 1)
     );
+
+    -- Pago con Yape (se añaden a tiendas que ya tenían la tabla creada).
+    ALTER TABLE settings ADD COLUMN IF NOT EXISTS yape_number TEXT;
+    ALTER TABLE settings ADD COLUMN IF NOT EXISTS yape_name   TEXT;
+    ALTER TABLE settings ADD COLUMN IF NOT EXISTS yape_qr     TEXT;
+
+    -- Pedidos pagados con Yape (con la captura del comprobante).
+    CREATE TABLE IF NOT EXISTS orders (
+      id          SERIAL PRIMARY KEY,
+      items       JSONB NOT NULL,
+      total       NUMERIC NOT NULL,
+      yape_op     TEXT NOT NULL,
+      capture     TEXT,
+      status      TEXT NOT NULL DEFAULT 'pendiente',
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS orders_yape_op_key ON orders (yape_op);
+    -- Pedidos hechos en el modo prueba (?prueba): se marcan para borrarlos fácil.
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT false;
+    -- Cliente que hizo el pedido (si tenía la sesión iniciada).
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_email TEXT;
+
+    -- Clientes registrados con Google (opcional). Aceptan recibir novedades.
+    CREATE TABLE IF NOT EXISTS customers (
+      email       TEXT PRIMARY KEY,
+      name        TEXT,
+      picture     TEXT,
+      newsletter  BOOLEAN NOT NULL DEFAULT true,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+      last_login  TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    -- Perfil (datos de envío) y lista de favoritos (ids de productos).
+    ALTER TABLE customers ADD COLUMN IF NOT EXISTS phone     TEXT;
+    ALTER TABLE customers ADD COLUMN IF NOT EXISTS address   TEXT;
+    ALTER TABLE customers ADD COLUMN IF NOT EXISTS district  TEXT;
+    ALTER TABLE customers ADD COLUMN IF NOT EXISTS favorites JSONB NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE customers ADD COLUMN IF NOT EXISTS birthday  DATE;
+
+    -- Gatupuntos: libro de movimientos. "ref" evita dar dos veces el mismo
+    -- bono (registro, cumple-2026, pedido-12, canje-12…).
+    CREATE TABLE IF NOT EXISTS points (
+      id          SERIAL PRIMARY KEY,
+      email       TEXT NOT NULL,
+      amount      INTEGER NOT NULL,
+      kind        TEXT NOT NULL,
+      ref         TEXT NOT NULL,
+      note        TEXT,
+      expires_at  TIMESTAMPTZ,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS points_email_ref_key ON points (email, ref);
+
+    -- Pedidos: subtotal, descuento canjeado con gatupuntos.
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS subtotal      NUMERIC;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount      NUMERIC NOT NULL DEFAULT 0;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS reward_points INTEGER NOT NULL DEFAULT 0;
+
+    -- Envíos: configuración (puntos de entrega en Juliaca y tarifas Shalom)
+    -- y, en cada pedido, a dónde va y cuánto se cobró de envío.
+    ALTER TABLE settings ADD COLUMN IF NOT EXISTS shipping JSONB;
+    ALTER TABLE orders   ADD COLUMN IF NOT EXISTS delivery JSONB;
+    ALTER TABLE orders   ADD COLUMN IF NOT EXISTS shipping NUMERIC NOT NULL DEFAULT 0;
+    -- true cuando el pedido descontó stock (se devuelve si se rechaza).
+    ALTER TABLE orders   ADD COLUMN IF NOT EXISTS stock_taken BOOLEAN NOT NULL DEFAULT false;
+
+    -- Reseñas de productos comprados (dan gatupuntos al aprobarlas).
+    CREATE TABLE IF NOT EXISTS reviews (
+      id          SERIAL PRIMARY KEY,
+      email       TEXT NOT NULL,
+      name        TEXT,
+      order_id    INTEGER NOT NULL,
+      product_id  TEXT NOT NULL,
+      rating      INTEGER NOT NULL,
+      text        TEXT NOT NULL,
+      photo       TEXT,
+      status      TEXT NOT NULL DEFAULT 'pendiente',
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS reviews_once_key ON reviews (email, order_id, product_id);
+
+    -- Michi-crédito: soles que se "devuelven" al confirmar un pago. Hay que
+    -- reclamarlos (48 h) y usarlos antes de que venzan (10 días).
+    CREATE TABLE IF NOT EXISTS credits (
+      id           SERIAL PRIMARY KEY,
+      email        TEXT NOT NULL,
+      order_id     INTEGER,
+      amount       NUMERIC NOT NULL,
+      used         NUMERIC NOT NULL DEFAULT 0,
+      status       TEXT NOT NULL DEFAULT 'por_reclamar',
+      note         TEXT,
+      claim_until  TIMESTAMPTZ,
+      expires_at   TIMESTAMPTZ,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS credits_order_key ON credits (order_id, note);
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS credit_used NUMERIC NOT NULL DEFAULT 0;
+
+    -- Productos con ×2 gatupuntos (para rotar stock).
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS double_points BOOLEAN NOT NULL DEFAULT false;
   `);
 }
 
@@ -69,9 +168,125 @@ export function rowToProduct(r) {
     stock: Number(r.stock),
     emoji: r.emoji || "",
     bestSeller: r.best_seller,
+    doublePoints: !!r.double_points,
     images: Array.isArray(r.images) ? r.images : [],
     desc: r.description || "",
   };
+}
+
+// Código visible del pedido: GLW-0001, GLW-0002…
+// Para la tienda pública: sin el precio de costo (solo lo ve la administradora).
+export function publicProduct(r) {
+  const { cost, ...rest } = rowToProduct(r);
+  if (r.review_count != null) {
+    rest.rating = r.review_avg == null ? 0 : Math.round(Number(r.review_avg) * 10) / 10;
+    rest.reviews = Number(r.review_count);
+  }
+  return rest;
+}
+
+export function rowToOrder(r) {
+  return {
+    id: r.id,
+    code: "GLW-" + String(r.id).padStart(4, "0"),
+    items: Array.isArray(r.items) ? r.items : [],
+    total: Number(r.total),
+    yapeOp: r.yape_op,
+    capture: r.capture || "",
+    status: r.status,
+    isTest: !!r.is_test,
+    subtotal: r.subtotal == null ? Number(r.total) : Number(r.subtotal),
+    discount: Number(r.discount || 0),
+    rewardPoints: Number(r.reward_points || 0),
+    shipping: Number(r.shipping || 0),
+    creditUsed: Number(r.credit_used || 0),
+    delivery: r.delivery || null,
+    createdAt: r.created_at,
+  };
+}
+
+export function rowToReview(r) {
+  return {
+    id: r.id,
+    name: r.name || "",
+    orderId: r.order_id,
+    productId: r.product_id,
+    rating: Number(r.rating),
+    text: r.text,
+    photo: r.photo || "",
+    status: r.status,
+    createdAt: r.created_at,
+  };
+}
+
+export function rowToCustomer(r) {
+  return {
+    email: r.email,
+    name: r.name || "",
+    picture: r.picture || "",
+    phone: r.phone || "",
+    address: r.address || "",
+    district: r.district || "",
+    newsletter: r.newsletter,
+    favorites: Array.isArray(r.favorites) ? r.favorites : [],
+    birthday: r.birthday ? new Date(r.birthday).toISOString().slice(0, 10) : "",
+  };
+}
+
+// Envíos por defecto: entrega gratis en Juliaca (puntos editables) y tarifas
+// Shalom por departamento. La tarifa por defecto es un EJEMPLO: se ajusta en
+// el panel con el cotizador oficial de Shalom.
+export const PE_DEPARTMENTS = [
+  "Amazonas", "Áncash", "Apurímac", "Arequipa", "Ayacucho", "Cajamarca", "Callao", "Cusco",
+  "Huancavelica", "Huánuco", "Ica", "Junín", "La Libertad", "Lambayeque", "Lima", "Loreto",
+  "Madre de Dios", "Moquegua", "Pasco", "Piura", "Puno", "San Martín", "Tacna", "Tumbes", "Ucayali",
+];
+export const DEFAULT_SHIPPING = {
+  // days: 0 = domingo … 6 = sábado; from/to en formato 24 h
+  juliacaPoints: [
+    { name: "Plaza de Armas de Juliaca", days: [1, 2, 3, 4, 5, 6], from: "16:00", to: "19:00" },
+    { name: "Real Plaza Juliaca", days: [6, 0], from: "11:00", to: "18:00" },
+    { name: "Universidad Andina (UANCV)", days: [1, 2, 3, 4, 5], from: "12:00", to: "14:00" },
+  ],
+  defaultRate: 12,
+  rates: {},
+};
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+export function normPoint(p) {
+  const o = typeof p === "string" ? { name: p } : p || {};
+  const days = Array.isArray(o.days) ? [...new Set(o.days.map(Number).filter((d) => d >= 0 && d <= 6))].sort() : [1, 2, 3, 4, 5, 6];
+  const from = HHMM.test(o.from || "") ? o.from : "10:00";
+  let to = HHMM.test(o.to || "") ? o.to : "18:00";
+  if (to <= from) to = from.replace(/^\d{2}/, (h) => String(Math.min(23, Number(h) + 1)).padStart(2, "0"));
+  return { name: String(o.name || "").trim().slice(0, 80), days, from, to };
+}
+
+export function shippingOf(raw) {
+  const s = raw && typeof raw === "object" ? raw : {};
+  return {
+    // cada punto: { name, days, from, to } (los antiguos se completan con Lun–Sáb 10–18 h)
+    juliacaPoints: Array.isArray(s.juliacaPoints)
+      ? s.juliacaPoints.map(normPoint).filter((p) => p.name)
+      : DEFAULT_SHIPPING.juliacaPoints,
+    defaultRate: Number.isFinite(Number(s.defaultRate)) ? Number(s.defaultRate) : DEFAULT_SHIPPING.defaultRate,
+    // agencias Shalom sugeridas: { "Puno": ["Juliaca – Jr. …", …], … }
+    agencies: Object.fromEntries(
+      Object.entries(s.agencies && typeof s.agencies === "object" ? s.agencies : {})
+        .filter(([d]) => PE_DEPARTMENTS.includes(d))
+        .map(([d, list]) => [d, (Array.isArray(list) ? list : []).map((x) => String(x).trim().slice(0, 120)).filter(Boolean).slice(0, 40)])
+        .filter(([, list]) => list.length)
+    ),
+    rates: s.rates && typeof s.rates === "object" ? s.rates : {},
+  };
+}
+export function shippingCost(cfg, department) {
+  const r = Number(cfg.rates?.[department]);
+  return Number.isFinite(r) && cfg.rates?.[department] !== "" && cfg.rates?.[department] != null ? r : cfg.defaultRate;
+}
+
+export function publicSettings(r) {
+  const { pin, ...rest } = rowToSettings(r);
+  return rest;
 }
 
 export function rowToSettings(r) {
@@ -82,5 +297,9 @@ export function rowToSettings(r) {
     lowStock: Number(r.low_stock),
     logo: r.logo || "",
     tagline: r.tagline || "",
+    yapeNumber: r.yape_number || "",
+    yapeName: r.yape_name || "",
+    yapeQr: r.yape_qr || "",
+    shipping: shippingOf(r.shipping),
   };
 }

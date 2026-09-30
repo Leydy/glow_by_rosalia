@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useId, useCallback } from "react";
 import {
   Store, Lock, Plus, Minus, Pencil, Trash2, X, Search,
   TrendingUp, Package, Wallet, AlertTriangle, Settings as SettingsIcon,
@@ -6,13 +6,18 @@ import {
   ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { C, money } from "./theme.js";
-import { CATEGORIES, CATEGORY_INFO } from "./data.js";
+import { CATEGORIES, CATEGORY_INFO, HERO_INTRO_WORDS, HERO_TICKER } from "./data.js";
 import ChatBot from "./ChatBot.jsx";
 import {
   setAdminPin, checkPin,
   createProduct, updateProduct, deleteProduct, importProducts,
   getProducts, getSettings, updateSettings, uploadImages,
+  createOrder, getOrders, setOrderStatus, deleteTestOrders, getAdminSettings, getAdminProducts,
+  getConfig, googleLogin, testLogin, setCustomerToken, getMe, updateMe, getMyOrders, saveFavorites, getMyPoints, getShalomAgencies,
+  getMyReviews, createReview, getProductReviews, getAdminReviews, setReviewStatus, getMyCredits, claimMyCredit,
 } from "./api.js";
+import { toPng } from "html-to-image";
+import UBIGEO from "./ubigeo.json"; // departamentos → provincias → distritos (INEI)
 
 /* ---------- Carga local (solo el carrito del visitante) ----------
    Los productos y los ajustes ahora viven en la base de datos (Postgres) y se
@@ -96,19 +101,1329 @@ function fileToDataURL(file, maxSize = 800, quality = 0.8) {
   });
 }
 
+// Pantalla de carga: Rosalía (de perfil, con sus manchas) corre sobre un suelo
+// que se desliza, dejando nubecitas de polvo.
+function RunningCat() {
+  const leg = (x, y, cls, fill) => (
+    <g transform={`translate(${x} ${y})`}>
+      <path className={cls} d="M-5 0 H5 V24 A5 5 0 0 1 -5 24 Z" fill={fill} stroke="#CFC3BA" strokeWidth="1.4" />
+    </g>
+  );
+  return (
+    <svg className="glow-run-cat" viewBox="0 0 170 100" aria-hidden="true">
+      <defs>
+        <clipPath id="run-body"><ellipse cx="72" cy="52" rx="42" ry="18" /></clipPath>
+        <clipPath id="run-head"><circle cx="118" cy="38" r="17" /></clipPath>
+      </defs>
+      <g className="glow-run-bob">
+        <path className="glow-run-tail" d="M32 46 C18 44 10 34 8 20 C7 14 13 13 14 19 C16 30 22 36 34 38 Z" fill={ROS.tabby} />
+        <path d="M11 22 L16 21 M13 30 L19 28" stroke={ROS.stripe} strokeWidth="2.4" strokeLinecap="round" />
+        {leg(44, 60, "glow-run-leg is-b2", ROS.shade)}
+        {leg(100, 60, "glow-run-leg is-f2", ROS.shade)}
+        <ellipse cx="72" cy="52" rx="42" ry="18" fill={ROS.white} stroke="#CFC3BA" strokeWidth="1.4" />
+        <g clipPath="url(#run-body)">
+          <path d="M28 40 C36 30 52 32 54 44 C52 54 38 58 28 54 Z" fill={ROS.orange} />
+          <path d="M62 32 C76 28 92 32 96 42 C86 48 70 46 62 32 Z" fill={ROS.black} />
+        </g>
+        {leg(40, 60, "glow-run-leg is-b1", ROS.white)}
+        {leg(104, 60, "glow-run-leg is-f1", ROS.white)}
+        <path d="M109 24 L112 8 L121 21 Z" fill={ROS.tabby} />
+        <path d="M121 21 L128 8 L130 25 Z" fill={ROS.tabby} />
+        <path d="M112 12 L114 21 L119 20 Z" fill={ROS.earIn} />
+        <circle cx="118" cy="38" r="17" fill={ROS.white} stroke="#CFC3BA" strokeWidth="1.4" />
+        <g clipPath="url(#run-head)">
+          <path d="M98 18 H140 V30 C134 32 128 30 124 28 C120 32 114 36 108 44 L98 46 Z" fill={ROS.tabby} />
+          <path d="M112 24 L114 30 M118 22 L119 28" stroke={ROS.stripe} strokeWidth="2" strokeLinecap="round" />
+        </g>
+        <path d="M120 36 C122 32 128 32 130 36 C128 40 122 40 120 36 Z" fill={ROS.irisIn} stroke={ROS.line} strokeWidth="1.2" />
+        <ellipse cx="125.5" cy="36" rx="1.2" ry="2.4" fill="#15110E" />
+        <path d="M132 43 L136 42 L134 46 Z" fill="#EDA3A6" />
+        <path d="M130 47 C138 46 146 45 152 43 M130 49 C138 50 146 51 152 52" stroke="#BDB2AA" strokeWidth=".8" fill="none" />
+        <path d="M104 50 Q118 58 128 48" stroke={C.primary} strokeWidth="4" strokeLinecap="round" fill="none" />
+        <circle cx="120" cy="56" r="3.6" fill={C.gold} />
+      </g>
+    </svg>
+  );
+}
+
+function PageLoader({ leaving, error }) {
+  return (
+    <div className={`glow-loader${leaving ? " is-leaving" : ""}`} style={{ background: C.bg }}>
+      {error ? (
+        <p style={{ color: C.warn, fontWeight: 600, maxWidth: 420, textAlign: "center", padding: "0 20px" }}>{error}</p>
+      ) : (
+        <>
+          <div className="glow-loader-stage">
+            <RunningCat />
+            <span className="glow-dust is-1" /><span className="glow-dust is-2" /><span className="glow-dust is-3" />
+            <div className="glow-loader-ground" style={{ color: C.rose }} />
+          </div>
+          <p className="glow-loader-text" style={{ color: C.roseDeep }}>
+            Cargando la tienda<span>.</span><span>.</span><span>.</span>
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Modo prueba ----------
+   Con ?prueba en la dirección se activa para esta pestaña: muestra un aviso,
+   permite simular el registro y usar una captura de Yape de ejemplo. Los
+   pedidos se marcan como prueba y se pueden borrar desde el panel. */
+const TEST_MODE = (() => {
+  try {
+    if (new URLSearchParams(window.location.search).has("prueba")) sessionStorage.setItem("glow:prueba", "1");
+    return sessionStorage.getItem("glow:prueba") === "1";
+  } catch {
+    return false;
+  }
+})();
+function exitTestMode() {
+  try { sessionStorage.removeItem("glow:prueba"); } catch { /* sin almacenamiento */ }
+  window.location.href = window.location.pathname;
+}
+
+// Cliente registrado: se recuerda en este navegador (solo nombre, correo y foto).
+function loadCustomer() {
+  try {
+    return JSON.parse(localStorage.getItem("glow:cliente") || "null");
+  } catch {
+    return null;
+  }
+}
+function saveCustomer(c) {
+  try {
+    if (c) localStorage.setItem("glow:cliente", JSON.stringify(c));
+    else localStorage.removeItem("glow:cliente");
+  } catch {
+    /* sin almacenamiento: la sesión dura lo que dure la pestaña */
+  }
+}
+
+// Carga el script de "Acceder con Google" una sola vez.
+let gsiPromise = null;
+function loadGoogleScript() {
+  gsiPromise ||= new Promise((ok, fail) => {
+    const sc = document.createElement("script");
+    sc.src = "https://accounts.google.com/gsi/client";
+    sc.async = true;
+    sc.onload = ok;
+    sc.onerror = () => { gsiPromise = null; fail(new Error("No se pudo cargar Google")); };
+    document.head.appendChild(sc);
+  });
+  return gsiPromise;
+}
+
+// Captura de Yape de ejemplo (solo modo prueba): se dibuja al momento con el
+// monto del carrito, el titular y un Nro. de operación al azar.
+function makeSampleCapture(total, yapeName) {
+  const W = 390, H = 560;
+  const cv = document.createElement("canvas");
+  cv.width = W; cv.height = H;
+  const g = cv.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+  g.fillStyle = "#742284"; g.fillRect(0, 0, W, 110);
+  g.textAlign = "center";
+  g.fillStyle = "#fff"; g.font = "bold 30px Arial"; g.fillText("¡Yapeaste!", W / 2, 68);
+  g.fillStyle = "#222"; g.font = "bold 46px Arial";
+  g.fillText("S/ " + (Number.isInteger(total) ? total : total.toFixed(2)), W / 2, 190);
+  const short = (yapeName || "Titular").split(/\s+/).map((w, i) => (i === 0 || i === 2 ? w : w[0] + ".")).slice(0, 4).join(" ");
+  g.fillStyle = "#333"; g.font = "20px Arial"; g.fillText(short, W / 2, 232);
+  const d = new Date();
+  g.fillStyle = "#666"; g.font = "16px Arial";
+  g.fillText(d.toLocaleDateString("es-PE", { day: "numeric", month: "short", year: "numeric" }) + " - " + d.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" }), W / 2, 280);
+  const op = String(Math.floor(10000000 + Math.random() * 89999999));
+  g.textAlign = "left"; g.fillStyle = "#333"; g.font = "17px Arial";
+  g.fillText("Destino: Yape", 28, 360);
+  g.fillText("Nro. de operación: " + op, 28, 400);
+  g.fillStyle = "#999"; g.font = "13px Arial"; g.textAlign = "center";
+  g.fillText("CAPTURA DE PRUEBA · NO ES UN PAGO REAL", W / 2, 520);
+  return new Promise((ok) => cv.toBlob((b) => ok(new File([b], "captura-prueba.png", { type: "image/png" })), "image/png"));
+}
+
+/* ---------- Favoritos ----------
+   Se guardan en este navegador y, si el cliente inició sesión, también en su
+   cuenta (así lo acompañan a cualquier dispositivo). */
+function loadFavs() {
+  try {
+    const v = JSON.parse(localStorage.getItem("glow:favs") || "[]");
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+}
+function storeFavs(list) {
+  try {
+    localStorage.setItem("glow:favs", JSON.stringify(list));
+  } catch {
+    /* sin almacenamiento: los favoritos duran lo que dure la pestaña */
+  }
+}
+
+function HeartIcon({ filled, size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M12 20.5C5 15 2.5 11.5 3.3 8 4 5 7.5 3.6 10 5.4c.8.6 1.5 1.3 2 2 .5-.7 1.2-1.4 2-2C16.5 3.6 20 5 20.7 8c.8 3.5-1.7 7-8.7 12.5z"
+        fill={filled ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+// Corazón para marcar un producto como favorito (va sobre la foto).
+function FavButton({ active, onClick, style }) {
+  return (
+    <button
+      type="button"
+      className={`glow-fav${active ? " is-on" : ""}`}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      aria-label={active ? "Quitar de favoritos" : "Añadir a favoritos"}
+      aria-pressed={active}
+      title={active ? "Quitar de favoritos" : "Añadir a favoritos"}
+      style={style}
+    >
+      <HeartIcon filled={active} />
+    </button>
+  );
+}
+
+// Estado del pedido tal como lo ve el cliente.
+const ORDER_STEP = {
+  pendiente: { label: "Pago en verificación", color: "#D48A12", bg: "#FFF6E5" },
+  verificado: { label: "Pago confirmado", color: "#1FA971", bg: "#EAF8F1" },
+  enviado: { label: "¡Pedido enviado!", color: "#742284", bg: "#F4ECF8" },
+  rechazado: { label: "Pago no válido · escríbenos", color: "#C0392B", bg: "#FDECEA" },
+};
+
+// Menú de la cuenta (se abre al tocar el avatar).
+function AccountMenu({ customer, onPick, onLogout, onClose }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const out = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
+    const esc = (e) => e.key === "Escape" && onClose();
+    document.addEventListener("pointerdown", out);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("pointerdown", out); document.removeEventListener("keydown", esc); };
+  }, [onClose]);
+  const item = (key, icon, label) => (
+    <button key={key} role="menuitem" onClick={() => onPick(key)}>{icon}<span>{label}</span></button>
+  );
+  return (
+    <div className="glow-menu" role="menu" ref={ref}>
+      <div className="glow-menu-head">
+        <CatAvatar customer={customer} size={40} />
+        <div><b>{customer.name}</b><small>{customer.email}</small></div>
+      </div>
+      {item("cuenta", <span className="glow-menu-basket"><YarnBasket points={300} size={22} /></span>, "Mi cuenta · gatupuntos")}
+      {item("perfil", <SettingsIcon size={17} />, "Mi perfil")}
+      {item("pedidos", <Package size={17} />, "Mis pedidos")}
+      {item("favoritos", <HeartIcon size={17} />, "Mis favoritos")}
+      <button role="menuitem" className="is-out" onClick={onLogout}><LogOut size={17} /><span>Cerrar sesión</span></button>
+    </div>
+  );
+}
+
+// Panel lateral de la cuenta: perfil, pedidos o favoritos.
+function AccountDrawer({ section, onSection, onClose, customer, onCustomer, favs, products, onToggleFav, onAdd, onJoin }) {
+  const titles = { perfil: "Mi perfil", pedidos: "Mis pedidos", favoritos: "Mis favoritos" };
+  const tabs = customer ? ["perfil", "pedidos", "favoritos"] : ["favoritos"];
+  return (
+    <div className="glow-drawer-bg" onClick={onClose}>
+      <aside className="glow-drawer" onClick={(e) => e.stopPropagation()} aria-label={titles[section]}>
+        <div className="glow-drawer-head">
+          <h3>{titles[section]}</h3>
+          <button onClick={onClose} aria-label="Cerrar"><X size={22} /></button>
+        </div>
+        {tabs.length > 1 && (
+          <div className="glow-tabs">
+            {tabs.map((t) => (
+              <button key={t} className={t === section ? "is-on" : ""} onClick={() => onSection(t)}>{titles[t].replace("Mis ", "").replace("Mi ", "")}</button>
+            ))}
+          </div>
+        )}
+        <div className="glow-drawer-body">
+          {section === "perfil" && customer && <ProfileForm customer={customer} onCustomer={onCustomer} />}
+          {section === "pedidos" && customer && <MyOrders />}
+          {section === "favoritos" && (
+            <FavoritesList favs={favs} products={products} onToggleFav={onToggleFav} onAdd={onAdd} customer={customer} onJoin={onJoin} />
+          )}
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function FavoritesList({ favs, products, onToggleFav, onAdd, customer, onJoin }) {
+  const list = favs.map((id) => products.find((p) => p.id === id)).filter(Boolean);
+  if (list.length === 0)
+    return (
+      <div className="glow-empty">
+        <span className="glow-empty-heart"><HeartIcon size={34} /></span>
+        <p className="glow-soft" style={{ fontSize: 20, margin: "10px 0 4px" }}>Aún no tienes favoritos</p>
+        <p style={{ color: C.inkSoft, fontSize: 13, margin: 0 }}>Toca el corazón de cualquier producto para guardarlo aquí.</p>
+      </div>
+    );
+  return (
+    <>
+      {!customer && onJoin && (
+        <button className="glow-fav-tip" onClick={onJoin}>
+          <PawIcon /> Únete para guardarlos en tu cuenta y verlos en cualquier dispositivo
+        </button>
+      )}
+      <div className="glow-fav-list">
+        {list.map((p) => {
+          const out = p.stock <= 0;
+          return (
+            <div key={p.id} className="glow-fav-item">
+              <Thumb src={p.images?.[0]} alt={p.name} size={64} />
+              <div className="glow-fav-info">
+                <b className="glow-name" style={{ color: C.aubergine }}>{p.name}</b>
+                <span style={{ color: C.aubergine, fontWeight: 800 }}>{money(p.price)}</span>
+                <button
+                  disabled={out}
+                  onClick={() => onAdd(p)}
+                  style={{ background: out ? C.line : C.primary, color: out ? C.inkSoft : C.primaryInk }}
+                >
+                  <ShoppingCart size={14} /> {out ? "Agotado" : "Añadir"}
+                </button>
+              </div>
+              <FavButton active onClick={() => onToggleFav(p.id)} style={{ position: "static" }} />
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+function ProfileForm({ customer, onCustomer }) {
+  const [f, setF] = useState(customer);
+  const [state, setState] = useState(""); // '' | 'saving' | 'saved' | error
+  const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
+  useEffect(() => {
+    getMe().then((me) => setF((x) => ({ ...x, ...me }))).catch(() => {});
+  }, []);
+  const save = async () => {
+    setState("saving");
+    try {
+      const me = await updateMe(f);
+      onCustomer(me);
+      setState("saved");
+      setTimeout(() => setState(""), 1800);
+    } catch (e) {
+      setState(e.message);
+    }
+  };
+  return (
+    <div className="glow-profile">
+      <div className="glow-profile-head">
+        <CatAvatar customer={f} size={64} />
+        <div><b className="glow-name" style={{ color: C.aubergine, fontSize: 20 }}>{f.name}</b><small>{f.email}</small></div>
+      </div>
+      <Field label="¿Cómo te llamamos?"><Inp value={f.name} onChange={(v) => set("name", v)} placeholder="Tu nombre" /></Field>
+      <Field label="Celular (para coordinar tu envío)"><Inp value={f.phone} onChange={(v) => set("phone", v.replace(/[^\d+ ]/g, ""))} placeholder="987 654 321" /></Field>
+      <Field label="Distrito"><Inp value={f.district} onChange={(v) => set("district", v)} placeholder="Ej. Miraflores" /></Field>
+      <Field label="Dirección de envío"><Inp value={f.address} onChange={(v) => set("address", v)} placeholder="Calle, número, referencia" /></Field>
+      <Field label={customer.birthday ? "Tu cumpleaños 🎂" : "Tu cumpleaños 🎂 (+50 gatupuntos en tu mes)"}>
+        <input
+          type="date"
+          className="glow-date"
+          value={f.birthday || ""}
+          disabled={!!customer.birthday}
+          max={new Date().toISOString().slice(0, 10)}
+          onChange={(e) => set("birthday", e.target.value)}
+        />
+        {customer.birthday
+          ? <small style={{ color: C.inkSoft }}>Ya está registrado. Para cambiarlo, escríbenos por WhatsApp.</small>
+          : <small style={{ color: C.inkSoft }}>Solo se puede registrar una vez.</small>}
+      </Field>
+      <label className="glow-switch">
+        <input type="checkbox" checked={f.newsletter !== false} onChange={(e) => set("newsletter", e.target.checked)} />
+        <span />
+        <div><b>Recibir novedades y ofertas</b><small>Correos del club de Rosalía. Puedes apagarlo cuando quieras.</small></div>
+      </label>
+      <button className="glow-pay-btn" onClick={save} disabled={state === "saving"} style={{ background: C.aubergine, marginTop: 16 }}>
+        {state === "saving" ? "Guardando…" : state === "saved" ? "¡Guardado!" : "Guardar cambios"}
+      </button>
+      {state && !["saving", "saved"].includes(state) && <p className="glow-err">{state}</p>}
+    </div>
+  );
+}
+
+function MyOrders() {
+  const [orders, setOrders] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  useEffect(() => {
+    getMyReviews().then(setReviews).catch(() => {});
+  }, []);
+  const [err, setErr] = useState("");
+  const [open, setOpen] = useState(null);
+  useEffect(() => {
+    getMyOrders().then(setOrders).catch((e) => setErr(e.message));
+  }, []);
+  if (err) return <p className="glow-err">{err}</p>;
+  if (!orders) return <p style={{ color: C.inkSoft }}>Cargando tus pedidos…</p>;
+  if (orders.length === 0)
+    return (
+      <div className="glow-empty">
+        <span className="glow-empty-heart"><Package size={32} /></span>
+        <p className="glow-soft" style={{ fontSize: 20, margin: "10px 0 4px" }}>Aún no tienes pedidos</p>
+        <p style={{ color: C.inkSoft, fontSize: 13, margin: 0 }}>Cuando pagues con Yape con tu sesión iniciada, aparecerán aquí.</p>
+      </div>
+    );
+  return (
+    <div className="glow-my-orders">
+      {orders.map((o) => {
+        const st = ORDER_STEP[o.status] || ORDER_STEP.pendiente;
+        return (
+          <div key={o.id} className="glow-my-order">
+            <div className="glow-my-order-top">
+              <b>#{o.code}</b>
+              <span>{new Date(o.createdAt).toLocaleDateString("es-PE", { day: "numeric", month: "short", year: "numeric" })}</span>
+            </div>
+            <div className="glow-my-order-imgs">
+              {o.items.map((l) => (l.image ? <img key={l.id} src={l.image} alt={l.name} title={l.name} /> : null))}
+              <div>{o.items.reduce((n, l) => n + l.qty, 0)} producto(s)<b>{money(o.total)}</b></div>
+            </div>
+            {o.pointsEarned > 0 && <span className="glow-acc-plus">🧶 +{fmtPts(o.pointsEarned)} gatupuntos</span>}
+            {o.pointsPending > 0 && <span className="glow-acc-plus is-pend">⏳ +{fmtPts(o.pointsPending)} gatupuntos al confirmar</span>}
+            <div className="glow-my-order-bottom">
+              <span className="glow-chip" style={{ color: st.color, background: st.bg }}>{st.label}</span>
+              <button onClick={() => setOpen(o)} style={{ color: C.yape }}>Ver notita</button>
+            </div>
+            <OrderReviews order={o} reviews={reviews} onReviewed={(r) => setReviews((x) => [r, ...x])} />
+          </div>
+        );
+      })}
+      {open && (
+        <div className="glow-modal-bg" onClick={() => setOpen(null)}>
+          <div style={{ width: "100%", maxWidth: 380 }} onClick={(e) => e.stopPropagation()}>
+            <NoteLetter order={open} />
+            <button className="glow-pay-btn" onClick={() => setOpen(null)} style={{ background: C.aubergine, marginTop: 12 }}>Cerrar</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Gatupuntos ---------- */
+const fmtPts = (n) => Number(n || 0).toLocaleString("es-PE");
+
+// Cesto de mimbre con pelotitas de lana: una pelotita por cada 100 gatupuntos
+// (hasta 15). Caen al cesto una tras otra.
+const BALL_COLORS = ["#F26D9C", "#B892FF", "#F0B429", "#7FD1C7", "#FF8A65", "#9FC5FF", "#E58FD8"];
+const BALL_SPOTS = [
+  [60, 88], [88, 90], [116, 88], [74, 72], [102, 72], [46, 74], [130, 74],
+  [88, 56], [60, 58], [116, 58], [74, 42], [102, 42], [46, 50], [130, 50], [88, 28],
+];
+function YarnBall({ x, y, color, delay }) {
+  return (
+    <g className="glow-ball" style={{ animationDelay: `${delay}s` }}>
+      <circle cx={x} cy={y} r="14" fill={color} />
+      <g fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" opacity=".55">
+        <path d={`M${x - 11} ${y - 5} q11 7 22 0`} />
+        <path d={`M${x - 12} ${y + 3} q12 7 24 -1`} />
+        <path d={`M${x - 4} ${y - 13} q-5 13 2 26`} />
+      </g>
+      <circle cx={x - 5} cy={y - 6} r="3" fill="#fff" opacity=".35" />
+    </g>
+  );
+}
+function YarnBasket({ points = 0, size = 150 }) {
+  const n = Math.min(BALL_SPOTS.length, Math.ceil(points / 100));
+  return (
+    <svg className="glow-basket" viewBox="0 0 176 150" width={size} aria-label={`${fmtPts(points)} gatupuntos`} role="img">
+      {/* asa */}
+      <path d="M34 92 C34 20 142 20 142 92" fill="none" stroke="#B9824A" strokeWidth="7" strokeLinecap="round" />
+      <path d="M34 92 C34 20 142 20 142 92" fill="none" stroke="#D9A566" strokeWidth="3" strokeLinecap="round" strokeDasharray="6 6" />
+      {BALL_SPOTS.slice(0, n).map(([x, y], k) => (
+        <YarnBall key={k} x={x} y={y} color={BALL_COLORS[k % BALL_COLORS.length]} delay={0.15 + k * 0.08} />
+      ))}
+      {/* cuerpo tejido */}
+      <path d="M18 92 H158 L144 142 H32 Z" fill="#C98E52" />
+      <g stroke="#A86F37" strokeWidth="2" opacity=".8">
+        <path d="M22 106 H154 M26 120 H150 M29 132 H147" />
+        <path d="M40 92 L46 142 M62 92 L65 142 M88 92 V142 M114 92 L111 142 M136 92 L130 142" />
+      </g>
+      <rect x="12" y="86" width="152" height="12" rx="6" fill="#DDA868" />
+      <path d="M18 92 H158" stroke="#B9824A" strokeWidth="2" />
+      {/* lacito */}
+      <path d="M88 104 L74 96 L74 112 Z M88 104 L102 96 L102 112 Z" fill="#FF3D8B" />
+      <circle cx="88" cy="104" r="4" fill="#FF3D8B" stroke="#fff" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+/* ---------- Michi-crédito ---------- */
+const CREDIT_MIN = 30; // compra mínima para usarlo
+const CREDIT_SHARE = 0.2; // cubre como máximo el 20% del carrito
+const round2 = (n) => Math.round(n * 100) / 100;
+const creditsChanged = () => window.dispatchEvent(new Event("glow:credits"));
+
+function CreditCoin({ size = 64, spin = false }) {
+  return (
+    <span className={`glow-coin${spin ? " is-spin" : ""}`} style={{ width: size, height: size }}>
+      <svg viewBox="0 0 40 40" width={size * 0.56} aria-hidden="true">
+        <ellipse cx="20" cy="26" rx="8" ry="6.5" /><ellipse cx="10" cy="17" rx="3.6" ry="4.5" />
+        <ellipse cx="16.5" cy="11" rx="3.6" ry="4.5" /><ellipse cx="23.5" cy="11" rx="3.6" ry="4.5" />
+        <ellipse cx="30" cy="17" rx="3.6" ry="4.5" />
+      </svg>
+    </span>
+  );
+}
+
+// "3 d 4 h" / "5 h 20 min" hasta una fecha.
+function timeLeft(iso) {
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return "0 min";
+  const d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60;
+  return d ? `${d} d ${h} h` : h ? `${h} h ${m} min` : `${m} min`;
+}
+
+// "¡Reclámalo!": aparece cuando se confirma un pago.
+function ClaimModal({ credit, onClaim, onClose }) {
+  const [left, setLeft] = useState(0);
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    const tick = () => setLeft(Math.max(0, Math.floor((new Date(credit.claimUntil).getTime() - Date.now()) / 1000)));
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [credit.claimUntil]);
+  const pad = (n) => String(n).padStart(2, "0");
+  const claim = async () => {
+    await onClaim(credit.id);
+    setDone(true);
+    setTimeout(onClose, 1800);
+  };
+  return (
+    <div className="glow-modal-bg" onClick={onClose}>
+      <div className="glow-claim" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Michi-crédito">
+        <span className="glow-claim-rays" />
+        <div className="glow-claim-in">
+          <small>{done ? "¡Listo! Ya está en tu billetera" : "Tu pago fue confirmado · te devolvemos"}</small>
+          <CreditCoin size={88} spin />
+          <div className="glow-claim-amt">{money(credit.amount)}</div>
+          <p>de <b>Michi-crédito</b> para tu próxima compra 🎉</p>
+          {done ? (
+            <p className="glow-claim-ok">✓ Úsalo en los próximos 10 días en compras desde S/ {CREDIT_MIN}</p>
+          ) : (
+            <>
+              <button className="glow-pay-btn is-gold" onClick={claim}>Reclamar mi crédito</button>
+              <div className="glow-timer">
+                <span>{pad(Math.floor(left / 3600))}<small>horas</small></span>
+                <span>{pad(Math.floor(left / 60) % 60)}<small>min</small></span>
+                <span>{pad(left % 60)}<small>seg</small></span>
+              </div>
+              <button className="glow-link-btn" onClick={onClose} style={{ color: C.plum }}>Luego</button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Billetera de Michi-crédito (en Mi cuenta).
+function WalletCard({ wallet, onClaim }) {
+  if (!wallet) return null;
+  const stateTxt = { reclamado: "", no_reclamado: "no se reclamó", vencido: "venció sin usar", anulado: "pago rechazado", por_reclamar: "por reclamar" };
+  return (
+    <div className="glow-wallet">
+      <div className="glow-wallet-top">
+        <CreditCoin size={58} />
+        <div>
+          <small>Tu Michi-crédito</small>
+          <b>{money(wallet.balance)}</b>
+          {wallet.balance > 0 && wallet.expiresAt && <span className="glow-wallet-exp">⏳ vence en {timeLeft(wallet.expiresAt)}</span>}
+          {wallet.balance === 0 && <span className="glow-wallet-hint">Ganas hasta S/ 5 por compra confirmada</span>}
+        </div>
+      </div>
+      {wallet.toClaim.map((c) => (
+        <button key={c.id} className="glow-wallet-claim" onClick={() => onClaim(c)}>
+          🎉 Reclama {money(c.amount)} · te quedan {timeLeft(c.claimUntil)}
+        </button>
+      ))}
+      {wallet.history.length > 0 && (
+        <div className="glow-wallet-hist">
+          {wallet.history.slice(0, 4).map((h, k) => {
+            const lost = ["no_reclamado", "vencido", "anulado"].includes(h.state);
+            return (
+              <div key={k}>
+                <span>{h.note === "devolucion" ? "Devolución" : `Compra #GLW-${String(h.orderId).padStart(4, "0")}`}
+                  <small>{new Date(h.createdAt).toLocaleDateString("es-PE", { day: "numeric", month: "short" })}{stateTxt[h.state] ? ` · ${stateTxt[h.state]}` : h.used > 0 ? ` · usaste ${money(h.used)}` : ""}</small>
+                </span>
+                <b className={lost ? "is-lost" : "is-plus"}>{lost ? money(h.amount) : `+${money(h.amount)}`}</b>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <p className="glow-wallet-rules">Se usa en compras desde S/ {CREDIT_MIN} (hasta el 20% del carrito) · un beneficio por pedido.</p>
+    </div>
+  );
+}
+
+// Selector de canje en el carrito.
+function RewardPicker({ info, subtotal, value, onChange, wallet }) {
+  if (!info) return null;
+  const creditAmt = wallet && subtotal >= CREDIT_MIN ? round2(Math.min(wallet.balance, subtotal * CREDIT_SHARE)) : 0;
+  return (
+    <div className="glow-rw-pick">
+      <div className="glow-rw-pick-head">
+        <YarnBasket points={info.balance} size={42} />
+        <div><b>🎁 Tu beneficio para este pedido</b><small>Elige uno · tienes {fmtPts(info.balance)} gatupuntos{wallet?.balance ? ` y ${money(wallet.balance)} de Michi-crédito` : ""}</small></div>
+      </div>
+      {wallet?.balance > 0 && (
+        <button
+          type="button"
+          disabled={!creditAmt}
+          className={value === "credito" ? "is-on" : ""}
+          onClick={() => onChange(value === "credito" ? "" : "credito")}
+        >
+          <span className="glow-rw-dot" />
+          <span><b>Michi-crédito −{money(creditAmt || Math.min(wallet.balance, CREDIT_MIN * CREDIT_SHARE))}</b></span>
+          <small>{!creditAmt ? `compra desde S/ ${CREDIT_MIN}` : value === "credito" ? "aplicado ✓" : "usar"}</small>
+        </button>
+      )}
+      {info.rewards.map((r) => {
+        const okPts = info.balance >= r.points;
+        const okMin = subtotal >= r.min;
+        const on = value === r.key;
+        return (
+          <button
+            key={r.key}
+            type="button"
+            disabled={!okPts || !okMin}
+            className={on ? "is-on" : ""}
+            onClick={() => onChange(on ? "" : r.key)}
+          >
+            <span className="glow-rw-dot" />
+            <span>{r.surprise ? <b>🎁 ¡Sorpresa!</b> : <b>−S/ {r.value}</b>} · {fmtPts(r.points)} gatupuntos</span>
+            <small>{!okPts ? `te faltan ${fmtPts(r.points - info.balance)}` : !okMin ? `compra desde S/ ${r.min}` : on ? "aplicado ✓" : "usar"}</small>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ---------- Reseñas ---------- */
+const REVIEW_PTS = { text: 20, photo: 60 };
+
+// Calificación con patitas de gato (en vez de estrellas).
+function PawMark({ on, size }) {
+  return (
+    <svg className={on ? "is-on" : ""} width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
+      <ellipse cx="20" cy="26.5" rx="8.5" ry="7" /><ellipse cx="9.5" cy="17" rx="3.8" ry="4.8" />
+      <ellipse cx="16" cy="10" rx="3.8" ry="4.8" /><ellipse cx="24" cy="10" rx="3.8" ry="4.8" />
+      <ellipse cx="30.5" cy="17" rx="3.8" ry="4.8" />
+    </svg>
+  );
+}
+function Stars({ value = 0, size = 18 }) {
+  return (
+    <span className="glow-stars" aria-label={`${value} de 5 patitas`}>
+      {[1, 2, 3, 4, 5].map((k) => <PawMark key={k} on={k <= Math.round(value)} size={size} />)}
+    </span>
+  );
+}
+
+// Formulario de reseña de un producto comprado.
+function ReviewModal({ order, item, onClose, onSent }) {
+  const [rating, setRating] = useState(5);
+  const [text, setText] = useState("");
+  const [photo, setPhoto] = useState("");
+  const [state, setState] = useState(""); // '' | 'sending' | error
+  const onPick = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) setPhoto(await fileToDataURL(file, 1200, 0.85));
+  };
+  const send = async () => {
+    setState("sending");
+    try {
+      const r = await createReview({ orderId: order.id, productId: item.id, rating, text, photo });
+      onSent(r);
+    } catch (e) {
+      setState(e.message);
+    }
+  };
+  const pts = photo ? REVIEW_PTS.photo : REVIEW_PTS.text;
+  return (
+    <div className="glow-modal-bg" onClick={onClose}>
+      <div className="glow-ship glow-review" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Reseña">
+        <button className="glow-join-x" onClick={onClose} aria-label="Cerrar"><X size={20} /></button>
+        <div className="glow-review-head">
+          {item.image && <img src={item.image} alt="" />}
+          <div><small>Tu reseña de</small><b>{item.name}</b></div>
+        </div>
+        <div className="glow-review-stars" role="radiogroup" aria-label="Calificación">
+          {[1, 2, 3, 4, 5].map((k) => (
+            <button key={k} type="button" onClick={() => setRating(k)} aria-label={`${k} patitas`}><PawMark on={k <= rating} size={38} /></button>
+          ))}
+          <span className="glow-review-rating-lbl">{["", "No me gustó", "Regular", "Bonito", "¡Me encantó!", "¡Lo amo! 😻"][rating]}</span>
+        </div>
+        <textarea className="glow-textarea" rows={4} value={text} onChange={(e) => setText(e.target.value)} placeholder="¿Qué te pareció? ¿Cómo te queda? ¿Se lo recomendarías a otra michi-lover?" />
+        <p className="glow-hint">{text.trim().length < 15 ? `Escribe al menos 15 letras (${text.trim().length}/15)` : "¡Perfecto! 💕"}</p>
+
+        <label className={`glow-review-photo${photo ? " has-photo" : ""}`}>
+          {photo ? <img src={photo} alt="Tu foto" /> : <ImageIcon size={28} />}
+          <span>{photo ? "Cambiar foto" : <>Sube una foto con tu producto <b>¡y gana el triple!</b></>}</span>
+          <input type="file" accept="image/*" onChange={onPick} hidden />
+        </label>
+        {photo && <button className="glow-inline-link" onClick={() => setPhoto("")}>Quitar foto</button>}
+
+        <div className="glow-review-pts">
+          <span className={!photo ? "is-on" : ""}>✍️ Solo texto <b>+{REVIEW_PTS.text}</b></span>
+          <span className={photo ? "is-on" : ""}>📸 Con foto <b>+{REVIEW_PTS.photo}</b></span>
+        </div>
+        {state && state !== "sending" && <p className="glow-err">{state}</p>}
+        <button className="glow-pay-btn" disabled={text.trim().length < 15 || state === "sending"} onClick={send}
+          style={{ background: text.trim().length < 15 ? C.line : C.aubergine, marginTop: 12 }}>
+          {state === "sending" ? "Enviando…" : `Enviar reseña · +${pts} gatupuntos`}
+        </button>
+        <p className="glow-hint" style={{ textAlign: "center" }}>Los gatupuntos se suman cuando revisemos tu reseña.</p>
+      </div>
+    </div>
+  );
+}
+
+// Productos de un pedido para reseñar (solo con pago confirmado).
+function OrderReviews({ order, reviews, onReviewed }) {
+  const [open, setOpen] = useState(null);
+  if (!["verificado", "enviado"].includes(order.status)) return null;
+  const items = order.items.filter((l, i, a) => a.findIndex((x) => x.id === l.id) === i);
+  return (
+    <div className="glow-order-reviews">
+      <p>⭐ Reseña y gana hasta <b>+{REVIEW_PTS.photo} gatupuntos</b> por producto</p>
+      {items.map((l) => {
+        const r = reviews.find((x) => x.orderId === order.id && x.productId === l.id);
+        return (
+          <div key={l.id} className="glow-order-review">
+            {l.image && <img src={l.image} alt="" />}
+            <span>{l.name}</span>
+            {r ? (
+              <em className={`is-${r.status}`}>
+                {r.status === "aprobada" ? `✓ +${r.photo ? REVIEW_PTS.photo : REVIEW_PTS.text}` : r.status === "rechazada" ? "No aprobada" : "En revisión"}
+              </em>
+            ) : (
+              <button onClick={() => setOpen(l)}>Reseñar</button>
+            )}
+          </div>
+        );
+      })}
+      {open && (
+        <ReviewModal
+          order={order}
+          item={open}
+          onClose={() => setOpen(null)}
+          onSent={(r) => { setOpen(null); onReviewed(r); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// Reseñas aprobadas de un producto (para la tienda).
+function ProductReviews({ product, onClose, reviewOrder, customer, onWrite }) {
+  const [list, setList] = useState(null);
+  useEffect(() => {
+    getProductReviews(product.id, TEST_MODE).then(setList).catch(() => setList([]));
+  }, [product.id]);
+  return (
+    <div className="glow-modal-bg" onClick={onClose}>
+      <div className="glow-ship" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Reseñas">
+        <button className="glow-join-x" onClick={onClose} aria-label="Cerrar"><X size={20} /></button>
+        <h3>{product.name}</h3>
+        {product.reviews > 0 ? (
+          <p className="glow-rev-summary"><Stars value={product.rating} size={24} /> <b>{product.rating}</b> · {product.reviews} reseña{product.reviews === 1 ? "" : "s"}</p>
+        ) : (
+          <p className="glow-rev-summary">Aún no hay reseñas de este producto.</p>
+        )}
+        {reviewOrder ? (
+          <button className="glow-pay-btn" style={{ background: C.aubergine, margin: "4px 0 10px" }} onClick={() => onWrite(product, reviewOrder)}>
+            ✍️ Escribir mi reseña · hasta +{REVIEW_PTS.photo} gatupuntos
+          </button>
+        ) : (
+          <p className="glow-hint" style={{ margin: "0 0 10px" }}>
+            {customer ? "Podrás reseñar este producto cuando lo compres y confirmemos tu pago." : "Únete y compra este producto para dejar tu reseña y ganar gatupuntos."}
+          </p>
+        )}
+        {!list && <p style={{ color: C.inkSoft }}>Cargando…</p>}
+        {list?.map((r) => (
+          <div key={r.id} className="glow-rev-item">
+            <div className="glow-rev-top"><span className="glow-rev-av">{(r.name || "C")[0]}</span><div><b>{r.name}</b><small>{new Date(r.createdAt).toLocaleDateString("es-PE", { day: "numeric", month: "short", year: "numeric" })}</small></div><Stars value={r.rating} size={20} /></div>
+            <p>{r.text}</p>
+            {r.photo && <img src={r.photo} alt={`Foto de ${r.name}`} />}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Regalito dibujado (la tapa salta de vez en cuando).
+function GiftIcon({ size = 54 }) {
+  return (
+    <svg className="glow-gift-ico" width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
+      <rect x="10" y="30" width="44" height="28" rx="5" fill="#7A3F73" />
+      <rect x="29" y="30" width="6" height="28" fill="#F0B429" />
+      <g className="glow-gift-lid">
+        <rect x="6" y="20" width="52" height="12" rx="4" fill="#3B2146" />
+        <rect x="29" y="20" width="6" height="12" fill="#F0B429" />
+        <path d="M32 20 C24 8 12 12 18 19 C21 22 28 21 32 20 Z M32 20 C40 8 52 12 46 19 C43 22 36 21 32 20 Z" fill="#FF3D8B" />
+      </g>
+      <text x="32" y="52" textAnchor="middle" fontSize="15" fontWeight="800" fill="#fff" fontFamily="Fraunces, serif">?</text>
+    </svg>
+  );
+}
+
+// Productos vistos hace poco (en este navegador).
+function loadSeen() {
+  try {
+    const v = JSON.parse(localStorage.getItem("glow:vistos") || "[]");
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+}
+function markSeen(id) {
+  try {
+    const next = [id, ...loadSeen().filter((x) => x !== id)].slice(0, 12);
+    localStorage.setItem("glow:vistos", JSON.stringify(next));
+  } catch {
+    /* sin almacenamiento: no se recuerdan */
+  }
+}
+
+// Reglas de gatupuntos explicadas a la clienta.
+function PointsHelp({ info, onClose }) {
+  return (
+    <div className="glow-modal-bg" onClick={onClose}>
+      <div className="glow-ship glow-help" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Cómo funcionan los gatupuntos">
+        <button className="glow-join-x" onClick={onClose} aria-label="Cerrar"><X size={20} /></button>
+        <div className="glow-help-head"><YarnBasket points={600} size={64} /><h3>¿Cómo funcionan los gatupuntos?</h3></div>
+
+        <div className="glow-ship-sec">
+          <h4>🧶 Cómo los ganas</h4>
+          <ul className="glow-help-list">
+            <li>Ganas <b>{info.perSol} gatupuntos por cada S/ 1</b> de tus compras.</li>
+            <li>Se suman a tu cesto cuando <b>confirmamos tu pago</b>.</li>
+            <li>Los productos con la etiqueta <b>×2 gatupuntos</b> te dan el doble.</li>
+            <li><b>+{info.welcome}</b> de regalo al unirte al club y <b>+{info.birthday}</b> en tu mes de cumpleaños 🎂</li>
+            <li>⭐ Reseña lo que compraste: <b>+{info.reviewText}</b> con texto y <b>+{info.reviewPhoto}</b> si subes una foto con tu producto (se suman al aprobar la reseña).</li>
+            <li>El costo de envío no suma gatupuntos.</li>
+          </ul>
+        </div>
+
+        <div className="glow-ship-sec">
+          <h4>👑 Tu nivel</h4>
+          <p className="glow-ship-sub">Mientras más compras en el año, más gatupuntos ganas en cada compra:</p>
+          <div className="glow-help-levels">
+            {info.levels.map((l) => (
+              <div key={l.key} className={info.level.key === l.key ? "is-on" : ""}>
+                <b>{l.name}</b>
+                <span>{l.min ? `desde ${money(l.min)} al año` : "al unirte"}</span>
+                <em>×{l.mult}</em>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="glow-ship-sec">
+          <h4>🎁 Cómo los canjeas</h4>
+          <p className="glow-ship-sub">Eliges tu canje en el carrito, antes de pagar. Uno por pedido.</p>
+          <div className="glow-help-levels">
+            {info.rewards.map((r) => (
+              <div key={r.key}>
+                <b>{r.surprise ? "🎁 ¡Sorpresa!" : `S/ ${r.value} de descuento`}</b>
+                <span>en compras desde {money(r.min)}</span>
+                <em>{fmtPts(r.points)}</em>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="glow-ship-sec">
+          <h4>⏳ Importante</h4>
+          <ul className="glow-help-list">
+            <li>Tus gatupuntos vencen a los <b>{info.expiryMonths} meses</b> de ganarlos (se usan primero los más antiguos).</li>
+            <li>Si un pago no se puede confirmar, esos gatupuntos no se suman y el canje se te devuelve.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Ayuda: preguntas frecuentes.
+function HelpModal({ settings, onClose, onPoints }) {
+  const faqs = [
+    ["¿Cómo compro?", "Añade tus productos al carrito, toca «Pagar con Yape», elige cómo recibirlo y sigue los pasos. Al final recibes tu notita de venta."],
+    ["¿Cómo pago?", `Por Yape al ${(settings.yapeNumber || "").replace(/(\d{3})(?=\d)/g, "$1 ")}. Subes la captura de tu comprobante y nosotras confirmamos el pago.`],
+    ["¿Hacen entregas en Juliaca?", "Sí, gratis. Eliges el punto de encuentro, el día y la hora exacta al pagar."],
+    ["¿Envían a otras ciudades?", "Sí, por Shalom a todo el Perú. Recoges en la agencia que elijas con tu DNI. El costo depende del departamento."],
+    ["¿Qué son los gatupuntos?", "Puntos que ganas con cada compra y que canjeas por descuentos o una sorpresa."],
+    ["¿Qué es el Michi-crédito?", "Cuando confirmamos tu pago te devolvemos hasta S/ 5 en crédito. Reclámalo en 48 horas y úsalo en los siguientes 10 días en una compra desde S/ 30. Es un beneficio por pedido: crédito o gatupuntos."],
+    ["¿Dónde veo mi pedido?", "En Mi cuenta → Mis compras. Ahí ves si tu pago está en verificación, confirmado o enviado."],
+  ];
+  return (
+    <div className="glow-modal-bg" onClick={onClose}>
+      <div className="glow-ship glow-help" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Ayuda">
+        <button className="glow-join-x" onClick={onClose} aria-label="Cerrar"><X size={20} /></button>
+        <h3>¿En qué te ayudamos?</h3>
+        {faqs.map(([q, a]) => (
+          <details key={q} className="glow-faq">
+            <summary>{q}</summary>
+            <p>{a}</p>
+            {q.includes("gatupuntos") && <button className="glow-link-btn" style={{ color: C.yape, justifyContent: "flex-start" }} onClick={onPoints}>Ver cómo funcionan ›</button>}
+          </details>
+        ))}
+        <a className="glow-pay-btn" style={{ background: "#25D366", marginTop: 14, textDecoration: "none" }}
+          href={`https://wa.me/${settings.whatsapp}?text=${encodeURIComponent("Hola, necesito ayuda con mi pedido")}`} target="_blank" rel="noreferrer">
+          <MessageCircle size={18} /> Escríbenos por WhatsApp
+        </a>
+      </div>
+    </div>
+  );
+}
+
+// Página "Mi cuenta" (estilo tienda grande, versión gatuna).
+function AccountPage({ customer, favs, products, onToggleFav, onAdd, onPanel, settings, wallet, onClaimCredit }) {
+  const [info, setInfo] = useState(null);
+  const [myReviews, setMyReviews] = useState([]);
+  useEffect(() => {
+    getMyReviews().then(setMyReviews).catch(() => {});
+  }, []);
+  const [modal, setModal] = useState(null); // 'puntos' | 'ayuda'
+  const seen = loadSeen().map((id) => products.find((p) => p.id === id)).filter(Boolean).slice(0, 6);
+  const [orders, setOrders] = useState(null);
+  const [err, setErr] = useState("");
+  useEffect(() => {
+    getMyPoints().then(setInfo).catch((e) => setErr(e.message));
+    getMyOrders().then(setOrders).catch(() => setOrders([]));
+  }, []);
+  const favList = favs.map((id) => products.find((p) => p.id === id)).filter(Boolean);
+  const bestReward = info && [...info.rewards].reverse().find((r) => info.balance >= r.points);
+  const firstReward = info?.rewards[0];
+  const progress = info?.next ? Math.min(100, (info.spend / info.next.min) * 100) : 100;
+  const tiles = [
+    ["pedidos", <Package key="p" size={26} />, "Mis compras"],
+    ["perfil", <CatHomeIcon key="c" />, "Mi perfil"],
+    ["favoritos", <HeartIcon key="h" size={26} />, "Mis favoritos"],
+    ["ayuda", <span key="a" className="glow-tile-q">?</span>, "Ayuda"],
+  ];
+  return (
+    <div className="glow-wrap glow-account-page">
+      <div className="glow-acc-hero" style={{ "--pat": catPattern(C.roseDeep) }}>
+        <div className="glow-acc-row">
+          <div>
+            <h1 className="glow-acc-hello">Holiiii, <b>{customer.name}</b></h1>
+            {info && (
+              <span className="glow-level">
+                <i>🐱</i>Nivel {info.level.name}{info.level.mult > 1 ? ` · ganas ×${info.level.mult} gatupuntos` : ""}
+              </span>
+            )}
+          </div>
+          <div className="glow-pts-card">
+            <YarnBasket points={info?.balance || 0} />
+            <div className="glow-pts-info">
+              <small>Tienes para canjear</small>
+              <div className="glow-pts-big"><b>{info ? fmtPts(info.balance) : "…"}</b><span>gatupuntos</span></div>
+              {info && (
+                <p className="glow-pts-eq">
+                  {bestReward
+                    ? <>¡Ya puedes canjear <b>S/ {bestReward.value} de descuento</b>!</>
+                    : <>Te faltan <b>{fmtPts(firstReward.points - info.balance)}</b> para tu primer descuento de S/ {firstReward.value}</>}
+                </p>
+              )}
+              {info?.pending > 0 && <p className="glow-pts-pend">⏳ +{fmtPts(info.pending)} por confirmar</p>}
+              {info?.expiringSoon > 0 && <p className="glow-pts-pend">⌛ {fmtPts(info.expiringSoon)} vencen este mes</p>}
+              {info && (
+                <>
+                  <div className="glow-pts-bar"><i style={{ width: `${progress}%` }} /></div>
+                  <p className="glow-pts-barlbl">
+                    {info.next
+                      ? <>Te faltan {money(info.next.min - info.spend)} en compras este año para <b>{info.next.name}</b> (×{info.next.mult})</>
+                      : <>¡Eres del nivel más alto! 👑</>}
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+          <WalletCard wallet={wallet} onClaim={onClaimCredit} />
+        </div>
+      </div>
+      {err && <p className="glow-err">{err}</p>}
+
+      <div className="glow-acc-tiles">
+        {tiles.map(([k, icon, label]) => (
+          <button key={k} onClick={() => (k === "ayuda" ? setModal("ayuda") : onPanel(k))}>{icon}<span>{label}</span></button>
+        ))}
+      </div>
+
+      <section className="glow-acc-sec">
+        <div className="glow-acc-sec-h"><h2>Últimas compras {orders ? `(${orders.length})` : ""}</h2>{orders?.length > 3 && <button onClick={() => onPanel("pedidos")}>Revisar todas ›</button>}</div>
+        {orders && orders.length === 0 && <p className="glow-soft" style={{ fontSize: 19 }}>Aún no tienes compras. ¡Tu primer michi te espera!</p>}
+        <div className="glow-acc-orders">
+          {(orders || []).slice(0, 3).map((o) => {
+            const st = ORDER_STEP[o.status] || ORDER_STEP.pendiente;
+            return (
+              <div key={o.id} className="glow-acc-order">
+                <span className="glow-chip" style={{ color: st.color, background: st.bg }}>{st.label}</span>
+                <div className="glow-acc-order-row">
+                  {o.items.slice(0, 3).map((l) => (l.image ? <img key={l.id} src={l.image} alt={l.name} /> : null))}
+                  <div>
+                    <b>{o.items.length === 1 ? o.items[0].name : `${o.items.length} productos`}</b>
+                    <small>#{o.code} · {new Date(o.createdAt).toLocaleDateString("es-PE", { day: "numeric", month: "short" })} · {money(o.total)}</small>
+                  </div>
+                </div>
+                {o.pointsEarned > 0 && <span className="glow-acc-plus">🧶 +{fmtPts(o.pointsEarned)} gatupuntos ganados</span>}
+                {o.pointsPending > 0 && <span className="glow-acc-plus is-pend">⏳ +{fmtPts(o.pointsPending)} gatupuntos al confirmar</span>}
+                <OrderReviews order={o} reviews={myReviews} onReviewed={(r) => setMyReviews((x) => [r, ...x])} />
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {info && (
+        <section className="glow-acc-sec">
+          <div className="glow-acc-sec-h"><h2>Canjea tus gatupuntos</h2><button onClick={() => setModal("puntos")}>¿Cómo funciona? ›</button></div>
+          <div className="glow-acc-rewards">
+            {info.rewards.map((r, k) => {
+              const ok = info.balance >= r.points;
+              return (
+                <div key={r.key} className={`glow-acc-rw${ok ? " is-ok" : ""}${r.surprise ? " is-surprise" : ""}`}>
+                  {k === 1 && <span className="glow-acc-rw-tag">¡Más rinde!</span>}
+                  {r.surprise && <span className="glow-acc-rw-tag is-mystery">Misterio 🤫</span>}
+                  {r.surprise ? (
+                    <div className="glow-surprise-row">
+                      <GiftIcon />
+                      <div><h3>¡Sorpresa!</h3><p>Un regalo misterioso en tu compra desde S/ {r.min}</p></div>
+                    </div>
+                  ) : (
+                    <><h3>S/ {r.value}</h3><p>de descuento en compras desde S/ {r.min}</p></>
+                  )}
+                  <span className="glow-acc-rw-cost">{fmtPts(r.points)} gatupuntos</span>
+                  <div className="glow-acc-rw-state">{ok ? "Disponible · elígelo en el carrito al pagar" : `Te faltan ${fmtPts(r.points - info.balance)}`}</div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="glow-acc-how">
+            Ganas <b>{info.perSol} gatupuntos por cada S/ 1</b> cuando confirmamos tu pago · +{info.welcome} al unirte ·
+            +{info.birthday} en tu cumpleaños · +{info.reviewPhoto} por reseña con foto · vencen a los {info.expiryMonths} meses.{" "}
+            <button className="glow-inline-link" onClick={() => setModal("puntos")}>Ver todas las reglas</button>
+          </p>
+        </section>
+      )}
+
+      <section className="glow-acc-sec">
+        <div className="glow-acc-sec-h"><h2>Mis favoritos</h2>{favList.length > 0 && <button onClick={() => onPanel("favoritos")}>Ver todos ›</button>}</div>
+        {favList.length === 0 ? (
+          <p className="glow-soft" style={{ fontSize: 19 }}>Toca el corazón de un producto para guardarlo aquí.</p>
+        ) : (
+          <div className="glow-acc-favs">
+            {favList.slice(0, 6).map((p) => (
+              <div key={p.id} className="glow-acc-fav">
+                <div style={{ position: "relative" }}>
+                  <Thumb src={p.images?.[0]} alt={p.name} size={"100%"} />
+                  <FavButton active onClick={() => onToggleFav(p.id)} style={{ top: 8, right: 8 }} />
+                  {p.doublePoints && <span className="glow-x2">×2 gatupuntos</span>}
+                </div>
+                <b className="glow-name" style={{ color: C.aubergine }}>{p.name}</b>
+                <span>{money(p.price)}</span>
+                <button disabled={p.stock <= 0} onClick={() => onAdd(p)} style={{ background: p.stock <= 0 ? C.line : C.primary }}>
+                  {p.stock <= 0 ? "Agotado" : "Añadir"}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {seen.length > 0 && (
+        <section className="glow-acc-sec">
+          <div className="glow-acc-sec-h"><h2>Tus últimos vistos</h2></div>
+          <div className="glow-acc-favs">
+            {seen.map((p) => (
+              <div key={p.id} className="glow-acc-fav">
+                <div style={{ position: "relative" }}>
+                  <Thumb src={p.images?.[0]} alt={p.name} size={"100%"} />
+                  <FavButton active={favs.includes(p.id)} onClick={() => onToggleFav(p.id)} style={{ top: 8, right: 8 }} />
+                </div>
+                <b className="glow-name" style={{ color: C.aubergine }}>{p.name}</b>
+                <span>{money(p.price)}</span>
+                <button disabled={p.stock <= 0} onClick={() => onAdd(p)} style={{ background: p.stock <= 0 ? C.line : C.primary }}>
+                  {p.stock <= 0 ? "Agotado" : "Añadir"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {modal === "puntos" && info && <PointsHelp info={info} onClose={() => setModal(null)} />}
+      {modal === "ayuda" && <HelpModal settings={settings} onClose={() => setModal(null)} onPoints={() => setModal("puntos")} />}
+
+      {info?.history?.length > 0 && (
+        <section className="glow-acc-sec">
+          <div className="glow-acc-sec-h"><h2>Movimientos de gatupuntos</h2></div>
+          <div className="glow-acc-hist">
+            {info.history.map((h, k) => (
+              <div key={k}>
+                <span>{h.note || h.kind}<small>{new Date(h.createdAt).toLocaleDateString("es-PE", { day: "numeric", month: "short", year: "numeric" })}</small></span>
+                <b className={h.amount > 0 ? "is-plus" : "is-minus"}>{h.amount > 0 ? "+" : ""}{fmtPts(h.amount)}</b>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Registro (opcional) ---------- */
+// Inicial del nombre dentro de una carita con orejitas de gato.
+function CatAvatar({ customer, size = 34 }) {
+  return (
+    <span className="glow-cat-avatar" style={{ width: size, height: size }}>
+      {customer.picture ? <img src={customer.picture} alt="" referrerPolicy="no-referrer" /> : <b>{(customer.name || "?")[0].toUpperCase()}</b>}
+    </span>
+  );
+}
+
+function JoinModal({ googleClientId, onClose, onJoined }) {
+  const btnRef = useRef(null);
+  const [err, setErr] = useState("");
+  useEffect(() => {
+    if (!googleClientId) return;
+    let alive = true;
+    loadGoogleScript()
+      .then(() => {
+        if (!alive || !btnRef.current) return;
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: async ({ credential }) => {
+            try {
+              onJoined(await googleLogin(credential));
+            } catch (e) {
+              setErr(e.message);
+            }
+          },
+        });
+        window.google.accounts.id.renderButton(btnRef.current, { theme: "outline", size: "large", shape: "pill", text: "continue_with", locale: "es" });
+      })
+      .catch((e) => setErr(e.message));
+    return () => { alive = false; };
+  }, [googleClientId, onJoined]);
+
+  return (
+    <div className="glow-modal-bg" onClick={onClose}>
+      <div className="glow-join" onClick={(e) => e.stopPropagation()}>
+        <button className="glow-join-x" onClick={onClose} aria-label="Cerrar"><X size={20} /></button>
+        <div className="glow-join-face"><RosaliaFace /></div>
+        <h3>Únete al club de Rosalía</h3>
+        <p className="glow-soft" style={{ fontSize: 18, margin: "0 0 14px" }}>Es opcional y gratis</p>
+        <ul className="glow-join-perks">
+          <li>✉️ Novedades y nuevos michis en tu correo</li>
+          <li>🏷️ Ofertas y descuentos solo para el club</li>
+          <li>✨ Te saludamos por tu nombre al entrar</li>
+        </ul>
+        {googleClientId ? (
+          <div ref={btnRef} className="glow-join-gbtn" />
+        ) : (
+          !TEST_MODE && <p className="glow-hint" style={{ textAlign: "center" }}>El registro con Google aún no está configurado.</p>
+        )}
+        {TEST_MODE && (
+          <button className="glow-pay-btn is-ghost" style={{ color: C.aubergine, borderColor: C.aubergine, marginTop: 10 }}
+            onClick={async () => { try { onJoined(await testLogin()); } catch (e) { setErr(e.message); } }}>
+            Simular registro (modo prueba)
+          </button>
+        )}
+        {err && <p className="glow-err" style={{ textAlign: "center" }}>{err}</p>}
+        <p className="glow-join-legal">Al registrarte aceptas recibir correos con novedades y ofertas de {"Glow by Rosalía"}. Puedes darte de baja cuando quieras. Solo guardamos tu nombre, correo y foto de Google.</p>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [view, setView] = useState("shop"); // 'shop' | 'admin'
   const [products, setProducts] = useState([]);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [customer, setCustomer] = useState(loadCustomer);
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState("");
+  useEffect(() => {
+    getConfig()
+      .then((c) => {
+        setGoogleClientId(c.googleClientId || "");
+        if (TEST_MODE && c.testMode === false) exitTestMode(); // tienda publicada: sin modo prueba
+      })
+      .catch(() => {});
+  }, []);
+  const [favs, setFavs] = useState(loadFavs);
+  // Michi-crédito de la clienta (billetera, créditos por reclamar, aviso de vencimiento)
+  const [wallet, setWallet] = useState(null);
+  const [claimOpen, setClaimOpen] = useState(null);
+  const [expToast, setExpToast] = useState(false);
+  const loadWallet = useCallback(() => {
+    if (!loadCustomer()?.token) return setWallet(null);
+    getMyCredits()
+      .then((w) => {
+        setWallet(w);
+        let seen = false;
+        try { seen = sessionStorage.getItem("glow:claim-visto") === "1"; } catch { /* sin almacenamiento */ }
+        if (w.toClaim.length && !seen) setClaimOpen(w.toClaim[0]);
+        const soon = w.balance > 0 && w.expiresAt && new Date(w.expiresAt).getTime() - Date.now() < 2 * 864e5;
+        let toasted = false;
+        try { toasted = sessionStorage.getItem("glow:vence-visto") === "1"; } catch { /* sin almacenamiento */ }
+        if (soon && !toasted) setExpToast(true);
+      })
+      .catch(() => {});
+  }, []);
+  useEffect(() => {
+    window.addEventListener("glow:credits", loadWallet);
+    return () => window.removeEventListener("glow:credits", loadWallet);
+  }, [loadWallet]);
+  const claim = async (id) => {
+    const w = await claimMyCredit(id);
+    setWallet(w);
+  };
+  const closeClaim = () => {
+    setClaimOpen(null);
+    try { sessionStorage.setItem("glow:claim-visto", "1"); } catch { /* sin almacenamiento */ }
+  };
+  const [panel, setPanel] = useState(null); // null | 'perfil' | 'pedidos' | 'favoritos'
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Actualiza el cliente conservando su llave de sesión.
+  const onCustomer = useCallback((c) => {
+    setCustomer((prev) => {
+      const next = c ? { ...prev, ...c, token: c.token || prev?.token } : null;
+      saveCustomer(next);
+      return next;
+    });
+  }, []);
+  const onJoined = useCallback((c) => {
+    setCustomerToken(c.token);
+    onCustomer(c);
+    setJoinOpen(false);
+    setTimeout(creditsChanged, 0);
+    // une los favoritos de este navegador con los de su cuenta
+    setFavs((local) => {
+      const merged = [...new Set([...(c.favorites || []), ...local])];
+      storeFavs(merged);
+      if (merged.length !== (c.favorites || []).length) saveFavorites(merged).catch(() => {});
+      return merged;
+    });
+  }, [onCustomer]);
+  const logout = () => {
+    setWallet(null);
+    setCustomerToken("");
+    setCustomer(null);
+    saveCustomer(null);
+    setMenuOpen(false);
+    setPanel(null);
+    window.google?.accounts?.id?.disableAutoSelect?.();
+  };
+  // Al abrir la página con la sesión guardada: comprueba que siga vigente.
+  useEffect(() => {
+    const c = loadCustomer();
+    if (!c?.token) {
+      if (c) { saveCustomer(null); setCustomer(null); }
+      return;
+    }
+    setCustomerToken(c.token);
+    getMe()
+      .then((me) => {
+        onCustomer(me);
+        creditsChanged();
+        setFavs((local) => {
+          const merged = [...new Set([...(me.favorites || []), ...local])];
+          storeFavs(merged);
+          return merged;
+        });
+      })
+      .catch(() => { setCustomerToken(""); saveCustomer(null); setCustomer(null); });
+  }, [onCustomer]);
+  const toggleFav = useCallback((id) => {
+    setFavs((list) => {
+      const next = list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
+      storeFavs(next);
+      if (loadCustomer()?.token) saveFavorites(next).catch(() => {});
+      return next;
+    });
+  }, []);
+  const [page, setPage] = useState("tienda"); // 'tienda' | 'cuenta'
+  const [shipInfo, setShipInfo] = useState(false);
+
+  // El panel no se muestra en la tienda: se abre con la dirección …/#admin
+  useEffect(() => {
+    const sync = () => { if (window.location.hash === "#admin") setView("admin"); };
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, []);
+  const leaveAdmin = () => {
+    if (window.location.hash === "#admin") history.replaceState(null, "", window.location.pathname + window.location.search);
+  };
+  // Tras entrar con el PIN: ajustes completos (con PIN) y productos con costo.
+  const onAdminAuthed = async () => {
+    try {
+      const [st, prods] = await Promise.all([getAdminSettings(), getAdminProducts()]);
+      setSettings(st);
+      setProducts(prods);
+    } catch {
+      /* si falla, el panel sigue con los datos públicos */
+    }
+  };
+  const openPanel = (section) => {
+    setMenuOpen(false);
+    leaveAdmin();
+    setView("shop");
+    if (section === "cuenta") {
+      setPanel(null);
+      setPage("cuenta");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else setPanel(section);
+  };
+  useEffect(() => {
+    if (!customer && page === "cuenta") setPage("tienda");
+  }, [customer, page]);
+  const favCount = favs.filter((id) => products.some((p) => p.id === id)).length;
+  // La pantalla de carga se muestra al menos 1.6 s para que se vea a Rosalía
+  // correr; luego se desvanece sobre la tienda ya cargada.
+  const [minDone, setMinDone] = useState(false);
+  const [loaderGone, setLoaderGone] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMinDone(true), 1600);
+    return () => clearTimeout(t);
+  }, []);
+  const ready = !loading && !!settings && minDone;
+  useEffect(() => {
+    if (!ready) return;
+    const t = setTimeout(() => setLoaderGone(true), 600);
+    return () => clearTimeout(t);
+  }, [ready]);
 
   // Al abrir la página se piden productos y ajustes al servidor.
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const [p, s] = await Promise.all([getProducts(), getSettings()]);
+        const [p, s] = await Promise.all([getProducts(TEST_MODE), getSettings()]);
         if (!alive) return;
         setProducts(p);
         setSettings(s);
@@ -190,57 +1505,107 @@ export default function App() {
   };
 
   if (loading || !settings) {
-    return (
-      <div style={{ background: C.bg, color: C.inkSoft, minHeight: "100vh", display: "grid", placeItems: "center", padding: 20, textAlign: "center" }}>
-        {loadError ? (
-          <div style={{ maxWidth: 420 }}>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>🐱💤</div>
-            <p style={{ color: C.warn, fontWeight: 600 }}>{loadError}</p>
-          </div>
-        ) : (
-          <p>Cargando la tienda… ✨</p>
-        )}
-      </div>
-    );
+    return <PageLoader error={loadError} />;
   }
+
+  // Inicio: vuelve a la tienda y arriba del todo.
+  const goHome = () => {
+    leaveAdmin();
+    setView("shop");
+    setPage("tienda");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  // Búsqueda: baja al catálogo y deja el cursor en el buscador.
+  const goSearch = () => {
+    leaveAdmin();
+    setView("shop");
+    setPage("tienda");
+    setTimeout(() => {
+      document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" });
+      document.getElementById("glow-search")?.focus({ preventScroll: true });
+    }, 50);
+  };
 
   return (
     <div style={{ background: C.bg, color: C.ink, minHeight: "100vh" }}>
-      <header
-        className="glow-header"
-        style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "16px 20px", borderBottom: `1px solid ${C.line}`,
-          background: "rgba(255,255,255,0.7)", backdropFilter: "blur(6px)",
-          position: "sticky", top: 0, zIndex: 30,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-          <div
-            style={{
-              flexShrink: 0, width: 34, height: 34, borderRadius: 999,
-              background: `radial-gradient(circle at 35% 30%, ${C.gold}, ${C.rose})`,
-              boxShadow: `0 0 18px ${C.rose}55`,
-              display: "grid", placeItems: "center",
-            }}
-          >
-            <Sparkles size={18} color="#fff" />
-          </div>
-          <span className="glow-brand" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 600 }}>
-            {settings.storeName}
-          </span>
+      {!loaderGone && <PageLoader leaving={ready} />}
+      {TEST_MODE && (
+        <div className="glow-testbar">
+          🧪 <b>Modo prueba</b> · nada de lo que hagas aquí es real
+          <button onClick={exitTestMode}>Salir</button>
         </div>
+      )}
+      <header className="glow-header" style={{ "--pat": catPattern(C.roseDeep) }}>
+        <BrandName name={settings.storeName} />
 
-        <div style={{ display: "flex", flexShrink: 0, gap: 4, padding: 4, borderRadius: 999, background: C.blush }}>
-          <ModeBtn active={view === "shop"} onClick={() => setView("shop")} icon={<Store size={15} />} label="Tienda" />
-          <ModeBtn active={view === "admin"} onClick={() => setView("admin")} icon={<Lock size={15} />} label="Administración" />
-        </div>
+        <nav className="glow-nav">
+          {/* 1 · navegación */}
+          <div className="glow-nav-links">
+            <NavBtn active={view === "shop" && page === "tienda"} onClick={goHome} icon={<CatHomeIcon />} label="Inicio" />
+            <NavBtn onClick={goSearch} icon={<CatSearchIcon />} label="Búsqueda" />
+            <NavBtn onClick={() => setShipInfo(true)} icon={<TruckIcon />} label="Envíos a todo el Perú" />
+          </div>
+          <span className="glow-nav-sep" aria-hidden="true" />
+          {/* 2 · lo personal: favoritos y cuenta (con su Michi-crédito) */}
+          <button className="glow-heart-btn" onClick={() => openPanel("favoritos")} aria-label={`Mis favoritos (${favCount})`} title="Mis favoritos" style={{ color: C.roseDeep }}>
+            <HeartIcon filled={favCount > 0} size={19} />
+            {favCount > 0 && <span key={favCount} className="glow-heart-count" style={{ background: C.aubergine }}>{favCount}</span>}
+          </button>
+          {customer ? (
+            <div className="glow-account">
+              <button className="glow-hello" onClick={() => setMenuOpen((v) => !v)} aria-haspopup="menu" aria-expanded={menuOpen} title="Tu cuenta">
+                <span className="glow-hello-lines">
+                  <span className="glow-hello-text">Holiiii, <b>{customer.name}</b></span>
+                  {wallet?.balance > 0 && (
+                    <span className="glow-hello-credit">
+                      <CreditCoin size={14} /> {money(wallet.balance)} de crédito
+                      {wallet.expiresAt && <em> · {timeLeft(wallet.expiresAt).split(" ").slice(0, 2).join(" ")}</em>}
+                    </span>
+                  )}
+                </span>
+                <CatAvatar customer={customer} />
+                {wallet?.balance > 0 && <span className="glow-avatar-dot" aria-hidden="true" />}
+              </button>
+              {menuOpen && <AccountMenu customer={customer} onPick={openPanel} onLogout={logout} onClose={() => setMenuOpen(false)} />}
+            </div>
+          ) : (
+            (googleClientId || TEST_MODE) && view === "shop" && (
+              <button className="glow-join-btn" onClick={() => setJoinOpen(true)} style={{ background: C.aubergine }}>
+                <PawIcon /> <span className="glow-mode-label">Únete</span>
+              </button>
+            )
+          )}
+        </nav>
       </header>
 
+      {shipInfo && <ShippingInfo settings={settings} onClose={() => setShipInfo(false)} />}
+      {claimOpen && view === "shop" && <ClaimModal credit={claimOpen} onClaim={claim} onClose={closeClaim} />}
+      {expToast && wallet?.balance > 0 && (
+        <div className="glow-toast" role="status">
+          ⏰ <span>¡Tu <b>Michi-crédito de {money(wallet.balance)}</b> vence en <b>{timeLeft(wallet.expiresAt)}</b>! Úsalo en tu próxima compra desde S/ {CREDIT_MIN}.</span>
+          <button onClick={() => { setExpToast(false); try { sessionStorage.setItem("glow:vence-visto", "1"); } catch { /* sin almacenamiento */ } }} aria-label="Cerrar"><X size={16} /></button>
+        </div>
+      )}
+      {joinOpen && <JoinModal googleClientId={googleClientId} onClose={() => setJoinOpen(false)} onJoined={onJoined} />}
+
       {view === "shop" ? (
-        <Shop products={products} settings={settings} />
+        <Shop
+          products={products}
+          settings={settings}
+          favs={favs}
+          onToggleFav={toggleFav}
+          panel={panel}
+          onPanel={setPanel}
+          customer={customer}
+          onCustomer={onCustomer}
+          onJoin={googleClientId || TEST_MODE ? () => { setPanel(null); setJoinOpen(true); } : null}
+          accountPage={page === "cuenta" && !!customer}
+          wallet={wallet}
+          onClaimCredit={(c) => setClaimOpen(c)}
+        />
       ) : (
         <Admin
+          onAuthed={onAdminAuthed}
           products={products}
           settings={settings}
           onSaveProduct={saveProduct}
@@ -256,23 +1621,179 @@ export default function App() {
   );
 }
 
-function ModeBtn({ active, onClick, icon, label }) {
+// Nombre de la tienda: "Glow" en letra script con degradado brillante y
+// "by Rosalía" en cursiva debajo. Si el nombre no lleva " by ", va entero.
+function BrandName({ name }) {
+  const [main, sub] = name.split(/\s+by\s+/i);
+  return (
+    <span className="glow-brand" aria-label={name}>
+      <span className="glow-brand-main">{main}</span>
+      <Sparkle style={{ position: "static", width: 14, color: C.gold, alignSelf: "flex-start" }} />
+      {sub && <span className="glow-brand-sub" style={{ color: C.roseDeep }}>by {sub}</span>}
+    </span>
+  );
+}
+
+function TruckIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2 6h11v10H2zM13 9h4.5l3.5 3.5V16h-8" />
+      <circle cx="6" cy="17.5" r="1.8" /><circle cx="17" cy="17.5" r="1.8" />
+    </svg>
+  );
+}
+
+/* ---------- Horarios de entrega en Juliaca ---------- */
+const DAY_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+// Horas elegibles en el panel: de 6:00 a. m. a 10:00 p. m., cada 30 min.
+const HALF_HOURS = Array.from({ length: 33 }, (_, k) => `${String(6 + Math.floor(k / 2)).padStart(2, "0")}:${k % 2 ? "30" : "00"}`);
+const hour12 = (t) => {
+  const [h, m] = t.split(":").map(Number);
+  const suf = h < 12 ? "a. m." : h === 12 && m === 0 ? "m." : "p. m.";
+  return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${suf}`;
+};
+// "Lun a Sáb · 4:00 p. m. – 7:00 p. m."
+function scheduleText(p) {
+  const d = [...(p.days || [])].sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7)); // lunes primero
+  let days = d.map((x) => DAY_SHORT[x]).join(", ");
+  const seq = d.map((x) => (x + 6) % 7);
+  if (d.length > 2 && seq.every((x, i) => i === 0 || x === seq[i - 1] + 1)) days = `${DAY_SHORT[d[0]]} a ${DAY_SHORT[d[d.length - 1]]}`;
+  if (d.length === 7) days = "Todos los días";
+  return `${days} · ${hour12(p.from)} – ${hour12(p.to)}`;
+}
+const ymd = (dt) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+// Próximos días con atención en ese punto (hasta 10 fechas en 3 semanas).
+function nextDates(p) {
+  const out = [];
+  const now = new Date();
+  for (let i = 0; i < 21 && out.length < 10; i++) {
+    const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+    if (p.days.includes(dt.getDay()) && slotsFor(p, ymd(dt)).length) out.push(dt);
+  }
+  return out;
+}
+// Horas cada 30 min dentro del horario; si es hoy, solo desde dentro de 1 hora.
+function slotsFor(p, date) {
+  const toMin = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
+  const now = new Date();
+  const isToday = date === ymd(now);
+  const minNow = now.getHours() * 60 + now.getMinutes() + 60;
+  const out = [];
+  for (let m = toMin(p.from); m < toMin(p.to); m += 30) {
+    if (isToday && m < minNow) continue;
+    out.push(`${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
+  }
+  return out;
+}
+function whenText(date, time) {
+  if (!date) return "";
+  const [y, m, d] = date.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  return `${dt.toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" })} · ${hour12(time)}`;
+}
+
+// Ventanita pública: puntos de encuentro en Juliaca y tarifas Shalom.
+function ShippingInfo({ settings, onClose }) {
+  const cfg = settings.shipping || { juliacaPoints: [], defaultRate: 0, rates: {} };
+  const [deps, setDeps] = useState([]);
+  useEffect(() => {
+    getConfig().then((c) => setDeps(c.departments || [])).catch(() => {});
+  }, []);
+  const rate = (d) => {
+    const r = cfg.rates?.[d];
+    return r !== "" && r != null && Number.isFinite(Number(r)) ? Number(r) : cfg.defaultRate;
+  };
+  return (
+    <div className="glow-modal-bg" onClick={onClose}>
+      <div className="glow-ship" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Envíos">
+        <button className="glow-join-x" onClick={onClose} aria-label="Cerrar"><X size={20} /></button>
+        <h3>🚚 Envíos a todo el Perú</h3>
+
+        <div className="glow-ship-sec">
+          <h4>📍 Juliaca · <span className="glow-free">ENTREGA GRATIS</span></h4>
+          <p className="glow-ship-sub">Al pagar eliges el punto, el día y la hora exacta:</p>
+          {cfg.juliacaPoints.map((p) => (
+            <div key={p.name} className="glow-ship-point">
+              <b>{p.name}</b>
+              <span>🕒 {scheduleText(p)}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="glow-ship-sec">
+          <h4>📦 Resto del Perú · por Shalom</h4>
+          <p className="glow-ship-sub">Recoges en la agencia Shalom que elijas, con tu DNI. Al pagar te pedimos nombres completos, DNI, celular y agencia. Costo por departamento:</p>
+          <div className="glow-ship-table">
+            {deps.map((d) => (
+              <div key={d} className={d === "Puno" ? "is-home" : ""}>
+                <span>{d}</span><b>{money(rate(d))}</b>
+              </div>
+            ))}
+          </div>
+          <p className="glow-ship-sub" style={{ marginTop: 10 }}>El envío se suma al total al pagar. Los gatupuntos se calculan sin el envío.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PawIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true">
+      <ellipse cx="20" cy="27" rx="9" ry="7.5" /><ellipse cx="9" cy="17" rx="4" ry="5" /><ellipse cx="16" cy="10" rx="4" ry="5" /><ellipse cx="24" cy="10" rx="4" ry="5" /><ellipse cx="31" cy="17" rx="4" ry="5" />
+    </svg>
+  );
+}
+
+// Íconos gatunos de la barra (mismo trazo que lucide).
+function CatHomeIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 21V11L4 3.5L9 7h6l5-3.5L19 11v10z" />
+      <path d="M10 21v-4a2 2 0 0 1 4 0v4" />
+      <path d="M1.5 13.5H5M1.5 16.5L5 15.5M22.5 13.5H19M22.5 16.5L19 15.5" />
+    </svg>
+  );
+}
+function CatSearchIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5.3 7.2L4.6 2.6L8.6 4.9" />
+      <path d="M14.7 7.2L15.4 2.6L11.4 4.9" />
+      <circle cx="10" cy="11" r="6.3" />
+      <path d="M9 11.2h2l-1 1.2z" fill="currentColor" strokeWidth="1.2" />
+      <path d="M14.6 15.6L21 22" />
+    </svg>
+  );
+}
+
+// Marca simple para los botones de Yape (no es el logo oficial).
+function YapeMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="2" y="4" width="20" height="16" rx="5" fill="currentColor" opacity=".25" />
+      <path d="M8 8.5l3.2 4.2L14.6 8.5M11.2 12.7V16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="17.5" cy="15" r="1.4" fill="currentColor" />
+    </svg>
+  );
+}
+
+// Botón de la barra superior. "round" = solo ícono (el candado del panel).
+function NavBtn({ active, onClick, icon, label, round }) {
   return (
     <button
       onClick={onClick}
       title={label}
       aria-label={label}
+      className={round ? "glow-nav-btn is-round" : "glow-nav-btn"}
       style={{
-        display: "flex", alignItems: "center", gap: 6, padding: "6px 12px",
-        borderRadius: 999, border: "none", fontSize: 14,
-        background: active ? C.surface : "transparent",
-        color: active ? C.roseDeep : C.inkSoft,
-        fontWeight: active ? 600 : 500,
-        boxShadow: active ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+        background: active || round ? C.surface : "transparent",
+        color: active || round ? C.roseDeep : C.ink,
+        boxShadow: active || round ? "0 2px 8px rgba(214,53,127,0.15)" : "none",
       }}
     >
       {icon}
-      <span className="glow-mode-label">{label}</span>
+      {!round && <span className="glow-mode-label">{label}</span>}
     </button>
   );
 }
@@ -323,8 +1844,8 @@ function ProductGallery({ images = [], alt, size = 52 }) {
 // Miniatura cuadrada (carrito y panel): foto real o marcador "sin foto".
 function Thumb({ src, alt, size }) {
   return (
-    <div style={{ position: "relative", flexShrink: 0, width: size, height: size, borderRadius: 10, overflow: "hidden", display: "grid", placeItems: "center", background: C.blush }}>
-      <SingleImage src={src} alt={alt} size={size * 0.6} fit="cover" />
+    <div style={{ position: "relative", flexShrink: 0, width: size, height: typeof size === "number" ? size : "auto", aspectRatio: "1 / 1", borderRadius: 10, overflow: "hidden", display: "grid", placeItems: "center", background: C.blush }}>
+      <SingleImage src={src} alt={alt} size={typeof size === "number" ? size * 0.6 : 40} fit="cover" />
     </div>
   );
 }
@@ -359,7 +1880,7 @@ function SingleImage({ src, alt, size = 64, fit = "contain" }) {
 }
 
 // Sección "Más vendidos": carrusel que avanza solo y se pausa al pasar el mouse.
-function BestSellers({ products, onAdd }) {
+function BestSellers({ products, onAdd, favs = [], onToggleFav }) {
   const featured = products.filter((p) => p.bestSeller);
   const items = featured.length ? featured : products.slice(0, 5);
   const n = items.length;
@@ -394,18 +1915,19 @@ function BestSellers({ products, onAdd }) {
         <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 600, textAlign: "center", margin: "0 0 4px" }}>
           Más vendidos
         </h2>
-        <p style={{ textAlign: "center", color: C.inkSoft, margin: "0 0 22px" }}>Los favoritos de la tienda</p>
+        <p className="glow-soft" style={{ textAlign: "center", fontSize: 19, margin: "0 0 22px" }}>Los favoritos de la tienda</p>
 
         <div style={{ position: "relative", borderRadius: 20, overflow: "hidden", background: C.surface, border: `1px solid ${C.line}`, display: "flex", flexWrap: "wrap" }}>
           <div style={{ position: "relative", flex: "1 1 280px", minHeight: 260, background: `linear-gradient(135deg, ${C.blush}, ${C.bg})`, display: "grid", placeItems: "center" }}>
             <SingleImage src={p.images?.[0]} alt={p.name} size={72} fit="cover" />
+            {onToggleFav && <FavButton active={favs.includes(p.id)} onClick={() => onToggleFav(p.id)} style={{ top: 12, right: 12 }} />}
           </div>
           <div style={{ flex: "1 1 280px", padding: 28, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-            <p style={{ color: C.roseDeep, fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: 0 }}>{p.category}</p>
-            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 600, margin: "4px 0 8px" }}>{p.name}</h3>
-            <p style={{ color: C.inkSoft, fontSize: 14, margin: "0 0 18px" }}>{p.desc}</p>
+            <p className="glow-card-cat" style={{ color: C.antique, fontSize: 12 }}>{p.category}</p>
+            <h3 className="glow-name" style={{ fontSize: 30, color: C.aubergine, margin: "4px 0 8px" }}>{p.name}</h3>
+            <p className="glow-soft" style={{ fontSize: 18, margin: "0 0 18px" }}>{p.desc}</p>
             <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 24, fontWeight: 700 }}>{money(p.price)}</span>
+              <span style={{ fontSize: 24, fontWeight: 800, color: C.aubergine }}>{money(p.price)}</span>
               <button
                 disabled={out}
                 onClick={() => onAdd(p)}
@@ -446,7 +1968,7 @@ function BestSellers({ products, onAdd }) {
 
 // Collage de fotos reales para la portada: una foto grande y hasta dos
 // pequeñas superpuestas, con marco blanco y sombra suave.
-function HeroCollage({ imgs }) {
+function HeroCollage({ imgs, variant, picks, active }) {
   const [main, ...rest] = imgs;
   const photo = (src, cls) => (
     <div className={`glow-hero-photo ${cls}`}>
@@ -458,6 +1980,393 @@ function HeroCollage({ imgs }) {
       {main && photo(main, "is-main")}
       {rest[0] && photo(rest[0], "is-a")}
       {rest[1] && photo(rest[1], "is-b")}
+      <Sparkle style={{ top: "-4%", left: "2%", width: 26, color: C.gold }} />
+      <Sparkle style={{ top: "44%", right: "-5%", width: 18, color: C.rose, animationDelay: "1.2s" }} />
+      <Sparkle style={{ bottom: "20%", left: "40%", width: 14, color: "#fff", animationDelay: "2.1s" }} />
+      <CatMascot variant={variant} picks={picks} active={active} />
+    </div>
+  );
+}
+
+// Rosalía, la gatita de la tienda (SVG realista, animado con CSS). Es una
+// calico atigrada: cara blanca con gorro atigrado asimétrico, ojos dorado-oliva,
+// y en el cuerpo manchas naranja, negra y atigrada. En cada diapositiva lleva el
+// accesorio de esa categoría. Parpadea, mueve una oreja, ladea la cabeza y la cola.
+const ROS = {
+  white: "#FBF8F5", shade: "#E6DDD6", tabby: "#7E664F", tabbyLight: "#A88A68",
+  stripe: "#2F2620", orange: "#D98A4A", orangeLight: "#E9A76A", black: "#26211F",
+  earIn: "#E9AFAB", earInDeep: "#C98B8A", irisIn: "#DCC258", irisOut: "#8D8534",
+  noseDeep: "#D48489", line: "#3A2E2A",
+};
+
+// Textura de pelo: trazos cortos que salen desde un punto, con semilla fija
+// (se calculan una sola vez y siempre salen iguales).
+function furPath(n, [bx, by, bw, bh], [fx, fy], seed, [l0, l1] = [3, 7]) {
+  let s = seed;
+  const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  let d = "";
+  for (let i = 0; i < n; i++) {
+    const x = bx + r() * bw, y = by + r() * bh;
+    const a = Math.atan2(y - fy, x - fx) + (r() - 0.5) * 0.5;
+    const L = l0 + r() * (l1 - l0);
+    d += `M${x.toFixed(1)} ${y.toFixed(1)}l${(Math.cos(a) * L).toFixed(1)} ${(Math.sin(a) * L).toFixed(1)}`;
+  }
+  return d;
+}
+const FUR = {
+  earL: furPath(26, [68, 16, 20, 30], [70, 50], 11, [5, 10]),
+  earR: furPath(26, [112, 16, 20, 30], [130, 50], 12, [5, 10]),
+  capDark: furPath(170, [55, 30, 95, 62], [100, 100], 3),
+  capLight: furPath(120, [60, 30, 85, 60], [100, 100], 7, [3, 6]),
+  face: furPath(160, [60, 60, 82, 60], [100, 96], 5, [3, 6]),
+  orange: furPath(60, [38, 114, 40, 42], [58, 110], 21, [3, 6]),
+  body: furPath(240, [44, 112, 112, 122], [100, 150], 9, [4, 8]),
+  chest: furPath(44, [78, 116, 44, 36], [100, 110], 17, [6, 11]),
+};
+
+const HEAD = "M60 72 C58 50 73 33 100 31 C127 33 142 50 140 72 C145 90 137 106 122 115 C111 121 89 121 78 115 C63 106 55 90 60 72 Z";
+const BODY = "M70 108 C50 122 40 152 42 184 C44 212 60 230 84 234 H116 C140 230 156 212 158 184 C160 152 150 122 130 108 Z";
+
+function CatArt({ variant }) {
+  const u = useId().replace(/:/g, "");
+  const sweater = variant === "Ropa";
+  const pawUp = variant === "Anillos" || variant === "Llaveros";
+  const ear = (d) => <path d={d} fill={`url(#tb${u})`} />;
+  return (
+    <>
+      <defs>
+        <clipPath id={`hc${u}`}><path d={HEAD} /></clipPath>
+        <clipPath id={`bc${u}`}><path d={BODY} /></clipPath>
+        <radialGradient id={`hs${u}`} cx="50%" cy="58%" r="62%"><stop offset=".55" stopColor={ROS.white} /><stop offset="1" stopColor={ROS.shade} /></radialGradient>
+        <radialGradient id={`bs${u}`} cx="50%" cy="40%" r="65%"><stop offset=".5" stopColor={ROS.white} /><stop offset="1" stopColor={ROS.shade} /></radialGradient>
+        <radialGradient id={`ir${u}`} cx="50%" cy="50%" r="55%"><stop offset="0" stopColor={ROS.irisIn} /><stop offset=".75" stopColor={ROS.irisOut} /><stop offset="1" stopColor="#3F3A18" /></radialGradient>
+        <linearGradient id={`ei${u}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={ROS.earInDeep} /><stop offset="1" stopColor={ROS.earIn} /></linearGradient>
+        <linearGradient id={`tb${u}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={ROS.tabby} /><stop offset="1" stopColor={ROS.tabbyLight} /></linearGradient>
+        <linearGradient id={`og${u}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor={ROS.orangeLight} /><stop offset="1" stopColor={ROS.orange} /></linearGradient>
+        <radialGradient id={`ns${u}`} cx="50%" cy="35%" r="70%"><stop offset="0" stopColor="#F6BDBF" /><stop offset="1" stopColor={ROS.noseDeep} /></radialGradient>
+      </defs>
+
+      {/* cola atigrada alrededor de las patas */}
+      <g className="glow-cat-tail">
+        <path d="M146 224 C172 224 188 208 184 188 C182 178 174 174 170 180 C176 192 168 210 142 212 Z" fill={ROS.tabby} />
+        <path d="M156 212 L160 222 M168 206 L176 214 M176 194 L184 196" stroke={ROS.stripe} strokeWidth="3" strokeLinecap="round" opacity=".85" />
+      </g>
+
+      {/* cuerpo gordito */}
+      <path d={BODY} fill={sweater ? C.rose : `url(#bs${u})`} />
+      <g clipPath={`url(#bc${u})`}>
+        {sweater ? (
+          <>
+            {[[64, 140], [100, 132], [136, 142], [58, 180], [96, 172], [140, 184], [74, 212], [124, 214]].map(([x, y], k) => (
+              <g key={k} fill="#fff">
+                <circle cx={x - 3.5} cy={y} r="3.2" /><circle cx={x + 3.5} cy={y} r="3.2" />
+                <circle cx={x} cy={y - 3.5} r="3.2" /><circle cx={x} cy={y + 3.5} r="3.2" />
+                <circle cx={x} cy={y} r="2.4" fill={C.gold} />
+              </g>
+            ))}
+            <path d="M44 150 Q100 166 156 150" stroke="#fff" strokeWidth="3" strokeDasharray="1 7" strokeLinecap="round" fill="none" />
+          </>
+        ) : (
+          <>
+            <path d="M36 120 C52 108 76 114 78 134 C78 152 58 158 40 152 Z" fill={`url(#og${u})`} />
+            <path d={FUR.orange} stroke="#B86E34" strokeWidth=".8" strokeLinecap="round" opacity=".5" fill="none" />
+            <path d="M122 114 C144 110 162 128 160 156 C148 164 130 156 120 138 Z" fill={ROS.black} />
+            <path d="M130 170 C148 166 162 190 156 216 C142 222 128 206 126 188 Z" fill={ROS.tabby} />
+            <path d="M134 178 C140 180 146 180 152 178 M132 190 C138 192 146 192 152 190" stroke={ROS.stripe} strokeWidth="2.4" fill="none" opacity=".8" />
+            <path d="M144 170 C150 172 154 178 154 184" stroke={ROS.orange} strokeWidth="5" opacity=".5" fill="none" />
+            <path d={FUR.body} stroke="#DDD4CC" strokeWidth=".8" strokeLinecap="round" opacity=".35" fill="none" />
+          </>
+        )}
+      </g>
+      {!sweater && <path d={FUR.chest} stroke="#fff" strokeWidth="1.4" strokeLinecap="round" opacity=".95" fill="none" />}
+
+      {/* patas delanteras */}
+      <path d="M78 142 C76 174 76 202 78 228 H97 C98 202 98 174 97 142 Z" fill={ROS.white} />
+      {!pawUp && <path d="M103 142 C102 174 102 202 103 228 H122 C124 202 124 174 122 142 Z" fill={ROS.white} />}
+      <path d={pawUp ? "M97 152 C98 182 98 206 97 228" : "M97 152 C98 182 98 206 97 228 M103 152 C102 182 102 206 103 228"} stroke={ROS.shade} strokeWidth="2" fill="none" />
+      <ellipse cx="87" cy="230" rx="12.5" ry="7" fill={ROS.white} />
+      {!pawUp && <ellipse cx="113" cy="230" rx="12.5" ry="7" fill={ROS.white} />}
+      <path d={pawUp ? "M82 232 V236 M87 232 V237 M92 232 V236" : "M82 232 V236 M87 232 V237 M92 232 V236 M108 232 V236 M113 232 V237 M118 232 V236"} stroke={ROS.shade} strokeWidth="1.3" />
+
+      {/* collar de la tienda (en Collares lleva su cadenita con dije) */}
+      {variant !== "Collares" && (
+        <>
+          <path d="M72 113 Q100 127 128 113" stroke={C.primary} strokeWidth="6" strokeLinecap="round" fill="none" />
+          <g className="glow-acc-swing" style={{ transformOrigin: "100px 121px" }}>
+            <circle cx="100" cy="129" r="7" fill={C.gold} stroke="#B8861C" strokeWidth="1.6" />
+            <circle cx="97.5" cy="126.5" r="1.8" fill="#fff" opacity=".8" />
+          </g>
+        </>
+      )}
+      {variant === "Collares" && (
+        <>
+          <path d="M72 113 Q100 129 128 113" stroke={C.gold} strokeWidth="2.6" strokeDasharray="2 2.6" strokeLinecap="round" fill="none" />
+          <g className="glow-acc-swing" style={{ transformOrigin: "100px 121px" }}>
+            <path d="M100 121 V126" stroke={C.gold} strokeWidth="2.4" />
+            <path d="M100 131 C93 124 86 130 100 144 C114 130 107 124 100 131 Z" fill={C.primary} stroke="#B01E62" strokeWidth="1.6" />
+            <circle cx="95" cy="130" r="2" fill="#fff" opacity=".85" />
+          </g>
+        </>
+      )}
+
+      {/* patita levantada (anillo / llavero) */}
+      {pawUp && (
+        <g className="glow-cat-wave">
+          <path d="M112 150 C122 140 138 126 146 112" stroke={ROS.shade} strokeWidth="21" strokeLinecap="round" fill="none" />
+          <path d="M112 150 C122 140 138 126 146 112" stroke={ROS.white} strokeWidth="18" strokeLinecap="round" fill="none" />
+          <ellipse cx="148" cy="106" rx="11" ry="9.5" fill={ROS.white} stroke={ROS.shade} strokeWidth="1.4" />
+          <path d="M142 101 V97 M148 99 V95 M154 101 V97" stroke={ROS.shade} strokeWidth="1.3" />
+          {variant === "Anillos" && (
+            <>
+              <ellipse cx="148" cy="114" rx="9" ry="3.4" fill="none" stroke={C.gold} strokeWidth="3.4" />
+              <path d="M148 104 L153 109 L148 114 L143 109 Z" transform="translate(0 -1)" fill="#BFE9FF" stroke="#6BA6C4" strokeWidth="1.3" />
+            </>
+          )}
+          {variant === "Llaveros" && (
+            <g className="glow-acc-swing" style={{ transformOrigin: "148px 114px" }}>
+              <circle cx="148" cy="122" r="7.5" fill="none" stroke={C.gold} strokeWidth="3" />
+              <path d="M148 129.5 V135" stroke={C.gold} strokeWidth="2.4" />
+              <circle cx="148" cy="143" r="8" fill={C.primary} stroke="#B01E62" strokeWidth="1.6" />
+              <path d="M144 141 L146 137.5 L148 141 M148 141 L150 137.5 L152 141" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinejoin="round" />
+            </g>
+          )}
+        </g>
+      )}
+
+      {/* bolso delante de las patitas */}
+      {variant === "Bolsos" && (
+        <g className="glow-acc-swing" style={{ transformOrigin: "100px 186px" }}>
+          <path d="M84 204 Q84 186 100 186 Q116 186 116 204" fill="none" stroke="#B01E62" strokeWidth="3.4" />
+          <rect x="74" y="200" width="52" height="34" rx="9" fill={C.primary} stroke="#B01E62" strokeWidth="2" />
+          <path d="M74 212 H126" stroke="#B01E62" strokeWidth="1.6" opacity=".5" />
+          <circle cx="100" cy="212" r="4" fill={C.gold} stroke="#B8861C" strokeWidth="1.4" />
+        </g>
+      )}
+
+      {/* cabeza */}
+      <g className="glow-cat-head">
+        <g className="glow-cat-ear">
+          {ear("M68 60 C62 40 61 20 67 6 C79 14 92 27 96 38 Z")}
+          <path d="M71 50 C68 36 68 23 71 14 C80 22 87 30 90 39 Z" fill={`url(#ei${u})`} />
+          <path d={FUR.earL} stroke="#fff" strokeWidth=".8" strokeLinecap="round" opacity=".8" fill="none" />
+          <path d="M67 6 C63 14 62 26 64 38" stroke={ROS.orange} strokeWidth="3" opacity=".35" fill="none" />
+        </g>
+        {ear("M132 60 C138 40 139 20 133 6 C121 14 108 27 104 38 Z")}
+        <path d="M129 50 C132 36 132 23 129 14 C120 22 113 30 110 39 Z" fill={`url(#ei${u})`} />
+        <path d={FUR.earR} stroke="#fff" strokeWidth=".8" strokeLinecap="round" opacity=".8" fill="none" />
+
+        <path d={HEAD} fill={`url(#hs${u})`} />
+        <g clipPath={`url(#hc${u})`}>
+          {/* gorro atigrado asimétrico con la franja blanca */}
+          <path d="M50 20 H150 V60 C144 66 137 68 131 67 C125 65 119 63 113 61 C109 55 106 49 103 44 C99 45 95 48 92 53 C88 58 86 64 88 72 C88 82 82 90 74 94 C66 97 58 95 50 90 Z" fill={`url(#tb${u})`} />
+          <path d="M52 64 C58 70 64 80 68 92" stroke={ROS.tabbyLight} strokeWidth="6" opacity=".5" fill="none" />
+          <g stroke={ROS.stripe} strokeLinecap="round" fill="none" opacity=".85">
+            <path d="M77 40 C79 47 82 52 85 57" strokeWidth="2.6" />
+            <path d="M86 36 C87 42 89 47 91 51" strokeWidth="2.4" />
+            <path d="M94 34 C95 38 96 42 97 45" strokeWidth="2" />
+            <path d="M123 40 C121 47 118 52 115 57" strokeWidth="2.6" />
+            <path d="M114 36 C113 42 111 47 109 51" strokeWidth="2.4" />
+            <path d="M106 34 C105 38 104 42 103 45" strokeWidth="2" />
+            <path d="M58 70 C63 72 68 72 72 70" strokeWidth="2.6" />
+            <path d="M59 79 C63 81 67 81 70 79" strokeWidth="2.2" />
+            <path d="M134 58 C130 61 126 62 122 61" strokeWidth="2.4" />
+          </g>
+          <path d={FUR.capDark} stroke={ROS.stripe} strokeWidth=".8" strokeLinecap="round" opacity=".35" fill="none" />
+          <path d={FUR.capLight} stroke={ROS.tabbyLight} strokeWidth=".7" strokeLinecap="round" opacity=".5" fill="none" />
+          <path d={FUR.face} stroke="#D9CFC7" strokeWidth=".7" strokeLinecap="round" opacity=".28" fill="none" />
+          <path d="M60 50 C64 44 70 42 74 44 C70 50 66 54 60 56 Z" fill={ROS.orange} opacity=".45" />
+        </g>
+
+        {/* ojos dorado-oliva, mirada serena */}
+        <g className="glow-cat-eyes">
+          <path d="M70 77 C73 68 88 67 95 75 C90 84 76 85 70 77 Z" fill={`url(#ir${u})`} />
+          <ellipse cx="83" cy="76.5" rx="3.2" ry="5.6" fill="#15110E" />
+          <circle cx="86" cy="73.5" r="1.6" fill="#fff" opacity=".9" />
+          <path d="M70 77 C73 68 88 67 95 75 C90 84 76 85 70 77 Z" fill="none" stroke={ROS.line} strokeWidth="1.8" />
+          <path d="M130 77 C127 68 112 67 105 75 C110 84 124 85 130 77 Z" fill={`url(#ir${u})`} />
+          <ellipse cx="117" cy="76.5" rx="3.2" ry="5.6" fill="#15110E" />
+          <circle cx="120" cy="73.5" r="1.6" fill="#fff" opacity=".9" />
+          <path d="M130 77 C127 68 112 67 105 75 C110 84 124 85 130 77 Z" fill="none" stroke={ROS.line} strokeWidth="1.8" />
+        </g>
+        <path d="M69.5 76 C73 67.5 88 66.5 95.5 74 M130.5 76 C127 67.5 112 66.5 104.5 74" stroke={ROS.line} strokeWidth="1.8" fill="none" strokeLinecap="round" />
+
+        {/* cachetes, hocico, nariz, boca y bigotes */}
+        <ellipse cx="91" cy="105" rx="10" ry="7" fill="#fff" />
+        <ellipse cx="109" cy="105" rx="10" ry="7" fill="#fff" />
+        <path d="M100 82 C98 88 97 92 96 94 M100 82 C102 88 103 92 104 94" stroke="#DED4CC" strokeWidth="1.2" fill="none" />
+        <path d="M94.5 93 C96 90.5 104 90.5 105.5 93 C105.5 96 102.5 98.5 100 99.5 C97.5 98.5 94.5 96 94.5 93 Z" fill={`url(#ns${u})`} />
+        <path d="M100 99.5 V103.5 M100 103.5 C97.5 107 93.5 107.5 91 105 M100 103.5 C102.5 107 106.5 107.5 109 105" stroke="#9C7475" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+        <g stroke="#BDB2AA" strokeWidth=".8" strokeLinecap="round" opacity=".9" fill="none">
+          <path d="M86 103 C70 99 52 99 34 103" /><path d="M86 106 C70 105 54 107 38 112" /><path d="M87 109 C74 110 60 114 46 121" />
+          <path d="M114 103 C130 99 148 99 166 103" /><path d="M114 106 C130 105 146 107 162 112" /><path d="M113 109 C126 110 140 114 154 121" />
+        </g>
+
+        {/* aretes colgando de las orejas */}
+        {variant === "Aretes" && (
+          <>
+            <g className="glow-acc-swing" style={{ transformOrigin: "63px 18px" }}>
+              <circle cx="63" cy="22" r="3.6" fill="none" stroke={C.gold} strokeWidth="2.2" />
+              <path d="M63 25.5 V30" stroke={C.gold} strokeWidth="2" />
+              <path d="M63 32 C58 28 55 33 63 41 C71 33 68 28 63 32 Z" fill={C.primary} stroke="#B01E62" strokeWidth="1.4" />
+            </g>
+            <g className="glow-acc-swing is-late" style={{ transformOrigin: "137px 18px" }}>
+              <circle cx="137" cy="22" r="3.6" fill="none" stroke={C.gold} strokeWidth="2.2" />
+              <path d="M137 25.5 V30" stroke={C.gold} strokeWidth="2" />
+              <path d="M137 32 C132 28 129 33 137 41 C145 33 142 28 137 32 Z" fill={C.primary} stroke="#B01E62" strokeWidth="1.4" />
+            </g>
+          </>
+        )}
+      </g>
+    </>
+  );
+}
+
+// Zona que la lupa amplía en cada variante (x y ancho alto, en el viewBox 200×250).
+const CAT_ZOOM = {
+  intro: "76 106 48 40",
+  Collares: "74 108 52 44",
+  Aretes: "46 8 36 38",
+  Anillos: "126 90 44 40",
+  Ropa: "48 128 72 60",
+  Llaveros: "126 100 44 56",
+  Bolsos: "68 180 64 60",
+};
+const CAT_SAYS = {
+  intro: "¡Hola! Soy Rosalía",
+  Collares: "¡Mira mi collar!",
+  Aretes: "¡Mis aretes nuevos!",
+  Anillos: "¡Brilla, brilla!",
+  Ropa: "¿Me veo linda?",
+  Llaveros: "¡Nunca pierdo mis llaves!",
+  Bolsos: "¡Lista para salir!",
+};
+
+function CatMascot({ variant = "intro", picks = [], active = false }) {
+  const zoom = CAT_ZOOM[variant] || CAT_ZOOM.intro;
+  const [n, setN] = useState(0);
+
+  // Mientras la diapositiva está visible, la lupa va mostrando otro producto.
+  useEffect(() => {
+    if (!active || picks.length <= 1) return;
+    setN(0);
+    const t = setInterval(() => setN((i) => i + 1), 2000);
+    return () => clearInterval(t);
+  }, [active, picks.length]);
+
+  const cur = picks.length ? n % picks.length : 0;
+  const p = picks[cur];
+  return (
+    <div className="glow-cat-wrap" aria-hidden="true">
+      <svg className="glow-cat" viewBox="0 0 200 250">
+        <CatArt variant={variant} />
+      </svg>
+      {/* lupa: productos reales de la tienda (o el accesorio ampliado si no hay fotos) */}
+      <div className="glow-cat-zoom">
+        {picks.length ? (
+          picks.map((q, k) => (
+            <img key={q.id} src={firstPhoto(q)} alt="" className={k === cur ? "is-on" : ""} />
+          ))
+        ) : (
+          <svg viewBox={zoom} preserveAspectRatio="xMidYMid slice">
+            <CatArt variant={variant} />
+          </svg>
+        )}
+      </div>
+      {p && <span className="glow-cat-price" style={{ background: C.primary }}>{money(p.price)}</span>}
+      {[0, 1, 2].map((k) => (
+        <svg key={k} className="glow-cat-heart" viewBox="0 0 24 24" style={{ fill: C.primary, animationDelay: `${k * 1.2}s`, left: `${38 + k * 12}%` }}>
+          <path d="M12 21 C4 14 2 10 4 6.5 C6 3.5 10 4 12 7 C14 4 18 3.5 20 6.5 C22 10 20 14 12 21 Z" />
+        </svg>
+      ))}
+      <span className="glow-cat-say" style={{ color: C.roseDeep }}>{CAT_SAYS[variant] || CAT_SAYS.intro}</span>
+    </div>
+  );
+}
+
+// Estampado gatuno del fondo: carita de michi, huellita, pescadito, ovillo y
+// corazón en un mosaico de 140px, en el color de acento de cada diapositiva.
+function catPattern(color) {
+  const c = encodeURIComponent(color);
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'>
+    <g fill='${c}'>
+      <path d='M14 30 L17 16 L25 24 Q30 22 35 24 L43 16 L46 30 Q48 44 30 46 Q12 44 14 30 Z'/>
+      <g transform='translate(92 20) rotate(20)'><ellipse cx='0' cy='6' rx='6' ry='5'/><circle cx='-7' cy='-2' r='2.6'/><circle cx='-2.5' cy='-6.5' r='2.6'/><circle cx='2.5' cy='-6.5' r='2.6'/><circle cx='7' cy='-2' r='2.6'/></g>
+      <path d='M62 84 Q76 72 90 84 Q76 96 62 84 Z M90 84 L100 76 L100 92 Z'/>
+      <path d='M22 108 C22 98 36 98 36 108 C36 118 22 118 22 108 Z M122 104 C118 98 110 101 116 110 L122 116 L128 110 C134 101 126 98 122 104 Z'/>
+    </g>
+    <g fill='none' stroke='${c}' stroke-width='2'><circle cx='112' cy='60' r='8'/><path d='M105 56 Q112 60 119 56 M104 62 Q112 67 120 62 M120 64 C128 72 124 80 132 82'/></g>
+  </svg>`;
+  return `url("data:image/svg+xml,${svg.replace(/\s+/g, " ")}")`;
+}
+
+// Rastro de huellitas: aparecen una tras otra cruzando el slider, como si un
+// gato acabara de pasar caminando.
+const TRAIL = Array.from({ length: 12 }, (_, k) => ({
+  left: `${3 + k * 8}%`,
+  top: `${14 + (k % 2) * 16 + k * 1.2}px`,
+  delay: `${k * 0.35}s`,
+}));
+
+function PawTrail({ color }) {
+  return TRAIL.map((t, k) => (
+    <Paw key={k} className="glow-paw-step" style={{ left: t.left, top: t.top, color, animationDelay: t.delay }} />
+  ));
+}
+
+// Huellita (fondo animado del slider).
+function Paw({ style, className = "glow-paw" }) {
+  return (
+    <svg className={className} viewBox="0 0 40 40" style={style} aria-hidden="true">
+      <ellipse cx="20" cy="27" rx="9" ry="7.5" />
+      <ellipse cx="9" cy="17" rx="4" ry="5" />
+      <ellipse cx="16" cy="10" rx="4" ry="5" />
+      <ellipse cx="24" cy="10" rx="4" ry="5" />
+      <ellipse cx="31" cy="17" rx="4" ry="5" />
+    </svg>
+  );
+}
+
+// Destello de cuatro puntas (brilla y se apaga).
+function Sparkle({ style }) {
+  return (
+    <svg className="glow-sparkle" viewBox="0 0 24 24" style={style} aria-hidden="true">
+      <path d="M12 0 C13 8 16 11 24 12 C16 13 13 16 12 24 C11 16 8 13 0 12 C8 11 11 8 12 0 Z" />
+    </svg>
+  );
+}
+
+const PAWS = [
+  { left: "6%", size: 26, delay: "0s", dur: "11s" },
+  { left: "18%", size: 18, delay: "4s", dur: "13s" },
+  { left: "34%", size: 22, delay: "7s", dur: "12s" },
+  { left: "49%", size: 16, delay: "2s", dur: "14s" },
+  { left: "63%", size: 24, delay: "9s", dur: "12s" },
+  { left: "88%", size: 20, delay: "5s", dur: "15s" },
+];
+
+// Producto estrella de la diapositiva: tarjeta flotante con foto, precio y
+// botón para añadirlo directo al carrito.
+function HeroStar({ p, onAdd, active, fav, onToggleFav }) {
+  const out = p.stock <= 0;
+  return (
+    <div className="glow-hero-star">
+      <span className="glow-hero-star-ribbon" style={{ background: C.gold }}>{p.bestSeller ? "El más vendido" : "Favorito"}</span>
+      <div style={{ position: "relative" }}>
+        <img src={firstPhoto(p)} alt={p.name} />
+        {onToggleFav && <FavButton active={fav} onClick={() => onToggleFav(p.id)} style={{ bottom: 8, right: 8 }} />}
+      </div>
+      <h4 style={{ color: C.aubergine }}>{p.name}</h4>
+      <div className="glow-hero-star-row">
+        <span style={{ color: C.aubergine }}>{money(p.price)}</span>
+        <button
+          disabled={out}
+          tabIndex={active ? 0 : -1}
+          onClick={() => onAdd(p)}
+          style={{ background: out ? C.line : C.primary, color: out ? C.inkSoft : C.primaryInk }}
+        >
+          {out ? "Agotado" : "Añadir"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -468,7 +2377,7 @@ const firstPhoto = (p) => (p.images || []).find(Boolean);
 // Portada: slider con fotos reales de la tienda. Una diapositiva de bienvenida
 // + una por cada categoría que tenga productos. Avanza solo, se pausa al pasar
 // el mouse y en el celular se puede deslizar con el dedo.
-function HeroSlider({ products, settings, onPickCategory }) {
+function HeroSlider({ products, settings, onPickCategory, onAdd, favs = [], onToggleFav }) {
   const withPhoto = products.filter(firstPhoto);
   const featured = [
     ...withPhoto.filter((p) => p.bestSeller),
@@ -480,10 +2389,13 @@ function HeroSlider({ products, settings, onPickCategory }) {
       key: "intro",
       eyebrow: "Nueva colección",
       title: settings.storeName,
+      words: HERO_INTRO_WORDS,
       text: settings.tagline || "Accesorios de gatitos para alegrar tu día.",
       cta: "Ver catálogo",
       cat: "Todos",
-      imgs: featured.slice(0, 3).map(firstPhoto),
+      star: featured[0],
+      imgs: featured.slice(1, 4).map(firstPhoto),
+      picks: featured.slice(0, 6),
       grad: [C.blush, "#FFF3F8"],
     },
     ...CATEGORIES.filter((c) => c !== "Todos").flatMap((c) => {
@@ -491,14 +2403,21 @@ function HeroSlider({ products, settings, onPickCategory }) {
       if (!items.length) return [];
       const info = CATEGORY_INFO[c] || {};
       const from = Math.min(...items.map((p) => Number(p.price) || 0));
+      // Con 2 o más productos, el más vendido va en la tarjeta estrella y el
+      // collage muestra los demás (así no se repite la misma foto).
+      const star = items.length > 1 ? items.find((p) => p.bestSeller) || items[0] : null;
+      const rest = star ? items.filter((p) => p !== star) : items;
       return [{
         key: c,
         eyebrow: `${items.length} ${items.length === 1 ? "producto" : "productos"} · desde ${money(from)}`,
         title: c,
+        words: (info.words || []).map((w) => `que ${w}`),
         text: info.desc,
         cta: `Ver ${c.toLowerCase()}`,
         cat: c,
-        imgs: items.slice(0, 3).map(firstPhoto),
+        star,
+        imgs: rest.slice(0, 3).map(firstPhoto),
+        picks: items,
         grad: info.grad || [C.blush, C.bg],
       }];
     }),
@@ -516,6 +2435,19 @@ function HeroSlider({ products, settings, onPickCategory }) {
   }, [paused, n]);
 
   const cur = ((idx % n) + n) % n;
+
+  // La barra superior toma los colores de la diapositiva visible (variables
+  // CSS en <html>); al salir de la tienda vuelve a su degradado por defecto.
+  const [ga, gb] = slides[cur].grad;
+  useEffect(() => {
+    const root = document.documentElement.style;
+    root.setProperty("--hdr-a", ga);
+    root.setProperty("--hdr-b", gb);
+  }, [ga, gb]);
+  useEffect(() => () => {
+    document.documentElement.style.removeProperty("--hdr-a");
+    document.documentElement.style.removeProperty("--hdr-b");
+  }, []);
 
   const onTouchStart = (e) => { touchX.current = e.touches[0].clientX; };
   const onTouchEnd = (e) => {
@@ -541,16 +2473,30 @@ function HeroSlider({ products, settings, onPickCategory }) {
           aria-hidden={i !== cur}
           style={{ background: `linear-gradient(120deg, ${s.grad[0]}, ${s.grad[1]})` }}
         >
+          <span className="glow-hero-pattern" style={{ backgroundImage: catPattern(C.roseDeep) }} />
           <span className="glow-hero-blob is-1" style={{ background: s.grad[1] }} />
           <span className="glow-hero-blob is-2" style={{ background: "#fff" }} />
+          <PawTrail color={C.roseDeep} />
+          {PAWS.map((p, k) => (
+            <Paw key={k} style={{ left: p.left, width: p.size, color: C.roseDeep, animationDelay: p.delay, animationDuration: p.dur }} />
+          ))}
 
           <div className="glow-hero-inner">
+            <div className="glow-hero-left">
             <div className="glow-hero-text">
-              <p className="glow-hero-eyebrow" style={{ color: C.roseDeep }}>{s.eyebrow}</p>
-              <h2 className="glow-hero-title" style={{ color: C.ink }}>{s.title}</h2>
-              {s.text && <p className="glow-hero-desc" style={{ color: C.ink }}>{s.text}</p>}
+              <p className="glow-hero-eyebrow" style={{ color: C.antique }}>{s.eyebrow}</p>
+              <h2 className="glow-hero-title" style={{ color: C.aubergine }}>
+                {s.title}
+                {s.words?.length > 0 && (
+                  <span className="glow-hero-rot">
+                    {/* la primera palabra se repite al final para que el giro sea continuo */}
+                    <span>{[...s.words, s.words[0]].map((w, k) => <span key={k}>{w}</span>)}</span>
+                  </span>
+                )}
+              </h2>
+              {s.text && <p className="glow-hero-desc glow-soft">{s.text}</p>}
               <button
-                className="glow-hero-cta"
+                className="glow-hero-cta glow-shine"
                 tabIndex={i === cur ? 0 : -1}
                 onClick={() => onPickCategory(s.cat)}
                 style={{ background: C.primary, color: C.primaryInk, boxShadow: `0 10px 24px ${C.primary}44` }}
@@ -558,10 +2504,29 @@ function HeroSlider({ products, settings, onPickCategory }) {
                 {s.cta} <ChevronRight size={18} />
               </button>
             </div>
-            <HeroCollage imgs={s.imgs} />
+            {s.star && <HeroStar p={s.star} onAdd={onAdd} active={i === cur} fav={favs.includes(s.star.id)} onToggleFav={onToggleFav} />}
+            </div>
+            <HeroCollage imgs={s.imgs} variant={s.key} picks={s.picks} active={i === cur} />
           </div>
         </div>
       ))}
+
+      <div className="glow-yarn" aria-hidden="true">
+        <svg viewBox="0 0 40 40">
+          <circle cx="20" cy="20" r="18" fill={C.rose} />
+          <path d="M6 12 C16 18 24 18 34 12 M4 22 C16 28 26 28 36 20 M10 32 C18 34 26 32 32 28 M14 4 C10 16 12 28 20 38 M26 3 C30 14 30 26 24 38" stroke="#fff" strokeWidth="1.6" fill="none" opacity=".7" />
+        </svg>
+      </div>
+      <div className="glow-ticker" aria-label="Novedades de la tienda">
+        <div>
+          {[...HERO_TICKER, ...HERO_TICKER].map((t, k) => (
+            <span key={k} aria-hidden={k >= HERO_TICKER.length}>
+              <Sparkle style={{ position: "static", width: 12, color: C.primary, animation: "none" }} />
+              {t}
+            </span>
+          ))}
+        </div>
+      </div>
 
       {n > 1 && (
         <>
@@ -586,11 +2551,28 @@ function HeroSlider({ products, settings, onPickCategory }) {
 /* =========================================================================
    VISTA CLIENTE — catálogo + pedido por WhatsApp
 ========================================================================= */
-function Shop({ products, settings }) {
+function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, customer, onCustomer, onJoin, accountPage, wallet, onClaimCredit }) {
   const [cat, setCat] = useState("Todos");
   const [q, setQ] = useState("");
   const [cart, setCart] = useState(loadCart); // { [productId]: qty }
   const [cartOpen, setCartOpen] = useState(false);
+  const [reviewing, setReviewing] = useState(null); // producto cuyas reseñas se muestran
+  const [writing, setWriting] = useState(null); // { product, order } reseña que se está escribiendo
+  // Pedidos confirmados de la clienta → productos que aún puede reseñar.
+  const [mine, setMine] = useState({ orders: [], reviews: [] });
+  const loadMine = useCallback(() => {
+    if (!customer?.token) return setMine({ orders: [], reviews: [] });
+    Promise.all([getMyOrders(), getMyReviews()])
+      .then(([orders, reviews]) => setMine({ orders, reviews }))
+      .catch(() => {});
+  }, [customer?.token]);
+  useEffect(() => { loadMine(); }, [loadMine]);
+  const reviewOrderFor = (pid) =>
+    mine.orders.find(
+      (o) => ["verificado", "enviado"].includes(o.status) &&
+        o.items.some((l) => l.id === pid) &&
+        !mine.reviews.some((r) => r.orderId === o.id && r.productId === pid)
+    ) || null;
 
   // El carrito se guarda solo en el navegador.
   useEffect(() => {
@@ -645,20 +2627,28 @@ function Shop({ products, settings }) {
     setTimeout(() => document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" }), 0);
   };
 
-  // Pedido de todo el carrito.
-  const orderCart = () => {
+  // Pedido de todo el carrito por WhatsApp. Con paidYape=true avisa que ya
+  // se pagó por Yape y pide adjuntar la captura del comprobante.
+  const orderCart = (paidYape = false) => {
     if (cartLines.length === 0) return;
     const items = cartLines
       .map((l) => `• ${l.qty}x ${l.name} — ${money(l.price * l.qty)}`)
-      .join("%0A");
-    const msg = `Hola ${settings.storeName} 👋 Quiero pedir:%0A${items}%0A%0ATotal: ${money(cartTotal)}%0A%0A¿Está disponible?`;
-    window.open(`https://wa.me/${settings.whatsapp}?text=${msg}`, "_blank");
+      .join("\n");
+    const end = paidYape
+      ? `Ya pagué ${money(cartTotal)} por Yape. Te envío la captura del comprobante.`
+      : "¿Está disponible?";
+    const msg = `Hola ${settings.storeName}, quiero pedir:\n${items}\n\nTotal: ${money(cartTotal)}\n\n${end}`;
+    window.open(`https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
   return (
     <div>
       {/* Portada: slider llamativo */}
-      <HeroSlider products={products} settings={settings} onPickCategory={goToCategory} />
+      {accountPage ? (
+        <AccountPage customer={customer} favs={favs} products={products} onToggleFav={onToggleFav} onAdd={addToCart} onPanel={onPanel} settings={settings} wallet={wallet} onClaimCredit={onClaimCredit} />
+      ) : (
+      <>
+      <HeroSlider products={products} settings={settings} onPickCategory={goToCategory} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} />
 
       <div id="catalogo" className="glow-wrap" style={{ paddingTop: 28, scrollMarginTop: 70 }}>
         {/* filtros */}
@@ -672,7 +2662,7 @@ function Shop({ products, settings }) {
                   padding: "6px 14px", borderRadius: 999, fontSize: 14, fontWeight: 500,
                   border: `1px solid ${cat === c ? C.primary : C.line}`,
                   background: cat === c ? C.primary : "transparent",
-                  color: cat === c ? C.primaryInk : C.inkSoft,
+                  color: cat === c ? C.primaryInk : C.plum,
                 }}
               >
                 {c}
@@ -682,6 +2672,7 @@ function Shop({ products, settings }) {
           <div className="glow-search">
             <Search size={16} color={C.inkSoft} style={{ position: "absolute", left: 12, top: 11 }} />
             <input
+              id="glow-search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Buscar producto…"
@@ -698,18 +2689,20 @@ function Shop({ products, settings }) {
           {visible.map((p) => {
             const out = p.stock <= 0;
             return (
-              <div key={p.id} style={{ borderRadius: 18, overflow: "hidden", display: "flex", flexDirection: "column", background: C.surface, border: `1px solid ${C.line}`, boxShadow: "0 6px 20px rgba(214,53,127,0.08)" }}>
+              <div key={p.id} onPointerEnter={(e) => { if (e.pointerType === "mouse") e.currentTarget._seen = setTimeout(() => markSeen(p.id), 1000); }} onPointerLeave={(e) => clearTimeout(e.currentTarget._seen)} onClick={() => markSeen(p.id)} style={{ borderRadius: 18, overflow: "hidden", display: "flex", flexDirection: "column", background: C.surface, border: `1px solid ${C.line}`, boxShadow: "0 6px 20px rgba(214,53,127,0.08)" }}>
                 {/* foto con marco kawaii */}
                 <div className="glow-card-pad" style={{ padding: 10 }}>
                   <div className="glow-card-img" style={{ position: "relative", overflow: "hidden", display: "grid", placeItems: "center", borderRadius: 14, background: `linear-gradient(135deg, ${C.blush}, ${C.bg})`, border: "2px solid #fff", boxShadow: `0 0 0 2px ${C.blush}` }}>
                     <ProductGallery images={p.images} alt={p.name} />
+                    <FavButton active={favs.includes(p.id)} onClick={() => onToggleFav(p.id)} style={{ bottom: 8, right: 8 }} />
+                    {p.doublePoints && <span className="glow-x2 is-card">×2 gatupuntos</span>}
                     {p.bestSeller && (
                       <span className="glow-badge" style={{ position: "absolute", top: 8, left: 8, padding: "3px 9px", borderRadius: 999, fontSize: 11, fontWeight: 700, background: "#fff", color: C.roseDeep, boxShadow: "0 1px 4px rgba(0,0,0,0.12)" }}>
                         Más vendido
                       </span>
                     )}
                     <span
-                      className="glow-badge"
+                      className={`glow-badge ${out ? "is-out" : "is-available"}`}
                       style={{
                         position: "absolute", top: 8, right: 8, padding: "2px 8px", borderRadius: 999, fontSize: 12, fontWeight: 600,
                         background: C.surface, color: out ? C.warn : C.ok, border: `1px solid ${out ? C.warn : C.ok}33`,
@@ -720,11 +2713,21 @@ function Shop({ products, settings }) {
                   </div>
                 </div>
                 <div className="glow-card-body" style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                  <p style={{ color: C.roseDeep, fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", margin: 0 }}>{p.category}</p>
-                  <h3 className="glow-card-name" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 600, lineHeight: 1.15, margin: "2px 0 0" }}>{p.name}</h3>
-                  <p className="glow-card-desc" style={{ color: C.inkSoft, margin: "4px 0 0", flex: 1 }}>{p.desc}</p>
-                  <div style={{ marginTop: 12 }}>
-                    <span className="glow-card-price" style={{ fontWeight: 800, color: C.roseDeep }}>{money(p.price)}</span>
+                  <p className="glow-card-cat" style={{ color: C.antique }}>{p.category}</p>
+                  <h3 className="glow-card-name glow-name" style={{ color: C.aubergine }}>{p.name}</h3>
+                  {p.reviews > 0 && (
+                    <button className="glow-card-rating" onClick={(e) => { e.stopPropagation(); setReviewing(p); }}>
+                      <Stars value={p.rating} size={18} /> <b>{p.rating}</b> <small>({p.reviews}<span className="glow-hide-sm"> reseña{p.reviews === 1 ? "" : "s"}</span>)</small>
+                    </button>
+                  )}
+                  {reviewOrderFor(p.id) && (
+                    <button className="glow-card-write" onClick={(e) => { e.stopPropagation(); setWriting({ product: p, order: reviewOrderFor(p.id) }); }}>
+                      ✍️ Escribe tu reseña · +{REVIEW_PTS.photo}
+                    </button>
+                  )}
+                  <p className="glow-card-desc">{p.desc}</p>
+                  <div style={{ marginTop: "auto", paddingTop: 12 }}>
+                    <span className="glow-card-price" style={{ color: C.aubergine }}>{money(p.price)}</span>
                   </div>
                   <div style={{ marginTop: 12 }}>
                     <button
@@ -749,14 +2752,48 @@ function Shop({ products, settings }) {
           })}
         </div>
         {visible.length === 0 && (
-          <p style={{ textAlign: "center", paddingBottom: 64, color: C.inkSoft }}>
+          <p className="glow-soft" style={{ textAlign: "center", paddingBottom: 64, fontSize: 19 }}>
             No hay productos que coincidan con tu búsqueda.
           </p>
         )}
       </div>
 
       {/* Sección "Más vendidos" */}
-      <BestSellers products={products} onAdd={addToCart} />
+      <BestSellers products={products} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} />
+      </>
+      )}
+
+      {reviewing && (
+        <ProductReviews
+          product={reviewing}
+          customer={customer}
+          reviewOrder={reviewOrderFor(reviewing.id)}
+          onClose={() => setReviewing(null)}
+          onWrite={(product, order) => { setReviewing(null); setWriting({ product, order }); }}
+        />
+      )}
+      {writing && (
+        <ReviewModal
+          order={writing.order}
+          item={writing.order.items.find((l) => l.id === writing.product.id)}
+          onClose={() => setWriting(null)}
+          onSent={() => { setWriting(null); loadMine(); alert("¡Gracias por tu reseña! 💕 Sumarás tus gatupuntos cuando la revisemos."); }}
+        />
+      )}
+      {panel && (
+        <AccountDrawer
+          section={panel}
+          onSection={onPanel}
+          onClose={() => onPanel(null)}
+          customer={customer}
+          onCustomer={onCustomer}
+          favs={favs}
+          products={products}
+          onToggleFav={onToggleFav}
+          onAdd={addToCart}
+          onJoin={onJoin}
+        />
+      )}
 
       {/* Botón flotante del carrito */}
       {cartCount > 0 && (
@@ -794,17 +2831,582 @@ function Shop({ products, settings }) {
           onSetQty={setQty}
           onClear={clearCart}
           onOrder={orderCart}
+          settings={settings}
+          customer={customer}
+          onJoin={onJoin ? () => { setCartOpen(false); onJoin(); } : null}
         />
       )}
     </div>
   );
 }
 
-function CartDrawer({ lines, total, onClose, onSetQty, onClear, onOrder }) {
+// Lee una captura de Yape (texto de OCR) y saca el Nro. de operación, el
+// monto y si el destinatario coincide con el titular configurado.
+const plain = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+function parseYapeText(text, yapeName) {
+  const flat = text.replace(/\s+/g, " ");
+  let op = "";
+  const m = /operaci[oó0]n\D{0,25}(\d[\d ]{4,14}\d)/i.exec(flat);
+  if (m) op = m[1].replace(/\s/g, "");
+  else {
+    // sin la etiqueta: el número largo que no sea un celular (9 dígitos que empieza en 9)
+    const nums = (flat.match(/\b\d{6,12}\b/g) || []).filter((n) => !/^9\d{8}$/.test(n));
+    op = nums.sort((a, b) => b.length - a.length)[0] || "";
+  }
+  // "S/ 25": el OCR a veces lee la barra como I, l o 1, y la S como 5
+  const a = /\b[S5$]\s*[/|Il1]\s*\.?\s*(\d{1,5}(?:[.,]\d{1,2})?)\b/.exec(flat);
+  const amount = a ? Number(a[1].replace(",", ".")) : null;
+  const words = plain(yapeName || "").split(/\s+/).filter((w) => w.length >= 4);
+  const hits = words.filter((w) => plain(flat).includes(w)).length;
+  const toMe = words.length ? hits >= Math.min(2, words.length) : null;
+  return { op, amount, toMe };
+}
+
+async function readYapeCapture(file) {
+  const { createWorker, PSM } = await import("tesseract.js");
+  const worker = await createWorker("spa");
+  try {
+    // modo "texto disperso": así no se salta el monto grande del comprobante
+    await worker.setParameters({ tessedit_pageseg_mode: PSM.SPARSE_TEXT });
+    const { data } = await worker.recognize(file);
+    return data.text || "";
+  } finally {
+    await worker.terminate();
+  }
+}
+
+// Carita de Rosalía (la misma de la portada, recortada a la cabeza).
+function RosaliaFace() {
+  return (
+    <svg viewBox="56 4 88 108" aria-hidden="true">
+      <CatArt variant="face" />
+    </svg>
+  );
+}
+
+// Cartita de venta que recibe el cliente al terminar.
+const NoteLetter = React.forwardRef(function NoteLetter({ order }, ref) {
+  const date = new Date(order.createdAt).toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return (
+    <div className="glow-letter" ref={ref}>
+      <div className="glow-letter-stamp"><div><RosaliaFace /></div></div>
+      <p className="glow-letter-hi">¡Hola!</p>
+      <h3 className="glow-letter-title">¡Gracias por<br />tu compra!</h3>
+      {order.items.map((l) => (
+        <div key={l.id} className="glow-letter-row">
+          {l.image ? <img src={l.image} alt="" /> : <span className="glow-letter-noimg" />}
+          <div>{l.name}<small>{l.gift ? "🎁 SORPRESAA!!!" : `${l.qty} × ${money(l.price)}`}</small></div>
+          <b>{l.gift ? "Regalo" : money(l.qty * l.price)}</b>
+        </div>
+      ))}
+      {order.discount > 0 && (
+        <div className="glow-letter-disc"><span>Gatupuntos canjeados</span><span>−{money(order.discount)}</span></div>
+      )}
+      {order.creditUsed > 0 && (
+        <div className="glow-letter-disc"><span>Michi-crédito</span><span>−{money(order.creditUsed)}</span></div>
+      )}
+      {order.delivery && (
+        <div className="glow-letter-disc" style={{ color: "#6b5a63" }}>
+          <span>{order.delivery.type === "juliaca" ? "Entrega en Juliaca" : `Envío Shalom · ${order.delivery.department}`}</span>
+          <span>{order.shipping > 0 ? money(order.shipping) : "Gratis"}</span>
+        </div>
+      )}
+      <div className="glow-letter-tot"><span>Total</span><b>{money(order.total)}</b></div>
+      <dl className="glow-letter-meta">
+        <dt>Pedido</dt><dd>#{order.code} · {date}</dd>
+        <dt>Pago</dt><dd>Yape · op. <span>{order.yapeOp}</span></dd>
+        {order.delivery && (
+          <>
+            <dt>Entrega</dt>
+            <dd>{order.delivery.type === "juliaca" ? `${order.delivery.point}${order.delivery.date ? " · " + whenText(order.delivery.date, order.delivery.time) : ""}` : `Shalom: ${order.delivery.agency || "agencia"} · ${order.delivery.district || order.delivery.city}${order.delivery.province ? ", " + order.delivery.province : ""}`}</dd>
+          </>
+        )}
+      </dl>
+      {(() => {
+        const st = order.status === "pendiente" || !order.status ? null : ORDER_STEP[order.status];
+        return st ? (
+          <span className="glow-letter-verif" style={{ color: st.color, background: st.bg }}><i style={{ background: st.color }} />{st.label}</span>
+        ) : (
+          <span className="glow-letter-verif"><i />Pago enviado · en verificación</span>
+        );
+      })()}
+      <div className="glow-letter-sign">con cariño, Rosalía</div>
+    </div>
+  );
+});
+
+// Pago con Yape en 5 pasos: pagar → subir captura → leerla → revisar → notita.
+// Paso 1 del pago: cómo recibe su pedido (gratis en Juliaca o envío Shalom).
+function DeliveryStep({ settings, customer, value, onChange, itemsTotal, discount, discountLabel = "Gatupuntos", onNext, onBack }) {
+  const [deps, setDeps] = useState([]);
+  useEffect(() => {
+    getConfig().then((c) => setDeps(c.departments || [])).catch(() => {});
+  }, []);
+  const cfg = settings.shipping || { juliacaPoints: [], defaultRate: 0, rates: {} };
+  const v = value;
+  // Agencias Shalom del departamento elegido (si la tienda tiene la clave).
+  const [agencies, setAgencies] = useState({ enabled: false, items: [], loading: false });
+  useEffect(() => {
+    if (v.type !== "shalom" || !v.department) return;
+    let alive = true;
+    setAgencies((a) => ({ ...a, loading: true }));
+    getShalomAgencies(v.department)
+      .then((r) => alive && setAgencies({ ...r, loading: false }))
+      .catch(() => alive && setAgencies({ enabled: false, items: [], loading: false }));
+    return () => { alive = false; };
+  }, [v.type, v.department]);
+  const agencyList = agencies.enabled && agencies.items.length > 0;
+  const suggested = (cfg.agencies || {})[v.department] || [];
+  const OTHER = "__otra__";
+  const set = (k, x) => onChange({ ...v, [k]: x });
+  const rate = (dep) => {
+    const r = cfg.rates?.[dep];
+    return r !== "" && r != null && Number.isFinite(Number(r)) ? Number(r) : cfg.defaultRate;
+  };
+  const shipping = v.type === "shalom" && v.department ? rate(v.department) : 0;
+  const cel = (v.phone || "").replace(/\D/g, "").replace(/^51(?=9\d{8}$)/, "");
+  const celOk = /^9\d{8}$/.test(cel);
+  const fullName = (v.name || "").trim().split(/\s+/).filter((w) => w.length > 1).length >= 2;
+  const pt = cfg.juliacaPoints.find((p) => p.name === v.point);
+  const ok =
+    v.type === "juliaca" ? !!pt && !!v.date && !!v.time && v.name?.trim() && celOk
+    : v.type === "shalom" ? !!v.department && !!v.province && !!v.district && v.agency?.trim() && fullName && /^\d{8}$/.test(v.dni || "") && celOk
+    : false;
+  const missing =
+    v.type === "juliaca"
+      ? !pt ? "Elige el punto de encuentro" : !v.date ? "Elige el día" : !v.time ? "Elige la hora" : !v.name?.trim() ? "Escribe tu nombre" : !celOk ? "Escribe un celular de 9 dígitos" : ""
+      : v.type === "shalom"
+      ? !v.department ? "Elige el departamento" : !v.province ? "Elige la provincia" : !v.district ? "Elige el distrito" : !v.agency?.trim() ? "Elige la agencia Shalom" : !fullName ? "Escribe nombres y apellidos completos" : !/^\d{8}$/.test(v.dni || "") ? "El DNI debe tener 8 dígitos" : !celOk ? "El celular debe tener 9 dígitos" : ""
+      : "";
+  // primera vez: completa con los datos del perfil
+  useEffect(() => {
+    if (customer && !v.name) onChange({ ...v, name: customer.name || "", phone: customer.phone || "" });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div className="glow-deliv">
+      <p className="glow-field-label" style={{ marginTop: 0 }}>¿Cómo quieres recibir tu pedido?</p>
+      <div className="glow-deliv-opts">
+        <button type="button" className={v.type === "juliaca" ? "is-on" : ""} onClick={() => set("type", "juliaca")}>
+          <span className="glow-deliv-ico">📍</span>
+          <b>Entrega en Juliaca</b>
+          <small className="glow-free">GRATIS</small>
+        </button>
+        <button type="button" className={v.type === "shalom" ? "is-on" : ""} onClick={() => set("type", "shalom")}>
+          <span className="glow-deliv-ico">🚚</span>
+          <b>Envío por Shalom</b>
+          <small>resto del Perú</small>
+        </button>
+      </div>
+
+      {v.type === "juliaca" && (
+        <>
+          <p className="glow-field-label">Punto de entrega</p>
+          <div className="glow-points">
+            {cfg.juliacaPoints.map((pt) => (
+              <label key={pt.name} className={v.point === pt.name ? "is-on" : ""}>
+                <input type="radio" name="punto" checked={v.point === pt.name} onChange={() => onChange({ ...v, point: pt.name, date: "", time: "" })} />
+                <span className="glow-rw-dot" />
+                <span>{pt.name}<small className="glow-point-time">🕒 {scheduleText(pt)}</small></span>
+              </label>
+            ))}
+          </div>
+          {pt && (
+            <>
+              <p className="glow-field-label">Día</p>
+              <div className="glow-chips">
+                {nextDates(pt).map((dt) => {
+                  const k = ymd(dt);
+                  return (
+                    <button key={k} type="button" className={v.date === k ? "is-on" : ""} onClick={() => onChange({ ...v, date: k, time: "" })}>
+                      <small>{DAY_SHORT[dt.getDay()]}</small><b>{dt.getDate()}</b><small>{dt.toLocaleDateString("es-PE", { month: "short" })}</small>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+          {pt && v.date && (
+            <>
+              <p className="glow-field-label">Hora exacta</p>
+              <div className="glow-chips is-time">
+                {slotsFor(pt, v.date).map((t) => (
+                  <button key={t} type="button" className={v.time === t ? "is-on" : ""} onClick={() => set("time", t)}>{hour12(t)}</button>
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {v.type === "shalom" && (
+        <>
+          <p className="glow-field-label">Departamento de destino</p>
+          <select className="glow-select" value={v.department || ""} onChange={(e) => onChange({ ...v, department: e.target.value, province: "", district: "", agency: "", agencyPick: "", agencyId: "" })}>
+            <option value="">Elige…</option>
+            {deps.map((d) => <option key={d}>{d}</option>)}
+          </select>
+          {v.department && (
+            <div className="glow-2col">
+              <div>
+                <p className="glow-field-label">Provincia</p>
+                <select className="glow-select" value={v.province || ""} onChange={(e) => onChange({ ...v, province: e.target.value, district: "" })}>
+                  <option value="">Elige…</option>
+                  {Object.keys(UBIGEO[v.department] || {}).sort((a, b) => a.localeCompare(b, "es")).map((p) => <option key={p}>{p}</option>)}
+                </select>
+              </div>
+              <div>
+                <p className="glow-field-label">Distrito</p>
+                <select className="glow-select" value={v.district || ""} disabled={!v.province} onChange={(e) => set("district", e.target.value)}>
+                  <option value="">{v.province ? "Elige…" : "Primero la provincia"}</option>
+                  {((UBIGEO[v.department] || {})[v.province] || []).map((d) => <option key={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+          )}
+          {agencyList ? (
+            <>
+              <p className="glow-field-label">Agencia Shalom donde recogerás</p>
+              <select
+                className="glow-select"
+                value={v.agencyId || ""}
+                onChange={(e) => {
+                  const a = agencies.items.find((x) => x.id === e.target.value);
+                  onChange({ ...v, agencyId: a?.id || "", agency: a ? `${a.name}${a.address ? " – " + a.address : ""}` : "" });
+                }}
+              >
+                <option value="">Elige la agencia…</option>
+                {[...new Set(agencies.items.map((a) => a.province))].map((prov) => (
+                  <optgroup key={prov} label={prov || v.department}>
+                    {agencies.items.filter((a) => a.province === prov).map((a) => (
+                      <option key={a.id} value={a.id}>{a.name}{a.district ? ` · ${a.district}` : ""}{a.address ? ` – ${a.address}` : ""}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </>
+          ) : (
+            <>
+              <p className="glow-field-label">Agencia Shalom donde recogerás</p>
+              {suggested.length > 0 && (
+                <select
+                  className="glow-select"
+                  value={v.agencyPick || ""}
+                  onChange={(e) => onChange({ ...v, agencyPick: e.target.value, agency: e.target.value === OTHER ? "" : e.target.value })}
+                  style={{ marginBottom: 6 }}
+                >
+                  <option value="">Elige una agencia…</option>
+                  {suggested.map((a) => <option key={a} value={a}>{a}</option>)}
+                  <option value={OTHER}>Otra agencia (la escribo)</option>
+                </select>
+              )}
+              {(suggested.length === 0 || v.agencyPick === OTHER) && (
+                <>
+                  <input className="glow-input" value={v.agency || ""} onChange={(e) => set("agency", e.target.value)} placeholder="DIRECCIÓN DE LA AGENCIA SHALOM" />
+                  <p className="glow-hint">⚠️ Es la dirección de la <b>agencia Shalom</b> donde recogerás, no la de tu casa.</p>
+                </>
+              )}
+            </>
+          )}
+          <a className="glow-map-link" href="https://shalom.com.pe/agencias" target="_blank" rel="noreferrer">
+            🗺️ ¿No sabes qué agencia? Búscala en el mapa de Shalom
+          </a>
+          <p className="glow-field-label">DNI de quien recoge</p>
+          <input className="glow-input" inputMode="numeric" value={v.dni || ""} onChange={(e) => set("dni", e.target.value.replace(/\D/g, "").slice(0, 8))} placeholder="8 dígitos" />
+        </>
+      )}
+
+      {v.type && (
+        <>
+          <div className="glow-2col">
+            <div><p className="glow-field-label">{v.type === "shalom" ? "Nombres y apellidos completos" : "Tu nombre"}</p><input className="glow-input" value={v.name || ""} onChange={(e) => set("name", e.target.value)} placeholder={v.type === "shalom" ? "Como figura en su DNI" : "Nombre y apellido"} /></div>
+            <div><p className="glow-field-label">Celular</p><input className="glow-input" inputMode="tel" value={v.phone || ""} onChange={(e) => set("phone", e.target.value.replace(/[^\d+ ]/g, ""))} placeholder="987 654 321" /></div>
+          </div>
+          <p className="glow-field-label">Nota <small>(opcional)</small></p>
+          <input className="glow-input" value={v.note || ""} onChange={(e) => set("note", e.target.value)} placeholder={v.type === "juliaca" ? "Ej. estaré con polera rosada" : "Algo que debamos saber"} />
+
+          {v.type === "juliaca" && pt && v.date && v.time && (
+            <p className="glow-when">📍 {pt.name}<br />🕒 {whenText(v.date, v.time)}</p>
+          )}
+          <div className="glow-sum">
+            <div><span>Productos</span><span>{money(itemsTotal + discount)}</span></div>
+            {discount > 0 && <div className="is-gold"><span>{discountLabel}</span><span>−{money(discount)}</span></div>}
+            <div><span>Envío</span><span>{v.type === "juliaca" ? "Gratis 🎉" : v.department ? money(shipping) : "—"}</span></div>
+            <div className="is-total"><span>Total a yapear</span><b>{money(itemsTotal + shipping)}</b></div>
+          </div>
+        </>
+      )}
+      <button className="glow-pay-btn" disabled={!ok} onClick={() => onNext(shipping)} style={{ background: ok ? C.yape : C.line, marginTop: 14 }}>
+        {ok || !missing ? "Continuar al pago" : missing}
+      </button>
+      <button className="glow-link-btn" onClick={onBack} style={{ color: C.plum }}><ChevronLeft size={16} /> Volver al carrito</button>
+    </div>
+  );
+}
+
+function YapeCheckout({ settings, lines, total: itemsTotal, discount = 0, discountLabel = "Gatupuntos", reward = "", useCredit = false, willEarn = 0, customer, onBack, onDone, order }) {
+  const [step, setStep] = useState(order ? "done" : "entrega");
+  const [delivery, setDelivery] = useState({ type: "" });
+  const [shipping, setShipping] = useState(0);
+  const total = itemsTotal + shipping;
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState("");
+  const [read, setRead] = useState({ op: "", amount: null, toMe: null });
+  const [op, setOp] = useState("");
+  const [err, setErr] = useState("");
+  const [sending, setSending] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const noteRef = useRef(null);
+  const num = settings.yapeNumber || "";
+  const pretty = num.replace(/(\d{3})(?=\d)/g, "$1 ").trim();
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(num);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      /* sin permiso para copiar: el número queda visible igual */
+    }
+  };
+
+  const useSample = async () => processFile(await makeSampleCapture(total, settings.yapeName));
+  const onPick = async (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (f) processFile(f);
+  };
+  const processFile = async (f) => {
+    setFile(f);
+    setPreview(URL.createObjectURL(f));
+    setErr("");
+    setStep("reading");
+    const started = Date.now();
+    let r = { op: "", amount: null, toMe: null };
+    try {
+      r = parseYapeText(await readYapeCapture(f), settings.yapeName);
+    } catch {
+      /* si la lectura falla, el cliente escribe el número a mano */
+    }
+    await new Promise((ok) => setTimeout(ok, Math.max(0, 1500 - (Date.now() - started))));
+    setRead(r);
+    setOp(r.op);
+    setStep("review");
+  };
+
+  const confirm = async () => {
+    setSending(true);
+    setErr("");
+    try {
+      const capture = await fileToDataURL(file, 1400, 0.85);
+      const o = await createOrder({ items: lines.map((l) => ({ id: l.id, qty: l.qty })), yapeOp: op, capture, test: TEST_MODE, reward, delivery, useCredit });
+      creditsChanged();
+      onDone(o);
+      setStep("done");
+    } catch (e) {
+      setErr(e.message || "No se pudo registrar el pedido.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const download = async () => {
+    if (!noteRef.current) return;
+    try {
+      const url = await toPng(noteRef.current, { pixelRatio: 2, cacheBust: true, backgroundColor: "#FFFDF8" });
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `notita-${order.code}.png`;
+      a.click();
+    } catch {
+      alert("No se pudo descargar la notita. Puedes tomarle captura de pantalla.");
+    }
+  };
+
+  const whatsapp = () => {
+    const items = order.items.map((l) => `• ${l.qty}x ${l.name} — ${money(l.price * l.qty)}`).join("\n");
+    const link = order.capture ? `\nCaptura: ${window.location.origin}${order.capture}` : "";
+    const msg = `Hola ${settings.storeName}, pagué mi pedido #${order.code} por Yape:\n${items}\n\nTotal: ${money(order.total)}\nNro. de operación: ${order.yapeOp}${link}`;
+    window.open(`https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  const dots = { entrega: 1, pay: 2, upload: 3, reading: 4, review: 5 }[step];
+  const amountOk = read.amount == null ? null : Math.abs(read.amount - total) < 0.01;
+
+  return (
+    <div className="glow-yape">
+      {dots && (
+        <div className="glow-steps-dots">
+          {[1, 2, 3, 4, 5].map((k) => <i key={k} className={k <= dots ? "on" : ""} style={k <= dots ? { background: C.yape } : null} />)}
+        </div>
+      )}
+
+      {step === "entrega" && (
+        <DeliveryStep
+          settings={settings}
+          customer={customer}
+          value={delivery}
+          onChange={setDelivery}
+          itemsTotal={itemsTotal}
+          discount={discount}
+          discountLabel={discountLabel}
+          onNext={(ship) => { setShipping(ship); setStep("pay"); }}
+          onBack={onBack}
+        />
+      )}
+
+      {step === "pay" && (
+        <>
+          <p className="glow-yape-label">Monto a yapear</p>
+          <p className="glow-yape-total" style={{ color: C.yape }}>{money(total)}</p>
+          {settings.yapeQr && (
+            <div className="glow-yape-qr" style={{ borderColor: C.yape }}>
+              <img src={settings.yapeQr} alt="Código QR de Yape" />
+            </div>
+          )}
+          {num && (
+            <div className="glow-yape-num">
+              <div>
+                <small>Número Yape</small>
+                <b>{pretty}</b>
+                {settings.yapeName && <span>{settings.yapeName}</span>}
+              </div>
+              <button onClick={copy} style={{ color: C.yape, borderColor: C.yape }}>{copied ? "¡Copiado!" : "Copiar"}</button>
+            </div>
+          )}
+          <ol className="glow-yape-steps">
+            <li>Abre Yape y {settings.yapeQr ? "escanea el QR" : "yapea al número"}{settings.yapeQr && num ? " o yapea al número" : ""}.</li>
+            <li>Paga exactamente <b>{money(total)}</b>.</li>
+            <li>Guarda la captura del comprobante: la subes en el siguiente paso.</li>
+          </ol>
+          <button className="glow-pay-btn" onClick={() => setStep("upload")} style={{ background: C.yape }}>Ya yapeé · siguiente</button>
+          <button className="glow-link-btn" onClick={() => setStep("entrega")} style={{ color: C.plum }}><ChevronLeft size={16} /> Cambiar entrega</button>
+        </>
+      )}
+
+      {step === "upload" && (
+        <>
+          <label className="glow-drop" style={{ color: C.yape }}>
+            <ImageIcon size={46} strokeWidth={1.6} />
+            <b>Sube la captura de tu Yape</b>
+            <small>JPG o PNG · desde tu galería</small>
+            <input type="file" accept="image/*" onChange={onPick} hidden />
+          </label>
+          <p className="glow-tip">Que se vean el <b>monto</b> y el <b>Nro. de operación</b>. Lo leemos automáticamente.</p>
+          {TEST_MODE && (
+            <button className="glow-pay-btn is-ghost" onClick={useSample} style={{ color: C.aubergine, borderColor: C.aubergine, marginTop: 12 }}>
+              🧪 Usar captura de ejemplo (prueba)
+            </button>
+          )}
+          <button className="glow-link-btn" onClick={() => setStep("pay")} style={{ color: C.plum }}><ChevronLeft size={16} /> Volver</button>
+        </>
+      )}
+
+      {step === "reading" && (
+        <>
+          <div className="glow-scan">
+            <img src={preview} alt="Tu captura" />
+            <span />
+          </div>
+          <p className="glow-reading" style={{ color: C.aubergine }}>Rosalía está leyendo tu comprobante…</p>
+        </>
+      )}
+
+      {step === "review" && (
+        <>
+          <div className="glow-review-thumb">
+            <img src={preview} alt="" />
+            <div>
+              <b>Tu captura</b>
+              <label style={{ color: C.yape }}>Cambiar<input type="file" accept="image/*" onChange={onPick} hidden /></label>
+            </div>
+          </div>
+          <div className="glow-checks">
+            <div className={amountOk === false ? "is-warn" : amountOk ? "is-ok" : ""}>
+              <span>Monto</span>
+              <span>
+                <b>{read.amount != null ? money(read.amount) : "—"}</b>{" "}
+                {amountOk ? "✓ coincide" : amountOk === false ? `⚠ el pedido es ${money(total)}` : "no se pudo leer"}
+              </span>
+            </div>
+            {read.toMe != null && (
+              <div className={read.toMe ? "is-ok" : "is-warn"}>
+                <span>Para</span>
+                <span>{read.toMe ? `✓ ${settings.yapeName}` : "⚠ no se reconoce el destinatario"}</span>
+              </div>
+            )}
+          </div>
+          <label className="glow-field-label">Nro. de operación {read.op ? "(leído de tu captura)" : ""}</label>
+          <input
+            className="glow-op-input"
+            style={{ color: C.yape }}
+            inputMode="numeric"
+            value={op}
+            onChange={(e) => setOp(e.target.value.replace(/\D/g, "").slice(0, 14))}
+            placeholder="Escríbelo si no se leyó"
+          />
+          <p className="glow-hint">Está en tu comprobante de Yape, debajo del monto.</p>
+          {err && <p className="glow-err">{err}</p>}
+          <button className="glow-pay-btn" onClick={confirm} disabled={op.length < 4 || sending} style={{ background: op.length < 4 ? C.line : C.yape, marginTop: 14 }}>
+            {sending ? "Enviando…" : "Confirmar y ver mi notita"}
+          </button>
+        </>
+      )}
+
+      {step === "done" && order && (
+        <>
+          {order.items.some((l) => l.gift) && (() => {
+            const g = order.items.find((l) => l.gift);
+            return (
+              <div className="glow-gift">
+                <p className="glow-gift-title">🎁 SORPRESAA!!!</p>
+                {g.image && <img src={g.image} alt={g.name} />}
+                <p>Tu regalo es: <b>{g.name}</b></p>
+              </div>
+            );
+          })()}
+          <NoteLetter order={order} ref={noteRef} />
+          {willEarn > 0 && <p className="glow-earn" style={{ marginTop: 14 }}>🧶 Cuando confirmemos tu pago sumarás <b>{fmtPts(willEarn)} gatupuntos</b></p>}
+          <button className="glow-pay-btn" onClick={download} style={{ background: C.primary, boxShadow: "none", marginTop: 16 }}>Descargar mi notita</button>
+          <button className="glow-pay-btn is-ghost" onClick={whatsapp} style={{ color: C.yape, borderColor: C.yape, marginTop: 8 }}>
+            <MessageCircle size={18} /> Enviar a la tienda por WhatsApp
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+function CartDrawer({ lines, total: subtotal, onClose, onSetQty, onClear, onOrder, settings, customer, onJoin }) {
+  const [step, setStep] = useState("cart"); // 'cart' | 'yape'
+  const [order, setOrder] = useState(null); // pedido ya registrado (muestra la notita)
+  const [pts, setPts] = useState(null); // gatupuntos de la clienta
+  const [reward, setReward] = useState(""); // clave del canje de gatupuntos o "credito"
+  const [wallet, setWallet] = useState(null); // Michi-crédito
+  useEffect(() => {
+    if (!customer?.token) return;
+    getMyPoints().then(setPts).catch(() => {});
+    getMyCredits().then(setWallet).catch(() => {});
+  }, [customer?.token]);
+  const tier = pts?.rewards.find((r) => r.key === reward);
+  const creditAmt = reward === "credito" && wallet && subtotal >= CREDIT_MIN ? round2(Math.min(wallet.balance, subtotal * CREDIT_SHARE)) : 0;
+  // si cambia el carrito y el beneficio ya no aplica, se quita
+  useEffect(() => {
+    if ((tier && subtotal < tier.min) || (reward === "credito" && subtotal < CREDIT_MIN)) setReward("");
+  }, [subtotal, tier, reward]);
+  const discount = reward === "credito" ? creditAmt : tier ? tier.value : 0;
+  const discountLabel = reward === "credito" ? "Michi-crédito" : "Gatupuntos";
+  const total = subtotal - discount;
+  const weighted = lines.reduce((s, l) => s + l.qty * l.price * (l.doublePoints ? 2 : 1), 0);
+  const willEarn = subtotal ? Math.floor(weighted * (total / subtotal) * (pts?.perSol || 1.25) * (pts?.level.mult || 1)) : 0;
+  const yapeReady = !!(settings.yapeNumber || settings.yapeQr);
+  useEffect(() => {
+    if (lines.length === 0 && !order) setStep("cart");
+  }, [lines.length, order]);
   return (
     <div
       onClick={onClose}
-      style={{ position: "fixed", inset: 0, display: "flex", justifyContent: "flex-end", background: "#2e1b2c66", zIndex: 50 }}
+      style={{ position: "fixed", inset: 0, display: "flex", justifyContent: "flex-end", background: "#2e1b2c66", zIndex: 70 }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -813,21 +3415,40 @@ function CartDrawer({ lines, total, onClose, onSetQty, onClear, onOrder }) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: `1px solid ${C.line}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <ShoppingCart size={20} color={C.roseDeep} />
-            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 600, margin: 0 }}>Tu pedido</h3>
+            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 600, margin: 0 }}>{order ? "¡Listo!" : step === "yape" ? "Pagar con Yape" : "Tu pedido"}</h3>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", color: C.inkSoft }}><X size={22} /></button>
         </div>
 
+        {step === "yape" ? (
+          <div style={{ flex: 1, overflowY: "auto", padding: "8px 20px 20px" }}>
+            <YapeCheckout
+              settings={settings}
+              lines={lines}
+              total={total}
+              reward={reward === "credito" ? "" : reward}
+              useCredit={reward === "credito"}
+              discount={discount}
+              discountLabel={discountLabel}
+              customer={customer}
+              willEarn={customer ? willEarn : 0}
+              order={order}
+              onBack={() => setStep("cart")}
+              onDone={(o) => { setOrder(o); onClear(); }}
+            />
+          </div>
+        ) : (
+        <>
         <div style={{ flex: 1, overflowY: "auto", padding: "8px 20px" }}>
           {lines.length === 0 ? (
-            <p style={{ textAlign: "center", color: C.inkSoft, marginTop: 40 }}>Tu carrito está vacío.</p>
+            <p className="glow-soft" style={{ textAlign: "center", fontSize: 19, marginTop: 40 }}>Tu carrito está vacío.</p>
           ) : (
             lines.map((l) => (
               <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: `1px solid ${C.line}` }}>
                 <Thumb src={l.images?.[0]} alt={l.name} size={52} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 600 }}>{l.name}</div>
-                  <div style={{ color: C.inkSoft, fontSize: 13 }}>{money(l.price)} c/u</div>
+                  <div style={{ color: C.plum, fontSize: 13 }}>{money(l.price)} c/u</div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <button onClick={() => onSetQty(l.id, l.qty - 1)} aria-label="Quitar uno" style={{ width: 28, height: 28, borderRadius: 8, border: `1px solid ${C.line}`, background: C.bg, color: C.ink, display: "grid", placeItems: "center", cursor: "pointer" }}>
@@ -847,22 +3468,47 @@ function CartDrawer({ lines, total, onClose, onSetQty, onClear, onOrder }) {
         </div>
 
         <div style={{ padding: "16px 20px", borderTop: `1px solid ${C.line}` }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-            <span style={{ color: C.inkSoft }}>Total</span>
+          {lines.length > 0 && customer && <RewardPicker info={pts} wallet={wallet} subtotal={subtotal} value={reward} onChange={setReward} />}
+          {tier?.surprise && <p className="glow-earn">🎁 Recibirás un regalo misterioso con tu pedido</p>}
+          {discount > 0 && (
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: C.inkSoft, marginBottom: 4 }}>
+              <span>Subtotal {money(subtotal)}</span><span style={{ color: C.antique, fontWeight: 700 }}>{discountLabel} −{money(discount)}</span>
+            </div>
+          )}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+            <span style={{ color: C.inkSoft }}>Total <small>(sin envío)</small></span>
             <span style={{ fontSize: 22, fontWeight: 700 }}>{money(total)}</span>
           </div>
+          {lines.length > 0 && <p style={{ margin: "0 0 8px", fontSize: 12, color: C.inkSoft }}>📍 Entrega gratis en Juliaca · 🚚 envío Shalom al resto del Perú</p>}
+          {lines.length > 0 && (customer ? (
+            <p className="glow-earn">🧶 Con esta compra ganarás <b>{fmtPts(willEarn)} gatupuntos</b></p>
+          ) : onJoin ? (
+            <button className="glow-earn is-join" onClick={onJoin}>🧶 Únete y gana <b>{fmtPts(Math.floor(weighted * 1.25) + 100)} gatupuntos</b> con esta compra</button>
+          ) : null)}
+          {yapeReady && (
+            <button
+              className="glow-pay-btn"
+              onClick={() => setStep("yape")}
+              disabled={lines.length === 0}
+              style={{ background: lines.length === 0 ? C.line : C.yape, color: lines.length === 0 ? C.inkSoft : "#fff", marginBottom: 8 }}
+            >
+              <YapeMark /> Pagar con Yape
+            </button>
+          )}
           <button
-            onClick={onOrder}
+            onClick={() => onOrder(false)}
             disabled={lines.length === 0}
             style={{
               width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-              padding: "12px 0", borderRadius: 12, fontSize: 15, fontWeight: 600, border: "none",
-              background: lines.length === 0 ? C.line : C.primary, color: lines.length === 0 ? C.inkSoft : C.primaryInk,
+              padding: "12px 0", borderRadius: 12, fontSize: 15, fontWeight: 600,
+              border: yapeReady ? `2px solid ${lines.length === 0 ? C.line : C.primary}` : "none",
+              background: yapeReady ? C.surface : lines.length === 0 ? C.line : C.primary,
+              color: lines.length === 0 ? C.inkSoft : yapeReady ? C.primary : C.primaryInk,
               cursor: lines.length === 0 ? "not-allowed" : "pointer",
             }}
           >
             <MessageCircle size={18} />
-            Finalizar pedido por WhatsApp
+            {yapeReady ? "Consultar por WhatsApp" : "Finalizar pedido por WhatsApp"}
           </button>
           {lines.length > 0 && (
             <button onClick={onClear} style={{ width: "100%", marginTop: 8, padding: "8px 0", borderRadius: 12, border: "none", background: "none", color: C.inkSoft, fontWeight: 600, cursor: "pointer" }}>
@@ -870,6 +3516,8 @@ function CartDrawer({ lines, total, onClose, onSetQty, onClear, onOrder }) {
             </button>
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
   );
@@ -878,7 +3526,7 @@ function CartDrawer({ lines, total, onClose, onSetQty, onClear, onOrder }) {
 /* =========================================================================
    VISTA ADMINISTRACIÓN — inventario, márgenes, ganancias, stock
 ========================================================================= */
-function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSaveSettings, onImportFromBrowser }) {
+function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSaveSettings, onImportFromBrowser, onAuthed }) {
   const [authed, setAuthed] = useState(false);
   const [pin, setPin] = useState("");
   const [err, setErr] = useState("");
@@ -931,6 +3579,7 @@ function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSaveSetti
         const ok = await checkPin(pin);
         if (ok) {
           setAdminPin(pin); // se recuerda para autorizar los cambios
+          await onAuthed?.();
           setAuthed(true);
         } else {
           setErr("PIN incorrecto.");
@@ -1007,7 +3656,7 @@ function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSaveSetti
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        {[["inventario", "Inventario"], ["ajustes", "Ajustes"]].map(([k, l]) => (
+        {[["inventario", "Inventario"], ["pedidos", "Pedidos"], ["resenas", "Reseñas"], ["ajustes", "Ajustes"]].map(([k, l]) => (
           <button
             key={k}
             onClick={() => setTab(k)}
@@ -1106,6 +3755,10 @@ function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSaveSetti
             </table>
           </div>
         </div>
+      ) : tab === "pedidos" ? (
+        <OrdersPanel />
+      ) : tab === "resenas" ? (
+        <ReviewsPanel />
       ) : (
         <SettingsPanel settings={settings} onSave={onSaveSettings} />
       )}
@@ -1139,6 +3792,7 @@ function ProductForm({ initial, busy, onSave, onClose }) {
     emoji: initial.emoji || "✨",
     images: initial.images || (initial.image ? [initial.image] : []),
     desc: initial.desc || "",
+    doublePoints: !!initial.doublePoints,
   });
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
   const valid = f.name.trim() && f.cost !== "" && f.price !== "" && f.stock !== "";
@@ -1231,6 +3885,11 @@ function ProductForm({ initial, busy, onSave, onClose }) {
           </div>
         </Field>
         <Field label="Descripción"><Inp value={f.desc} onChange={(v) => set("desc", v)} placeholder="Acabado mate de larga duración." /></Field>
+        <label className="glow-switch" style={{ marginBottom: 12 }}>
+          <input type="checkbox" checked={!!f.doublePoints} onChange={(e) => set("doublePoints", e.target.checked)} />
+          <span />
+          <div><b>×2 gatupuntos</b><small>Da el doble de gatupuntos: úsalo para rotar productos que se venden lento.</small></div>
+        </label>
 
         {f.cost !== "" && f.price !== "" && (
           <p style={{ color: C.inkSoft, fontSize: 13, marginBottom: 12 }}>
@@ -1243,6 +3902,259 @@ function ProductForm({ initial, busy, onSave, onClose }) {
           <button onClick={submit} disabled={!valid || busy || uploading} style={{ flex: 1, padding: "10px 0", borderRadius: 12, border: "none", color: valid && !busy ? C.primaryInk : C.inkSoft, background: valid && !busy ? C.primary : C.line, fontWeight: 600, cursor: valid && !busy ? "pointer" : "not-allowed" }}>{busy ? "Guardando…" : "Guardar"}</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Pedidos pagados con Yape: captura, Nro. de operación y estado.
+const STATUS_INFO = {
+  pendiente: { label: "Por verificar", color: "#D48A12", bg: "#FFF6E5" },
+  verificado: { label: "Pago verificado", color: "#1FA971", bg: "#EAF8F1" },
+  enviado: { label: "Enviado", color: "#742284", bg: "#F4ECF8" },
+  rechazado: { label: "Rechazado", color: "#C0392B", bg: "#FDECEA" },
+};
+
+function OrdersPanel() {
+  const [orders, setOrders] = useState(null);
+  const [err, setErr] = useState("");
+  useEffect(() => {
+    getOrders().then(setOrders).catch((e) => setErr(e.message));
+  }, []);
+  const change = async (id, status) => {
+    try {
+      const o = await setOrderStatus(id, status);
+      setOrders((list) => list.map((x) => (x.id === id ? o : x)));
+    } catch (e) {
+      alert("No se pudo cambiar el estado: " + e.message);
+    }
+  };
+  const clearTests = async () => {
+    if (!confirm("¿Borrar todos los pedidos de prueba?")) return;
+    try {
+      await deleteTestOrders();
+      setOrders((list) => list.filter((x) => !x.isTest));
+    } catch (e) {
+      alert("No se pudieron borrar: " + e.message);
+    }
+  };
+  if (err) return <p style={{ color: C.warn }}>{err}</p>;
+  if (!orders) return <p style={{ color: C.inkSoft }}>Cargando pedidos…</p>;
+  const tests = orders.filter((o) => o.isTest).length;
+  if (orders.length === 0)
+    return (
+      <div style={{ borderRadius: 16, padding: 24, background: C.surface, border: `1px solid ${C.line}`, color: C.inkSoft }}>
+        Aún no hay pedidos pagados con Yape. Aparecerán aquí con la captura del comprobante.
+      </div>
+    );
+  return (
+    <div className="glow-orders">
+      {tests > 0 && (
+        <button onClick={clearTests} style={{ justifySelf: "start", padding: "8px 14px", borderRadius: 10, border: `1px solid ${C.line}`, background: C.surface, color: C.warn, fontWeight: 700 }}>
+          Borrar {tests} pedido{tests > 1 ? "s" : ""} de prueba
+        </button>
+      )}
+      {orders.map((o) => {
+        const st = STATUS_INFO[o.status] || STATUS_INFO.pendiente;
+        return (
+          <div key={o.id} className="glow-order" style={{ background: C.surface, border: `1px solid ${C.line}` }}>
+            {o.capture ? (
+              <a href={o.capture} target="_blank" rel="noreferrer" className="glow-order-shot" title="Ver captura">
+                <img src={o.capture} alt="Captura del Yape" />
+              </a>
+            ) : <div className="glow-order-shot" />}
+            <div className="glow-order-info">
+              <div className="glow-order-head">
+                <b>#{o.code} {o.isTest && <span className="glow-test-tag">PRUEBA</span>}</b>
+                <span>{new Date(o.createdAt).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })}</span>
+              </div>
+              <div style={{ fontSize: 13, color: C.plum, margin: "4px 0" }}>
+                {o.items.map((l) => (l.gift ? `🎁 SORPRESA: ${l.name}` : `${l.qty}× ${l.name}`)).join(" · ")}
+              </div>
+              {o.delivery && (
+                <div className="glow-order-deliv">
+                  {o.delivery.type === "juliaca" ? (
+                    <>📍 <b>Juliaca · {o.delivery.point}</b> (gratis){o.delivery.date ? <> · <b>🕒 {whenText(o.delivery.date, o.delivery.time)}</b></> : ""}</>
+                  ) : (
+                    <>🚚 <b>Shalom · {o.delivery.department}{o.delivery.province ? ` › ${o.delivery.province}` : ""} › {o.delivery.district || o.delivery.city}</b>{o.delivery.agency ? ` · agencia ${o.delivery.agency}` : ""} · envío {money(o.shipping)} · DNI {o.delivery.dni}</>
+                  )}
+                  <br />{o.delivery.name} · {o.delivery.phone}{o.delivery.note ? ` · «${o.delivery.note}»` : ""}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "baseline" }}>
+                <b style={{ fontSize: 18 }}>{money(o.total)}</b>
+                {o.discount > 0 && <span style={{ fontSize: 12, color: C.antique, fontWeight: 700 }}>(canjeó {o.rewardPoints} gatupuntos · −{money(o.discount)})</span>}
+                {o.creditUsed > 0 && <span style={{ fontSize: 12, color: C.antique, fontWeight: 700 }}>(usó Michi-crédito −{money(o.creditUsed)})</span>}
+                <span style={{ fontSize: 13 }}>Yape op. <b style={{ fontFamily: "monospace", color: C.yape }}>{o.yapeOp}</b></span>
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8, flexWrap: "wrap" }}>
+                {o.status === "pendiente" && (
+                  <>
+                    <button className="glow-admin-ok" onClick={() => change(o.id, "verificado")}>✓ Confirmar pago</button>
+                    <button className="glow-admin-no" onClick={() => confirm(`¿Rechazar el pago del pedido #${o.code}? Se devolverán sus gatupuntos canjeados.`) && change(o.id, "rechazado")}>✗ Rechazar</button>
+                  </>
+                )}
+                {o.status === "verificado" && (
+                  <button className="glow-admin-ship" onClick={() => change(o.id, "enviado")}>📦 Marcar como enviado</button>
+                )}
+                <span style={{ fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 999, color: st.color, background: st.bg }}>{st.label}</span>
+                <select value={o.status} disabled={o.status === "rechazado"} onChange={(e) => change(o.id, e.target.value)} style={{ padding: "6px 8px", borderRadius: 8, border: `1px solid ${C.line}`, background: C.bg, fontSize: 13 }}>
+                  {Object.entries(STATUS_INFO).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Envíos: puntos de entrega gratis en Juliaca y tarifas Shalom por departamento.
+function ShippingSettings({ value, onChange }) {
+  const v = value || { juliacaPoints: [], defaultRate: 12, rates: {} };
+  const [deps, setDeps] = useState([]);
+  useEffect(() => {
+    getConfig().then((c) => setDeps(c.departments || [])).catch(() => {});
+  }, []);
+  const setRate = (dep, r) => onChange({ ...v, rates: { ...v.rates, [dep]: r === "" ? "" : Number(r) } });
+  return (
+    <div style={{ margin: "18px 0 6px", paddingTop: 16, borderTop: `1px solid ${C.line}` }}>
+      <div style={{ fontWeight: 700, color: C.aubergine, marginBottom: 4 }}>🚚 Entregas y envíos</div>
+      <p style={{ margin: "0 0 12px", color: C.inkSoft, fontSize: 13 }}>
+        En Juliaca la entrega es gratis en los puntos que pongas aquí. Para el resto del Perú, pon la tarifa de Shalom por departamento
+        (revísala en el <a href="https://shalom.com.pe/" target="_blank" rel="noreferrer">cotizador de Shalom</a>).
+      </p>
+      <Field label="Puntos de encuentro en Juliaca y horarios">
+        <div className="glow-pt-edit">
+          {v.juliacaPoints.map((p, i) => {
+            const upd = (k, x) => onChange({ ...v, juliacaPoints: v.juliacaPoints.map((q, j) => (j === i ? { ...q, [k]: x } : q)) });
+            return (
+              <div key={i} className="glow-pt-row">
+                <div className="glow-pt-top">
+                  <input value={p.name} onChange={(e) => upd("name", e.target.value)} placeholder="Lugar de encuentro" />
+                  <button type="button" aria-label="Quitar punto" onClick={() => onChange({ ...v, juliacaPoints: v.juliacaPoints.filter((_, j) => j !== i) })}><Trash2 size={15} /></button>
+                </div>
+                <div className="glow-pt-days">
+                  {[1, 2, 3, 4, 5, 6, 0].map((d) => {
+                    const on = (p.days || []).includes(d);
+                    return (
+                      <button key={d} type="button" className={on ? "is-on" : ""} aria-pressed={on}
+                        onClick={() => upd("days", on ? p.days.filter((x) => x !== d) : [...(p.days || []), d])}>{DAY_SHORT[d]}</button>
+                    );
+                  })}
+                </div>
+                <div className="glow-pt-hours">
+                  <label>Desde{" "}
+                    <select value={p.from || "10:00"} onChange={(e) => {
+                      const from = e.target.value;
+                      onChange({ ...v, juliacaPoints: v.juliacaPoints.map((q, j) => (j === i ? { ...q, from, to: q.to > from ? q.to : HALF_HOURS[HALF_HOURS.indexOf(from) + 1] } : q)) });
+                    }}>
+                      {HALF_HOURS.slice(0, -1).map((t) => <option key={t} value={t}>{hour12(t)}</option>)}
+                    </select>
+                  </label>
+                  <label>Hasta{" "}
+                    <select value={p.to || "18:00"} onChange={(e) => upd("to", e.target.value)}>
+                      {HALF_HOURS.filter((t) => t > (p.from || "10:00")).map((t) => <option key={t} value={t}>{hour12(t)}</option>)}
+                    </select>
+                  </label>
+                </div>
+              </div>
+            );
+          })}
+          <button type="button" className="glow-pt-add" onClick={() => onChange({ ...v, juliacaPoints: [...v.juliacaPoints, { name: "", days: [1, 2, 3, 4, 5, 6], from: "10:00", to: "18:00" }] })}>
+            <Plus size={15} /> Agregar punto
+          </button>
+        </div>
+      </Field>
+      <Field label="Tarifa Shalom por defecto (S/)">
+        <Inp type="number" value={v.defaultRate} onChange={(x) => onChange({ ...v, defaultRate: Number(x) })} />
+      </Field>
+      <details className="glow-rates" style={{ marginBottom: 10 }}>
+        <summary>Agencias Shalom sugeridas por departamento</summary>
+        <p style={{ margin: "0 0 8px", color: C.inkSoft, fontSize: 12.5 }}>
+          Una por línea, por ejemplo «Juliaca – Jr. Mariano Núñez 123». La clienta las verá en una lista (y podrá escribir otra).
+          Búscalas en <a href="https://shalom.com.pe/agencias" target="_blank" rel="noreferrer">shalom.com.pe/agencias</a>.
+        </p>
+        <div className="glow-agency-edit">
+          {deps.map((d) => {
+            const list = (v.agencies || {})[d] || [];
+            return (
+              <label key={d}>
+                <span>{d}{list.length ? ` (${list.length})` : ""}</span>
+                <textarea
+                  rows={list.length ? Math.min(6, list.length + 1) : 1}
+                  value={list.join("\n")}
+                  placeholder="Sin agencias sugeridas"
+                  onChange={(e) => onChange({ ...v, agencies: { ...(v.agencies || {}), [d]: e.target.value.split("\n") } })}
+                  onBlur={(e) => onChange({ ...v, agencies: { ...(v.agencies || {}), [d]: e.target.value.split("\n").map((x) => x.trim()).filter(Boolean) } })}
+                />
+              </label>
+            );
+          })}
+        </div>
+      </details>
+      <details className="glow-rates">
+        <summary>Tarifa por departamento (vacío = usa la de por defecto)</summary>
+        <div className="glow-rates-grid">
+          {deps.map((d) => (
+            <label key={d}>
+              <span>{d}</span>
+              <input type="number" min="0" step="0.5" value={v.rates?.[d] ?? ""} placeholder={String(v.defaultRate)} onChange={(e) => setRate(d, e.target.value)} />
+            </label>
+          ))}
+        </div>
+      </details>
+    </div>
+  );
+}
+
+// Reseñas por revisar: al aprobar, la clienta recibe sus gatupuntos.
+function ReviewsPanel() {
+  const [list, setList] = useState(null);
+  const [err, setErr] = useState("");
+  useEffect(() => {
+    getAdminReviews().then(setList).catch((e) => setErr(e.message));
+  }, []);
+  const change = async (id, status) => {
+    try {
+      const r = await setReviewStatus(id, status);
+      setList((l) => l.map((x) => (x.id === id ? { ...x, status: r.status } : x)));
+    } catch (e) {
+      alert("No se pudo guardar: " + e.message);
+    }
+  };
+  if (err) return <p style={{ color: C.warn }}>{err}</p>;
+  if (!list) return <p style={{ color: C.inkSoft }}>Cargando reseñas…</p>;
+  if (!list.length)
+    return <div style={{ borderRadius: 16, padding: 24, background: C.surface, border: `1px solid ${C.line}`, color: C.inkSoft }}>Aún no hay reseñas.</div>;
+  return (
+    <div className="glow-orders">
+      <p style={{ margin: 0, color: C.inkSoft, fontSize: 13 }}>
+        Aprueba solo reseñas reales. Con foto del producto: +{REVIEW_PTS.photo} gatupuntos · solo texto: +{REVIEW_PTS.text}. Las aprobadas se muestran en la tienda.
+      </p>
+      {list.map((r) => (
+        <div key={r.id} className="glow-order" style={{ background: C.surface, border: `1px solid ${C.line}` }}>
+          {r.photo ? (
+            <a href={r.photo} target="_blank" rel="noreferrer" className="glow-order-shot"><img src={r.photo} alt="Foto de la reseña" /></a>
+          ) : <div className="glow-order-shot" style={{ display: "grid", placeItems: "center", color: C.inkSoft, fontSize: 12 }}>sin foto</div>}
+          <div className="glow-order-info">
+            <div className="glow-order-head"><b>{r.productName}</b><span>{new Date(r.createdAt).toLocaleDateString("es-PE")}</span></div>
+            <div style={{ fontSize: 13, color: C.plum }}>{r.name} · {r.email} · pedido #GLW-{String(r.orderId).padStart(4, "0")}</div>
+            <div style={{ margin: "4px 0" }}><Stars value={r.rating} size={16} /></div>
+            <p style={{ margin: "0 0 8px", fontSize: 14, color: C.ink }}>{r.text}</p>
+            {r.status === "pendiente" ? (
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="glow-admin-ok" onClick={() => change(r.id, "aprobada")}>✓ Aprobar · +{r.photo ? REVIEW_PTS.photo : REVIEW_PTS.text}</button>
+                <button className="glow-admin-no" onClick={() => change(r.id, "rechazada")}>✗ Rechazar</button>
+              </div>
+            ) : (
+              <span className="glow-chip" style={r.status === "aprobada" ? { color: "#1FA971", background: "#EAF8F1" } : { color: "#C0392B", background: "#FDECEA" }}>
+                {r.status === "aprobada" ? "Aprobada" : "Rechazada"}
+              </span>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -1263,6 +4175,21 @@ function SettingsPanel({ settings, onSave }) {
       setLogoErr("");
     } catch {
       setLogoErr("No se pudo subir el logo. Revisa tu conexión con el servidor.");
+    }
+    e.target.value = "";
+  };
+  const [qrErr, setQrErr] = useState("");
+  const onPickQr = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      // el QR se guarda más grande y nítido para que se pueda escanear
+      const dataUrl = await fileToDataURL(file, 900, 0.95);
+      const [url] = await uploadImages([dataUrl]);
+      set("yapeQr", url);
+      setQrErr("");
+    } catch {
+      setQrErr("No se pudo subir el QR. Revisa tu conexión con el servidor.");
     }
     e.target.value = "";
   };
@@ -1318,8 +4245,42 @@ function SettingsPanel({ settings, onSave }) {
       <Field label="Eslogan (frase de la portada)"><Inp value={f.tagline || ""} onChange={(v) => set("tagline", v)} placeholder="Accesorios de gatitos para alegrar tu día 🐾" /></Field>
 
       <Field label="Número de WhatsApp (con código de país)"><Inp value={f.whatsapp} onChange={(v) => set("whatsapp", v.replace(/\D/g, ""))} placeholder="51900000000" /></Field>
+      <div style={{ margin: "18px 0 6px", paddingTop: 16, borderTop: `1px solid ${C.line}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, color: C.yape, fontWeight: 700, marginBottom: 4 }}>
+          <YapeMark /> Pago con Yape
+        </div>
+        <p style={{ margin: "0 0 12px", color: C.inkSoft, fontSize: 13 }}>
+          Con el QR o el número configurados, el carrito muestra el botón «Pagar con Yape».
+        </p>
+        <Field label="QR de Yape (captura de «Mi QR» en tu app)">
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <div style={{ width: 88, height: 88, borderRadius: 14, overflow: "hidden", flexShrink: 0, display: "grid", placeItems: "center", background: C.bg, border: `1px solid ${C.line}` }}>
+              {f.yapeQr ? <img src={f.yapeQr} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <ImageIcon size={26} color={C.yape} />}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <label style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.line}`, background: C.bg, color: C.ink, fontSize: 13, fontWeight: 600, cursor: "pointer", width: "fit-content" }}>
+                <ImageIcon size={15} /> {f.yapeQr ? "Cambiar QR" : "Subir QR"}
+                <input type="file" accept="image/*" onChange={onPickQr} style={{ display: "none" }} />
+              </label>
+              {f.yapeQr && (
+                <button type="button" onClick={() => set("yapeQr", "")} style={{ background: "none", border: "none", color: C.roseDeep, fontSize: 13, fontWeight: 600, cursor: "pointer", textAlign: "left", padding: 0 }}>
+                  Quitar QR
+                </button>
+              )}
+            </div>
+          </div>
+          {qrErr && <p style={{ color: C.warn, fontSize: 12, margin: "6px 0 0" }}>{qrErr}</p>}
+        </Field>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <Field label="Número Yape"><Inp value={f.yapeNumber || ""} onChange={(v) => set("yapeNumber", v.replace(/\D/g, "").slice(0, 9))} placeholder="987654321" /></Field>
+          <Field label="Titular"><Inp value={f.yapeName || ""} onChange={(v) => set("yapeName", v)} placeholder="Nombre en Yape" /></Field>
+        </div>
+      </div>
+
+      <ShippingSettings value={f.shipping} onChange={(v) => set("shipping", v)} />
+
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="PIN de acceso"><Inp value={f.pin} onChange={(v) => set("pin", v)} /></Field>
+        <Field label="PIN del panel (solo tú lo ves)"><Inp value={f.pin || ""} onChange={(v) => set("pin", v)} placeholder="Vacío = no cambiar" /></Field>
         <Field label="Alerta de stock bajo"><Inp type="number" value={f.lowStock} onChange={(v) => set("lowStock", Number(v))} /></Field>
       </div>
       <button

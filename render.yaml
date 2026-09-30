@@ -1,0 +1,26 @@
+# Configuración para Render (https://render.com): "New → Blueprint" y elige
+# este repositorio. Las claves (sync: false) se escriben en el panel de Render,
+# nunca aquí.
+services:
+  - type: web
+    name: glow-by-rosalia
+    runtime: node
+    plan: free
+    buildCommand: npm run render-build
+    startCommand: npm run prod
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: TEST_MODE
+        value: "off"
+      - key: DATABASE_URL
+        sync: false
+      - key: CLOUDINARY_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: SHALOM_API_KEY
+        sync: false

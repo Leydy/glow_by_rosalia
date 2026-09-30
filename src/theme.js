@@ -5,6 +5,10 @@ export const C = {
   surface: "#FFFFFF",
   ink: "#2B2530", // tinta oscura neutra (texto, buen contraste)
   inkSoft: "#857C8A", // texto secundario
+  plum: "#6B5A63", // malva grisáceo: descripciones y textos suaves de la tienda
+  aubergine: "#3B2146", // berenjena: nombres de productos, títulos y precios
+  yape: "#742284", // morado de Yape (botón y pantalla de pago)
+  antique: "#A8741A", // dorado antiguo (legible sobre claro): categorías y detalles
   rose: "#F26D9C", // rosa vibrante
   roseDeep: "#D6357F", // magenta fuerte para acentos, etiquetas y precios
   primary: "#FF3D8B", // rosa fucsia vibrante — botones de acción (CTA que resalta)

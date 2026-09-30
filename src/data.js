@@ -63,6 +63,9 @@ export const DEFAULT_SETTINGS = {
   lowStock: 5,
   logo: "", // URL o imagen del logo para la portada (se configura en Ajustes)
   tagline: "Accesorios de gatitos para alegrar tu día 🐾",
+  yapeNumber: "", // número de celular de Yape (9 dígitos)
+  yapeName: "", // nombre del titular, tal como aparece en Yape
+  yapeQr: "", // imagen del QR de Yape (se sube en Ajustes)
 };
 
 export const CATEGORIES = ["Todos", "Aretes", "Collares", "Anillos", "Ropa", "Llaveros", "Bolsos"];
@@ -70,13 +73,23 @@ export const CATEGORIES = ["Todos", "Aretes", "Collares", "Anillos", "Ropa", "Ll
 // Info para los banners de portada por categoría: descripción general, emoji
 // grande y degradado pastel (kawaii y llamativo).
 export const CATEGORY_INFO = {
-  Aretes: { emoji: "🎀", desc: "Gatitos diminutos para tus orejas, en dorado y plata. ¡Dulces y elegantes!", grad: ["#FFE0EC", "#FFC7D0"] },
-  Collares: { emoji: "🐈", desc: "Lleva un michi cerquita del corazón con nuestros collares más tiernos.", grad: ["#ECE0FF", "#D8C7FF"] },
-  Anillos: { emoji: "💍", desc: "Anillos con huellitas y michis para llevar en cada mano un poquito de ternura.", grad: ["#FFF0DC", "#FFDDB8"] },
-  Ropa: { emoji: "👕", desc: "Polos y sudaderas con estampados de gatitos, suavecitos y abrazables.", grad: ["#DFF1FF", "#C7E6FF"] },
-  Llaveros: { emoji: "🧶", desc: "Llaveritos de felpa que querrás abrazar. Cuida tus llaves con estilo.", grad: ["#FFF1DA", "#FFE3C0"] },
-  Bolsos: { emoji: "👜", desc: "Bolsos espaciosos con gatitos, ¡demasiado lindos para dejarlos en casa!", grad: ["#DEFBEA", "#C3F2D6"] },
+  Aretes: { emoji: "🎀", desc: "Gatitos diminutos para tus orejas, en dorado y plata. ¡Dulces y elegantes!", grad: ["#FFE0EC", "#FFC7D0"], words: ["brillan", "enamoran", "ronronean"] },
+  Collares: { emoji: "🐈", desc: "Lleva un michi cerquita del corazón con nuestros collares más tiernos.", grad: ["#ECE0FF", "#D8C7FF"], words: ["enamoran", "brillan", "ronronean"] },
+  Anillos: { emoji: "💍", desc: "Anillos con huellitas y michis para llevar en cada mano un poquito de ternura.", grad: ["#FFF0DC", "#FFDDB8"], words: ["brillan", "enamoran", "abrazan"] },
+  Ropa: { emoji: "👕", desc: "Polos y sudaderas con estampados de gatitos, suavecitos y abrazables.", grad: ["#DFF1FF", "#C7E6FF"], words: ["abraza", "enamora", "ronronea"] },
+  Llaveros: { emoji: "🧶", desc: "Llaveritos de felpa que querrás abrazar. Cuida tus llaves con estilo.", grad: ["#FFF1DA", "#FFE3C0"], words: ["acompañan", "enamoran", "sonríen"] },
+  Bolsos: { emoji: "👜", desc: "Bolsos espaciosos con gatitos, ¡demasiado lindos para dejarlos en casa!", grad: ["#DEFBEA", "#C3F2D6"], words: ["enamoran", "combinan", "acompañan"] },
 };
+
+// Portada: frases que rotan bajo el nombre de la tienda en la diapositiva de
+// bienvenida, y mensajes de la cinta que se desliza al pie del slider.
+export const HERO_INTRO_WORDS = ["hecho con amor", "lleno de michis", "para consentirte"];
+export const HERO_TICKER = [
+  "Pide por WhatsApp",
+  "Envíos a todo el Perú",
+  "Nuevos michis cada semana",
+  "Hecho con amor por Rosalía",
+];
 
 // Versión del catálogo de ejemplo. Súbela cuando cambies SEED_PRODUCTS para que
 // las tiendas que aún tienen el catálogo viejo guardado se actualicen.
