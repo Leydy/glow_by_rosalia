@@ -1475,11 +1475,11 @@ button {
   margin-bottom: 4px;
   border-bottom: 1px solid #f0e3ea;
 }
-.glow-menu-head b {
+.glow-menu-head > div > b {
   display: block;
   color: #3b2146;
 }
-.glow-menu-head small {
+.glow-menu-head > div > small {
   display: block;
   max-width: 160px;
   overflow: hidden;
@@ -1720,7 +1720,12 @@ button {
 }
 .glow-my-orders {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
+}
+.glow-my-order,
+.glow-acc-order {
+  min-width: 0;
 }
 .glow-my-order {
   padding: 12px 14px;
@@ -1740,6 +1745,7 @@ button {
 }
 .glow-my-order-imgs {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   margin: 10px 0;
@@ -1783,8 +1789,23 @@ button {
     width: 34px;
     height: 34px;
   }
+  /* En el celular el menú de la cuenta ocupa el ancho de la pantalla,
+     con margen a los lados, justo debajo de la barra. */
   .glow-menu {
-    right: -90px;
+    position: fixed;
+    top: var(--menu-top, 64px);
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+  }
+  .glow-menu-head small {
+    max-width: none;
+  }
+  .glow-menu button {
+    padding: 13px 12px;
+    font-size: 15px;
   }
 }
 @media (max-width: 400px) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useId, useCallback } from "react";
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef, useId, useCallback } from "react";
 import {
   Store, Lock, Plus, Minus, Pencil, Trash2, X, Search,
   TrendingUp, Package, Wallet, AlertTriangle, Settings as SettingsIcon,
@@ -303,6 +303,11 @@ const ORDER_STEP = {
 // Menú de la cuenta (se abre al tocar el avatar).
 function AccountMenu({ customer, onPick, onLogout, onClose }) {
   const ref = useRef(null);
+  // En el celular el menú va fijo: se coloca justo debajo de la barra superior.
+  useLayoutEffect(() => {
+    const h = document.querySelector(".glow-header");
+    if (h && ref.current) ref.current.style.setProperty("--menu-top", `${Math.round(h.getBoundingClientRect().bottom) + 8}px`);
+  }, []);
   useEffect(() => {
     const out = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
     const esc = (e) => e.key === "Escape" && onClose();
