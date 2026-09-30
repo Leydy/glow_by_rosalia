@@ -79,7 +79,7 @@ export function welcomeEmail({ name, points = 100 }) {
 </td></tr></table>
 </body></html>`;
   const text = `¡Holiiii, ${first}! Bienvenida al club de Rosalía.\n\nTe regalamos ${points} gatupuntos por unirte. Junta 500 y canjéalos por S/ 5 de descuento.\n\nIr a la tienda: ${url}\n\nCon cariño, Rosalía`;
-  return { subject: `¡Bienvenida al club de Rosalía, ${first}! 🐾 Tienes ${points} gatupuntos`, html, text };
+  return { subject: `🐾✨ ¡Bienvenida al club de Rosalía, ${first}! 🎁 ${points} gatupuntos para ti 😻`, html, text };
 }
 
 export async function sendMail({ to, name, subject, html, text }) {
