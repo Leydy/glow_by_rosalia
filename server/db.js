@@ -91,6 +91,7 @@ export async function initSchema() {
     ALTER TABLE customers ADD COLUMN IF NOT EXISTS district  TEXT;
     ALTER TABLE customers ADD COLUMN IF NOT EXISTS favorites JSONB NOT NULL DEFAULT '[]'::jsonb;
     ALTER TABLE customers ADD COLUMN IF NOT EXISTS birthday  DATE;
+    ALTER TABLE customers ADD COLUMN IF NOT EXISTS welcome_sent_at TIMESTAMPTZ;
 
     -- Gatupuntos: libro de movimientos. "ref" evita dar dos veces el mismo
     -- bono (registro, cumple-2026, pedido-12, canje-12…).

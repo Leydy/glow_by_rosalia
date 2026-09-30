@@ -3501,6 +3501,148 @@ button {
   }
 }
 
+/* Pestañas del panel: en el celular se deslizan con el dedo */
+.glow-admin-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.glow-admin-tabs::-webkit-scrollbar {
+  display: none;
+}
+.glow-admin-tabs button {
+  flex-shrink: 0;
+}
+
+/* ---------- Panel: clientas ---------- */
+.glow-cust {
+  display: grid;
+  gap: 14px;
+}
+.glow-cust-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+.glow-cust-stats div {
+  padding: 14px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #f0e3ea;
+}
+.glow-cust-stats b {
+  display: block;
+  font-family: "Fraunces", serif;
+  font-size: 26px;
+  color: #3b2146;
+}
+.glow-cust-stats span {
+  color: #857c8a;
+  font-size: 12.5px;
+}
+.glow-cust-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.glow-cust-tools .glow-input {
+  flex: 1 1 240px;
+}
+.glow-cust-btn {
+  padding: 9px 14px;
+  border: none;
+  border-radius: 12px;
+  background: #3b2146;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.glow-cust-btn:disabled {
+  opacity: 0.5;
+}
+.glow-cust-mail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #fff6e5;
+  color: #6b4a10;
+  font-size: 13px;
+}
+.glow-cust-mail.is-on {
+  background: #eaf8f1;
+  color: #13744d;
+}
+.glow-cust-test {
+  display: flex;
+  gap: 6px;
+}
+.glow-cust-test .glow-input {
+  width: 200px;
+  padding: 7px 10px;
+}
+.glow-cust-flash {
+  margin: 0;
+  font-weight: 700;
+  color: #3b2146;
+}
+.glow-cust-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+.glow-cust-card {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #f0e3ea;
+  min-width: 0;
+}
+.glow-cust-info {
+  flex: 1;
+  min-width: 0;
+}
+.glow-cust-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.glow-cust-top b {
+  color: #3b2146;
+  font-size: 16px;
+}
+.glow-cust-sub {
+  color: #6b5a63;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.glow-cust-nums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 6px;
+  color: #3b2146;
+  font-size: 13px;
+}
+.glow-cust-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 6px;
+  color: #857c8a;
+  font-size: 12px;
+}
+
 /* ---------- Pantalla de carga ---------- */
 .glow-loader {
   position: fixed;

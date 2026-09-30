@@ -12,7 +12,7 @@ import {
   setAdminPin, checkPin,
   createProduct, updateProduct, deleteProduct, importProducts,
   getProducts, getSettings, updateSettings, uploadImages,
-  createOrder, getOrders, setOrderStatus, deleteTestOrders, getAdminSettings, getAdminProducts,
+  createOrder, getOrders, setOrderStatus, deleteTestOrders, getAdminSettings, getAdminProducts, getCustomers, sendWelcomeMail,
   getConfig, googleLogin, testLogin, setCustomerToken, getMe, updateMe, getMyOrders, saveFavorites, getMyPoints, getShalomAgencies,
   getMyReviews, createReview, getProductReviews, getAdminReviews, setReviewStatus, getMyCredits, claimMyCredit,
 } from "./api.js";
@@ -3660,8 +3660,8 @@ function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSaveSetti
         <Card icon={<AlertTriangle size={18} />} label="Stock bajo" value={String(stats.low)} sub={`≤ ${settings.lowStock} unid.`} warn={stats.low > 0} />
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        {[["inventario", "Inventario"], ["pedidos", "Pedidos"], ["resenas", "Reseñas"], ["ajustes", "Ajustes"]].map(([k, l]) => (
+      <div className="glow-admin-tabs">
+        {[["inventario", "Inventario"], ["pedidos", "Pedidos"], ["clientas", "Clientas"], ["resenas", "Reseñas"], ["ajustes", "Ajustes"]].map(([k, l]) => (
           <button
             key={k}
             onClick={() => setTab(k)}
@@ -3764,6 +3764,8 @@ function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSaveSetti
         <OrdersPanel />
       ) : tab === "resenas" ? (
         <ReviewsPanel />
+      ) : tab === "clientas" ? (
+        <CustomersPanel />
       ) : (
         <SettingsPanel settings={settings} onSave={onSaveSettings} />
       )}
@@ -4109,6 +4111,114 @@ function ShippingSettings({ value, onChange }) {
           ))}
         </div>
       </details>
+    </div>
+  );
+}
+
+// Clientas registradas con Google.
+function CustomersPanel() {
+  const [data, setData] = useState(null);
+  const [err, setErr] = useState("");
+  const [q, setQ] = useState("");
+  const [msg, setMsg] = useState("");
+  const [testTo, setTestTo] = useState("");
+  const load = () => getCustomers().then(setData).catch((e) => setErr(e.message));
+  useEffect(() => { load(); }, []);
+  const flash = (t) => { setMsg(t); setTimeout(() => setMsg(""), 3500); };
+  const resend = async (c) => {
+    try {
+      await sendWelcomeMail(c.email);
+      flash(`✓ Bienvenida enviada a ${c.email}`);
+      load();
+    } catch (e) {
+      flash("✗ " + e.message);
+    }
+  };
+  const test = async () => {
+    try {
+      await sendWelcomeMail(testTo.trim(), true);
+      flash(`✓ Correo de prueba enviado a ${testTo.trim()}. Revisa también Promociones y Spam.`);
+    } catch (e) {
+      flash("✗ " + e.message);
+    }
+  };
+  if (err) return <p style={{ color: C.warn }}>{err}</p>;
+  if (!data) return <p style={{ color: C.inkSoft }}>Cargando clientas…</p>;
+  const list = data.customers.filter((c) => `${c.name} ${c.email} ${c.district}`.toLowerCase().includes(q.toLowerCase()));
+  const subs = data.customers.filter((c) => c.newsletter);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(subs.map((c) => c.email).join(", "));
+      flash(`✓ ${subs.length} correos copiados`);
+    } catch {
+      flash("No se pudo copiar");
+    }
+  };
+  const date = (d) => (d ? new Date(d).toLocaleDateString("es-PE", { day: "numeric", month: "short", year: "numeric" }) : "—");
+  return (
+    <div className="glow-cust">
+      <div className="glow-cust-stats">
+        <div><b>{data.customers.length}</b><span>clientas registradas</span></div>
+        <div><b>{subs.length}</b><span>aceptan novedades</span></div>
+        <div><b>{data.customers.filter((c) => c.orders > 0).length}</b><span>ya compraron</span></div>
+        <div><b>{money(data.customers.reduce((s, c) => s + c.spent, 0))}</b><span>vendido a clientas del club</span></div>
+      </div>
+
+      <div className="glow-cust-tools">
+        <input className="glow-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nombre, correo o distrito…" />
+        <button className="glow-cust-btn" onClick={copy} disabled={!subs.length}>📋 Copiar correos que aceptan novedades</button>
+      </div>
+
+      <div className={`glow-cust-mail${data.mail ? " is-on" : ""}`}>
+        {data.mail ? (
+          <>
+            <span>✉️ Correo de bienvenida <b>activado</b>: se envía solo cuando una clienta se registra.</span>
+            <span className="glow-cust-test">
+              <input className="glow-input" value={testTo} onChange={(e) => setTestTo(e.target.value)} placeholder="tu correo" />
+              <button className="glow-cust-btn" onClick={test} disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testTo.trim())}>Enviarme una prueba</button>
+            </span>
+          </>
+        ) : (
+          <span>✉️ El correo de bienvenida está <b>desactivado</b>: falta conectar Brevo (BREVO_API_KEY y MAIL_FROM).</span>
+        )}
+      </div>
+      {msg && <p className="glow-cust-flash">{msg}</p>}
+
+      {list.length === 0 ? (
+        <div style={{ borderRadius: 16, padding: 24, background: C.surface, border: `1px solid ${C.line}`, color: C.inkSoft }}>
+          {data.customers.length ? "Nadie coincide con tu búsqueda." : "Aún no hay clientas registradas. Aparecerán aquí cuando se unan con Google."}
+        </div>
+      ) : (
+        <div className="glow-cust-list">
+          {list.map((c) => (
+            <div key={c.email} className="glow-cust-card">
+              <CatAvatar customer={c} size={46} />
+              <div className="glow-cust-info">
+                <div className="glow-cust-top">
+                  <b>{c.name || "Sin nombre"}</b>
+                  {c.newsletter ? <span className="glow-chip" style={{ color: "#1FA971", background: "#EAF8F1" }}>✉️ novedades</span>
+                    : <span className="glow-chip" style={{ color: "#857C8A", background: "#F4ECF3" }}>sin novedades</span>}
+                </div>
+                <div className="glow-cust-sub">{c.email}{c.phone ? ` · ${c.phone}` : ""}{c.district ? ` · ${c.district}` : ""}</div>
+                <div className="glow-cust-nums">
+                  <span>🛍️ <b>{c.orders}</b> pedido{c.orders === 1 ? "" : "s"} · {money(c.spent)}</span>
+                  <span>🧶 <b>{fmtPts(c.points)}</b> gatupuntos</span>
+                  {c.credit > 0 && <span>💰 <b>{money(c.credit)}</b> crédito</span>}
+                  {c.birthday && <span>🎂 {new Date(c.birthday + "T12:00").toLocaleDateString("es-PE", { day: "numeric", month: "long" })}</span>}
+                </div>
+                <div className="glow-cust-foot">
+                  <span>Se unió el {date(c.createdAt)} · última visita {date(c.lastLogin)}</span>
+                  {data.mail && (
+                    c.welcomeSent
+                      ? <button className="glow-inline-link" onClick={() => resend(c)}>Reenviar bienvenida</button>
+                      : <button className="glow-inline-link" onClick={() => resend(c)} style={{ color: C.warn }}>Bienvenida no enviada · enviar</button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

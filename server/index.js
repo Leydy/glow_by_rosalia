@@ -45,6 +45,7 @@ import { pool, initSchema, rowToProduct, rowToSettings, rowToOrder, rowToCustome
 import { RULES, addPoints, hasRef, balance, yearSpend, levelFor, orderPoints, maybeBirthday, pickSurprise } from "./points.js";
 import { CREDIT, grantCredit, revokeCredit, claimCredit, wallet, spendCredit } from "./credits.js";
 import { saveImage, deleteImage, setUploadsDir, usingCloudinary } from "./storage.js";
+import { mailEnabled, welcomeEmail, sendMail } from "./mail.js";
 import { SEED_PRODUCTS, DEFAULT_SETTINGS } from "../src/data.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -400,16 +401,75 @@ app.post("/api/customers/google", async (req, res, next) => {
       [info.email, info.given_name || info.name || "", info.picture || ""]
     );
     await addPoints(info.email, RULES.welcome, "registro", "registro", "Bienvenida al club");
+    if (!rows[0].welcome_sent_at) sendWelcome(rows[0]); // sin esperar: el registro no se demora
     res.json(customerOut(rows[0]));
   } catch (e) {
     next(e);
   }
 });
 
+// Correo de bienvenida (una sola vez por clienta; si falla se puede reenviar).
+async function sendWelcome(c) {
+  if (!mailEnabled()) return { sent: false, reason: "El envío de correos no está configurado (BREVO_API_KEY)." };
+  try {
+    const m = welcomeEmail({ name: c.name, points: RULES.welcome });
+    await sendMail({ to: c.email, name: c.name, ...m });
+    await pool.query("UPDATE customers SET welcome_sent_at = now() WHERE email=$1", [c.email]);
+    return { sent: true };
+  } catch (e) {
+    console.error("No se pudo enviar la bienvenida a", c.email, "-", e.message);
+    return { sent: false, reason: e.message };
+  }
+}
+
+// Clientas registradas, con sus números (solo la administradora).
 app.get("/api/customers", requirePin, async (_req, res, next) => {
   try {
-    const { rows } = await pool.query("SELECT email, name, newsletter, created_at FROM customers WHERE email <> $1 ORDER BY created_at DESC", [TEST_EMAIL]);
-    res.json(rows.map((r) => ({ email: r.email, name: r.name, newsletter: r.newsletter, createdAt: r.created_at })));
+    const { rows } = await pool.query(
+      `SELECT c.*,
+              COALESCE(o.n, 0) AS orders, COALESCE(o.spent, 0) AS spent, o.last_order
+         FROM customers c
+         LEFT JOIN (SELECT customer_email, COUNT(*) AS n,
+                           SUM(CASE WHEN status IN ('verificado','enviado') THEN total - shipping ELSE 0 END) AS spent,
+                           MAX(created_at) AS last_order
+                      FROM orders WHERE NOT is_test GROUP BY customer_email) o ON o.customer_email = c.email
+        WHERE c.email <> $1
+        ORDER BY c.created_at DESC`,
+      [TEST_EMAIL]
+    );
+    const out = [];
+    for (const r of rows) {
+      const [pts, w] = await Promise.all([balance(r.email), wallet(r.email)]);
+      out.push({
+        email: r.email, name: r.name || "", picture: r.picture || "", phone: r.phone || "", district: r.district || "",
+        birthday: r.birthday ? new Date(r.birthday).toISOString().slice(0, 10) : "",
+        newsletter: r.newsletter, createdAt: r.created_at, lastLogin: r.last_login,
+        welcomeSent: !!r.welcome_sent_at, orders: Number(r.orders), spent: Number(r.spent), lastOrder: r.last_order,
+        points: pts.balance, credit: w.balance,
+      });
+    }
+    res.json({ customers: out, mail: mailEnabled() });
+  } catch (e) {
+    next(e);
+  }
+});
+
+app.post("/api/customers/welcome", requirePin, async (req, res, next) => {
+  try {
+    const email = String(req.body?.email || "");
+    const test = !!req.body?.test;
+    if (test) {
+      // prueba: envía el correo a la dirección indicada, sin tocar a ninguna clienta
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: "Correo no válido." });
+      if (!mailEnabled()) return res.status(400).json({ error: "El envío de correos no está configurado (BREVO_API_KEY)." });
+      const name = String(req.body?.name || "Leydy");
+      const r = await sendMail({ to: email, name, ...welcomeEmail({ name, points: RULES.welcome }) }).catch((e) => ({ sent: false, reason: e.message }));
+      return r.sent ? res.json(r) : res.status(400).json({ error: r.reason });
+    }
+    const { rows } = await pool.query("SELECT * FROM customers WHERE email=$1", [email]);
+    if (!rows.length) return res.status(404).json({ error: "Clienta no encontrada." });
+    const r = await sendWelcome(rows[0]);
+    return r.sent ? res.json(r) : res.status(400).json({ error: r.reason });
   } catch (e) {
     next(e);
   }

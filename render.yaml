@@ -24,3 +24,11 @@ services:
         sync: false
       - key: SHALOM_API_KEY
         sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: Glow by Rosalía
+      - key: PUBLIC_URL
+        value: https://glow-by-rosalia.onrender.com

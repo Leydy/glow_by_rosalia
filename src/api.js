@@ -102,6 +102,13 @@ export async function getAdminProducts() {
   return handle(await fetch("/api/admin/products", { headers: writeHeaders() }));
 }
 
+export async function getCustomers() {
+  return handle(await fetch("/api/customers", { headers: writeHeaders() }));
+}
+export async function sendWelcomeMail(email, test = false) {
+  return handle(await fetch("/api/customers/welcome", { method: "POST", headers: writeHeaders(), body: JSON.stringify({ email, test }) }));
+}
+
 /* ---------- Pedidos ---------- */
 // items: [{ id, qty }]. capture: data URL de la captura del Yape.
 export async function createOrder({ items, yapeOp, capture, test = false, reward = "", delivery = null, useCredit = false }) {
