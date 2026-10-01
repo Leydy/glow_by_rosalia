@@ -156,6 +156,8 @@ export async function initSchema() {
 
     -- Productos con ×2 Michipuntos (para rotar stock).
     ALTER TABLE products ADD COLUMN IF NOT EXISTS double_points BOOLEAN NOT NULL DEFAULT false;
+    -- Datos extra por sección: Skin (piel, paso de rutina, ml, NSO…) y Kids (tallas, figura del muñequito).
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS details JSONB;
   `);
 }
 
@@ -174,7 +176,29 @@ export function rowToProduct(r) {
     doublePoints: !!r.double_points,
     images: Array.isArray(r.images) ? r.images : [],
     desc: r.description || "",
+    details: detailsOf(r.details),
   };
+}
+
+// Datos extra de un producto (Skin / Kids), limpios y con tamaños acotados.
+const HEX = /^#[0-9a-fA-F]{6}$/;
+export function detailsOf(raw) {
+  const d = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  const txt = (v, n) => String(v ?? "").trim().slice(0, n);
+  const list = (v, n, len = 24) => (Array.isArray(v) ? v : []).map((x) => txt(x, len)).filter(Boolean).slice(0, n);
+  const out = {};
+  if (d.step) out.step = txt(d.step, 20);
+  if (d.skinTypes) out.skinTypes = list(d.skinTypes, 8);
+  if (d.concerns) out.concerns = list(d.concerns, 8);
+  if (d.size) out.size = txt(d.size, 20);
+  if (d.ingredients) out.ingredients = txt(d.ingredients, 400);
+  if (d.usage) out.usage = txt(d.usage, 400);
+  if (d.nso) out.nso = txt(d.nso, 40);
+  if (d.sizes) out.sizes = list(d.sizes, 14, 8);
+  if (d.fit && typeof d.fit === "object" && d.fit.shape) {
+    out.fit = { shape: txt(d.fit.shape, 20), color: HEX.test(d.fit.color || "") ? d.fit.color : "#FFB3CF", print: txt(d.fit.print || "liso", 12) };
+  }
+  return out;
 }
 
 // Código visible del pedido: GLW-0001, GLW-0002…

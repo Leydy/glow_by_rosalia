@@ -1,6 +1,6 @@
 /* Tipografías de la marca: Cormorant Garamond (serif elegante para títulos)
    y Manrope (limpia, para el cuerpo y la interfaz). */
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,400..700,0..100,0..1;1,9..144,400..700,0..100,0..1&family=Pacifico&family=Caveat:wght@500;700&family=Manrope:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,400..700,0..100,0..1;1,9..144,400..700,0..100,0..1&family=Pacifico&family=Caveat:wght@500;700&family=Manrope:wght@400;500;600;700&family=Fredoka:wght@500;600;700&display=swap");
 
 * {
   box-sizing: border-box;
@@ -4740,3 +4740,257 @@ button {
   .glow-hw-ghost { animation: none; opacity: .6; bottom: 40px; }
   .glow-hw-flock { display: none; }
 }
+
+/* =========================================================================
+   Los 3 mundos: Michitienda · Glow Skin · Glow Kids
+========================================================================= */
+.glow-worlds { display: flex; justify-content: center; padding: 14px 16px 0; }
+.glow-worlds > div {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .75);
+  box-shadow: inset 0 0 0 1px rgba(59, 33, 70, .08), 0 6px 18px rgba(59, 33, 70, .06);
+}
+.glow-worlds button {
+  border: none;
+  background: none;
+  border-radius: 999px;
+  padding: 9px 18px;
+  font: 700 14px Manrope, sans-serif;
+  color: #6B5A63;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .25s, color .25s, box-shadow .25s;
+}
+.glow-worlds button:hover { color: #3B2146; }
+.glow-worlds button.is-on { color: #fff; background: var(--wacc, #FF3D8B); box-shadow: 0 6px 14px color-mix(in srgb, var(--wacc, #FF3D8B) 40%, transparent); }
+:root[data-world="skin"] { --wacc: #D9826B; }
+:root[data-world="kids"] { --wacc: #4AA3F0; }
+@media (max-width: 520px) {
+  .glow-worlds { padding: 10px 10px 0; }
+  .glow-worlds > div { width: 100%; justify-content: space-between; }
+  .glow-worlds button { padding: 8px 9px; font-size: 12.5px; }
+}
+
+/* portadas de Skin y Kids */
+.glow-whero {
+  display: grid;
+  grid-template-columns: 1.15fr .85fr;
+  align-items: center;
+  gap: 24px;
+  max-width: 1180px;
+  margin: 16px auto 0;
+  padding: 34px clamp(18px, 4vw, 48px);
+  border-radius: 28px;
+  width: calc(100% - 32px);
+  position: relative;
+  overflow: hidden;
+}
+.glow-whero.is-skin { background: linear-gradient(120deg, #F9E6DB, #EEF3EC 70%); color: #4A3A33; }
+.glow-whero.is-kids { background: linear-gradient(120deg, #DDF0FF, #FFF4CC 60%, #E2F7EC); color: #24476B; }
+.glow-whero-eb { font-size: 12px; letter-spacing: 3px; font-weight: 800; text-transform: uppercase; }
+.is-skin .glow-whero-eb { color: #7FA894; }
+.is-kids .glow-whero-eb { color: #E8960F; }
+.glow-whero h2 { margin: 8px 0 12px; line-height: 1.05; }
+.is-skin h2 { font-family: "Cormorant Garamond", serif; font-style: italic; font-weight: 600; font-size: clamp(36px, 5vw, 56px); }
+.is-skin h2 em { color: #D9826B; }
+.is-kids h2 { font-family: "Fredoka", "Manrope", sans-serif; font-weight: 700; font-size: clamp(32px, 4.4vw, 50px); }
+.is-kids h2 em { color: #4AA3F0; font-style: normal; }
+.glow-whero p { margin: 0 0 18px; font-size: 17px; line-height: 1.55; max-width: 460px; opacity: .85; }
+.glow-whero-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.glow-whero-cta, .glow-whero-ghost {
+  border: none;
+  border-radius: 999px;
+  padding: 13px 24px;
+  font: 800 15px Manrope, sans-serif;
+  cursor: pointer;
+}
+.glow-whero-cta { color: #fff; background: var(--wacc, #FF3D8B); box-shadow: 0 10px 22px color-mix(in srgb, var(--wacc, #FF3D8B) 35%, transparent); }
+.glow-whero-cta:disabled { opacity: .5; cursor: not-allowed; }
+.glow-whero-ghost { background: #fff; color: inherit; box-shadow: inset 0 0 0 1.5px rgba(0, 0, 0, .08); }
+.glow-whero-mascot { position: relative; display: grid; place-items: center; }
+.glow-world-art { display: block; width: min(250px, 100%); }
+.glow-world-art svg, .glow-cross-art svg, .glow-fit-kid svg, .glow-fit-thumb svg { display: block; width: 100%; height: auto; }
+.glow-whero-bubble {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: #fff;
+  border-radius: 16px 16px 16px 4px;
+  padding: 9px 13px;
+  font-weight: 700;
+  font-size: 13.5px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .08);
+  max-width: 210px;
+  z-index: 1;
+}
+@media (max-width: 760px) {
+  .glow-whero { grid-template-columns: 1fr; text-align: center; padding: 22px 18px; gap: 6px; }
+  .glow-whero p { margin-left: auto; margin-right: auto; font-size: 15.5px; }
+  .glow-whero-btns { justify-content: center; }
+  .glow-whero-mascot { order: -1; }
+  .glow-world-art { width: 150px; }
+  .glow-whero-bubble { position: static; margin: 0 auto 4px; }
+}
+
+/* mundo sin productos */
+.glow-soon { max-width: 640px; margin: 28px auto 60px; padding: 26px 22px; border-radius: 24px; background: #fff; text-align: center; width: calc(100% - 32px); box-shadow: 0 10px 30px rgba(0, 0, 0, .05); }
+.glow-soon b { display: block; font-size: 22px; margin-bottom: 6px; }
+.glow-soon p { margin: 0 0 16px; color: #6B5A63; }
+.glow-soon button { border: none; border-radius: 999px; padding: 11px 20px; font-weight: 800; color: #fff; background: #FF3D8B; cursor: pointer; }
+
+/* aviso Michitienda → Glow Skin */
+.glow-cross {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  max-width: 1100px;
+  width: calc(100% - 40px);
+  margin: 0 auto 48px;
+  padding: 16px 22px;
+  border-radius: 22px;
+  background: linear-gradient(110deg, #F9E6DB, #EEF3EC);
+  color: #4A3A33;
+}
+.glow-cross-art { width: 84px; flex: none; }
+.glow-cross b { display: block; font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 26px; font-weight: 600; }
+.glow-cross span { font-size: 14.5px; color: #7A6A62; }
+.glow-cross button { margin-left: auto; border: none; border-radius: 999px; background: #D9826B; color: #fff; font-weight: 800; padding: 12px 20px; white-space: nowrap; cursor: pointer; }
+@media (max-width: 640px) {
+  .glow-cross { flex-wrap: wrap; width: calc(100% - 32px); }
+  .glow-cross-art { width: 64px; }
+  .glow-cross > div { flex: 1; min-width: 0; }
+  .glow-cross b { font-size: 21px; }
+  .glow-cross button { margin-left: 0; width: 100%; }
+}
+
+/* tarjetas con el estilo de cada mundo */
+.glow-pcard.is-skin { border-radius: 24px !important; border-color: #EBDDD2 !important; box-shadow: 0 6px 20px rgba(217, 130, 107, .1) !important; }
+.glow-pcard.is-skin .glow-card-img { background: linear-gradient(160deg, #FBEEE6, #EFF4EF) !important; box-shadow: 0 0 0 2px #F3E6DC !important; border-radius: 18px !important; }
+.glow-pcard.is-skin .glow-card-cat { color: #7FA894 !important; }
+.glow-pcard.is-skin .glow-card-name { font-family: "Cormorant Garamond", serif !important; font-style: italic; font-weight: 600 !important; color: #4A3A33 !important; font-size: 21px !important; }
+.glow-pcard.is-skin .glow-card-price { color: #4A3A33 !important; }
+.glow-pcard.is-skin .glow-card-btn:not(:disabled) { background: #D9826B !important; }
+.glow-pcard.is-kids { border-radius: 22px !important; border-color: #D9E8F5 !important; box-shadow: 0 6px 20px rgba(74, 163, 240, .1) !important; }
+.glow-pcard.is-kids .glow-card-img { background: linear-gradient(160deg, #FFF4CC, #DDF0FF) !important; box-shadow: 0 0 0 2px #E3F0FB !important; }
+.glow-pcard.is-kids .glow-card-cat { color: #E8960F !important; }
+.glow-pcard.is-kids .glow-card-name { font-family: "Fredoka", "Manrope", sans-serif !important; font-weight: 600 !important; color: #24476B !important; }
+.glow-pcard.is-kids .glow-card-price { color: #24476B !important; }
+.glow-pcard.is-kids .glow-card-btn:not(:disabled) { background: #4AA3F0 !important; }
+.glow-nso { position: absolute; left: 8px; bottom: 8px; z-index: 1; font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 99px; background: #fff; color: #3E7A5E; box-shadow: 0 1px 4px rgba(0, 0, 0, .12); }
+.glow-skin-tags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 2px 0 6px; }
+.glow-skin-tags small { font-size: 11px; font-weight: 800; color: #7A6A62; margin-right: 2px; }
+.glow-skin-tags span { font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 99px; background: #EEF4EF; color: #4E7A66; }
+.glow-skin-tags button { border: none; background: none; padding: 2px 0; font-size: 12px; font-weight: 700; color: #D9826B; text-decoration: underline; cursor: pointer; }
+.glow-sizes { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 2px; }
+.glow-sizes button { min-width: 32px; height: 30px; padding: 0 8px; border-radius: 10px; border: 1.5px solid #D9E8F5; background: #F5FAFF; font: 700 13px Manrope, sans-serif; color: #24476B; cursor: pointer; }
+.glow-sizes button.is-on { background: #4AA3F0; border-color: #4AA3F0; color: #fff; }
+
+/* detalles de un producto de Skin */
+.glow-skin-info { max-width: 460px; }
+.glow-skin-info-top { display: flex; gap: 14px; align-items: center; margin-bottom: 10px; padding-right: 30px; }
+.glow-skin-info-top img, .glow-skin-info-noimg { width: 86px; height: 86px; border-radius: 18px; object-fit: cover; flex: none; background: #FBEEE6; display: grid; place-items: center; font-size: 30px; }
+.glow-skin-info-top small { color: #7FA894; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+.glow-skin-info-top h3 { margin: 2px 0 4px; font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 26px; color: #4A3A33; }
+.glow-skin-info p { margin: 8px 0; color: #5D4C44; line-height: 1.5; font-size: 14.5px; }
+.glow-skin-info-nso { background: #EEF4EF; border-radius: 12px; padding: 8px 12px; color: #3E7A5E !important; }
+
+/* Arma tu rutina */
+.glow-routine {
+  max-width: 1100px;
+  width: calc(100% - 40px);
+  margin: 0 auto 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  padding: 24px;
+  border-radius: 26px;
+  background: #fff;
+  border: 1px solid #EBDDD2;
+  color: #4A3A33;
+  scroll-margin-top: 80px;
+}
+.glow-routine h3 { margin: 0 0 4px; font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 32px; font-weight: 600; }
+.glow-routine-sub { color: #7A6A62; font-size: 14px; }
+.glow-rq { margin-top: 14px; }
+.glow-rq p { margin: 0 0 6px; font-weight: 700; font-size: 13.5px; color: #7A6A62; }
+.glow-rq div { display: flex; gap: 6px; flex-wrap: wrap; }
+.glow-rq button { border: 1.5px solid #EBDDD2; background: #FBF6F1; border-radius: 999px; padding: 7px 13px; font: 600 13px Manrope, sans-serif; color: #4A3A33; cursor: pointer; }
+.glow-rq button.is-on { background: #D9826B; border-color: #D9826B; color: #fff; }
+.glow-routine-out { background: linear-gradient(160deg, #FBEEE6, #EFF4EF); border-radius: 20px; padding: 16px; min-width: 0; }
+.glow-routine-out h4 { margin: 0 0 10px; font-size: 15px; }
+.glow-rstep { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 14px; padding: 8px 12px; margin-bottom: 8px; animation: glow-rpop .35s both; }
+@keyframes glow-rpop { from { opacity: 0; transform: translateY(8px); } }
+.glow-rstep i { font-style: normal; width: 28px; height: 28px; border-radius: 50%; background: #D9826B; color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 13px; flex: none; }
+.glow-rstep img, .glow-rstep-emoji { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; flex: none; display: grid; place-items: center; background: #FBEEE6; font-size: 20px; }
+.glow-rstep div { flex: 1; min-width: 0; }
+.glow-rstep b { display: block; font-size: 14px; }
+.glow-rstep small { color: #7A6A62; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.glow-rstep em { font-style: normal; font-weight: 800; font-size: 14px; white-space: nowrap; }
+.glow-routine-tot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; font-weight: 800; }
+.glow-routine-tot button { border: none; border-radius: 999px; background: #D9826B; color: #fff; font-weight: 800; padding: 10px 16px; cursor: pointer; }
+@media (max-width: 760px) { .glow-routine { grid-template-columns: 1fr; width: calc(100% - 32px); padding: 16px; } }
+
+/* Viste a tu peque */
+.glow-fit { max-width: 1100px; width: calc(100% - 40px); margin: 0 auto 48px; border-radius: 26px; background: #fff; border: 1px solid #D9E8F5; color: #24476B; scroll-margin-top: 80px; overflow: hidden; }
+.glow-fit-h { padding: 18px 22px 6px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.glow-fit-h h3 { font-family: "Fredoka", "Manrope", sans-serif; font-size: 28px; margin: 0; }
+.glow-fit-h span { color: #56677A; font-size: 14px; }
+.glow-fit-b { display: grid; grid-template-columns: 300px 1fr; gap: 18px; padding: 12px 22px 22px; }
+.glow-fit-stage { position: relative; border-radius: 22px; background: linear-gradient(180deg, #DDF0FF, #FFF8E1); min-height: 440px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; overflow: hidden; }
+.glow-fit-stage::before { content: ""; position: absolute; left: 12%; right: 12%; bottom: 14px; height: 16px; border-radius: 50%; background: rgba(36, 71, 107, .12); }
+.glow-fit-kid { position: relative; width: 240px; }
+.glow-fit-star { position: absolute; color: #F2C14E; font-size: 16px; animation: glow-tw 2s infinite; }
+@keyframes glow-tw { 50% { opacity: .3; transform: scale(.7); } }
+.glow-fit-size { position: absolute; top: 12px; left: 12px; right: 12px; background: #fff; border-radius: 14px; padding: 8px 12px; font-size: 13px; box-shadow: 0 4px 14px rgba(0, 0, 0, .06); z-index: 1; line-height: 1.4; }
+.glow-fit-size b { color: #E0527E; font-size: 15px; }
+.glow-fit-size small { color: #56677A; }
+.glow-fit-ctrl { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.glow-fit-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.glow-fit-row > label { font-weight: 700; font-size: 13px; color: #56677A; width: 92px; }
+.glow-fit-sw { width: 30px; height: 30px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 1.5px #D9E8F5; cursor: pointer; padding: 0; }
+.glow-fit-sw.is-on { box-shadow: 0 0 0 2.5px #4AA3F0; }
+.glow-fit-pill { border: 1.5px solid #D9E8F5; background: #F5FAFF; border-radius: 999px; padding: 6px 12px; font: 600 13px Manrope, sans-serif; color: #24476B; cursor: pointer; }
+.glow-fit-pill.is-on { background: #4AA3F0; border-color: #4AA3F0; color: #fff; }
+.glow-fit-ward { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; }
+.glow-fit-it { border: 2px solid #D9E8F5; border-radius: 16px; background: #F9FCFF; padding: 6px 6px 8px; cursor: pointer; text-align: center; position: relative; transition: transform .15s; font: inherit; color: inherit; }
+.glow-fit-it:hover { transform: translateY(-3px); }
+.glow-fit-it.is-on { border-color: #4AA3F0; background: #EAF5FF; }
+.glow-fit-it.is-on::after { content: "✓"; position: absolute; top: 6px; right: 8px; width: 20px; height: 20px; border-radius: 50%; background: #4AA3F0; color: #fff; font-size: 12px; font-weight: 800; display: grid; place-items: center; }
+.glow-fit-it img, .glow-fit-thumb { display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 10px; }
+.glow-fit-thumb svg { height: 84px; }
+.glow-fit-it b { display: block; font-family: "Fredoka", "Manrope", sans-serif; font-weight: 600; font-size: 13px; line-height: 1.15; margin-top: 6px; }
+.glow-fit-it small { color: #56677A; font-weight: 700; }
+.glow-fit-look { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; border-radius: 16px; background: #FFF6D6; }
+.glow-fit-look b { font-family: "Fredoka", "Manrope", sans-serif; font-size: 18px; }
+.glow-fit-look span { font-size: 13px; color: #56677A; }
+.glow-fit-look button { border: none; border-radius: 999px; padding: 10px 16px; font-weight: 800; cursor: pointer; color: #fff; }
+.glow-fit-look .is-add { background: #4AA3F0; margin-left: auto; }
+.glow-fit-look .is-add:disabled { opacity: .5; cursor: not-allowed; }
+.glow-fit-look .is-wa { background: #25D366; }
+.glow-fit-privacy { font-size: 12.5px; color: #56677A; margin: 0; }
+@media (max-width: 760px) {
+  .glow-fit { width: calc(100% - 32px); }
+  .glow-fit-b { grid-template-columns: 1fr; padding: 10px 14px 16px; }
+  .glow-fit-stage { min-height: 400px; }
+  .glow-fit-row > label { width: 100%; }
+  .glow-fit-ward { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .glow-fit-look .is-add { margin-left: 0; }
+}
+
+/* panel: datos extra del producto */
+.glow-pf-extra { border-radius: 14px; padding: 12px 14px 2px; margin-bottom: 12px; }
+.glow-pf-extra > b { display: block; margin-bottom: 10px; font-size: 14px; }
+.glow-pf-extra.is-skin { background: #FBF3EE; }
+.glow-pf-extra.is-kids { background: #F0F7FF; }
+.glow-pf-select { width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid #F0E3EA; background: #FFF7FB; color: #2B2530; font: inherit; }
+.glow-pf-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.glow-pf-chips button { border: 1.5px solid #E5D8E0; background: #fff; border-radius: 999px; padding: 6px 11px; font: 600 12.5px Manrope, sans-serif; color: #2B2530; cursor: pointer; }
+.glow-pf-chips button.is-on { background: #3B2146; border-color: #3B2146; color: #fff; }
+.glow-pf-fit { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.glow-pf-fit .glow-pf-select { flex: 1; min-width: 140px; width: auto; }
+.glow-pf-fit input[type="color"] { width: 42px; height: 40px; border: none; border-radius: 10px; padding: 0; background: none; cursor: pointer; }
+.glow-pf-preview { width: 64px; height: 56px; display: grid; place-items: center; background: #fff; border-radius: 10px; }
+.glow-pf-preview svg { width: 100%; height: 100%; }

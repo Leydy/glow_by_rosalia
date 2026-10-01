@@ -19,6 +19,10 @@ import {
 import { toPng } from "html-to-image";
 import UBIGEO from "./ubigeo.json"; // departamentos → provincias → distritos (INEI)
 import { GUIDES, GUIDE_KEYS } from "./guides.js";
+import {
+  WORLDS, WORLD_KEYS, worldOf, SKIN_TYPES, CONCERNS, ROUTINE_STEPS, BUDGETS, buildRoutine,
+  KID_SIZES, SHOE_SIZES, recommendedSize, AGES, SKIN_TONES, HAIR_COLORS, HAIR_STYLES, PRINTS, SHAPES, SHAPE_KEYS, garmentSvg, kidSvg, spaArt,
+} from "./worlds.js";
 import { activeSeason, seasonList, guideArt, inRange, daysUntil, webSvg, SPIDER, catSkullSvg, batSvg, PUMPKIN, WITCH_HAT, GHOST, MOON, garlandSvg, candySvg } from "./seasons.js";
 
 /* ---------- Carga local (solo el carrito del visitante) ----------
@@ -494,7 +498,7 @@ function MyOrders() {
               <span>{new Date(o.createdAt).toLocaleDateString("es-PE", { day: "numeric", month: "short", year: "numeric" })}</span>
             </div>
             <div className="glow-my-order-imgs">
-              {o.items.map((l) => (l.image ? <img key={l.id} src={l.image} alt={l.name} title={l.name} /> : null))}
+              {o.items.map((l, i) => (l.image ? <img key={`${l.id}-${i}`} src={l.image} alt={l.name} title={l.name} /> : null))}
               <div>{o.items.reduce((n, l) => n + l.qty, 0)} producto(s)<b>{money(o.total)}</b></div>
             </div>
             {o.pointsEarned > 0 && <span className="glow-acc-plus">🧶 +{fmtPts(o.pointsEarned)} Michipuntos</span>}
@@ -1344,7 +1348,7 @@ function AccountPage({ customer, favs, products, onToggleFav, onAdd, onPanel, se
               <div key={o.id} className="glow-acc-order">
                 <span className="glow-chip" style={{ color: st.color, background: st.bg }}>{st.label}</span>
                 <div className="glow-acc-order-row">
-                  {o.items.slice(0, 3).map((l) => (l.image ? <img key={l.id} src={l.image} alt={l.name} /> : null))}
+                  {o.items.slice(0, 3).map((l, i) => (l.image ? <img key={`${l.id}-${i}`} src={l.image} alt={l.name} /> : null))}
                   <div>
                     <b>{o.items.length === 1 ? o.items[0].name : `${o.items.length} productos`}</b>
                     <small>#{o.code} · {new Date(o.createdAt).toLocaleDateString("es-PE", { day: "numeric", month: "short" })} · {money(o.total)}</small>
@@ -1525,6 +1529,19 @@ export default function App() {
   const [products, setProducts] = useState([]);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Mundo de la tienda (Michitienda · Glow Skin · Glow Kids); se recuerda.
+  const [world, setWorldState] = useState(() => {
+    try {
+      const w = localStorage.getItem("glow:mundo");
+      return WORLDS[w] ? w : "michi";
+    } catch {
+      return "michi";
+    }
+  });
+  const setWorld = (w) => {
+    setWorldState(w);
+    try { localStorage.setItem("glow:mundo", w); } catch { /* sin almacenamiento */ }
+  };
   const [loadError, setLoadError] = useState("");
   const [customer, setCustomer] = useState(loadCustomer);
   const [joinOpen, setJoinOpen] = useState(false);
@@ -1676,6 +1693,21 @@ export default function App() {
     return () => clearTimeout(t);
   }, []);
   const ready = !loading && !!settings && minDone;
+  // Colores de fondo y cabecera de Glow Skin / Glow Kids (la Michitienda usa los de su portada).
+  useEffect(() => {
+    const w = WORLDS[world];
+    if (view !== "shop" || !w.bg) return;
+    const root = document.documentElement;
+    root.dataset.world = world;
+    root.style.setProperty("--world-bg", w.bg);
+    root.style.setProperty("--hdr-a", w.hdr[0]);
+    root.style.setProperty("--hdr-b", w.hdr[1]);
+    return () => {
+      delete root.dataset.world;
+      ["--world-bg", "--hdr-a", "--hdr-b"].forEach((k) => root.style.removeProperty(k));
+    };
+  }, [world, view]);
+
   // Temporada del día (Halloween, Navidad…); fuera de fecha es null.
   const season = useMemo(() => (settings ? activeSeason(settings.seasons) : null), [settings]);
   useEffect(() => {
@@ -1798,7 +1830,7 @@ export default function App() {
   };
 
   return (
-    <div style={{ background: C.bg, color: C.ink, minHeight: "100vh" }}>
+    <div style={{ background: `var(--world-bg, ${C.bg})`, color: C.ink, minHeight: "100vh", transition: "background .4s" }}>
       {!loaderGone && <PageLoader leaving={ready} />}
       {TEST_MODE && (
         <div className="glow-testbar">
@@ -1875,6 +1907,8 @@ export default function App() {
           wallet={wallet}
           onClaimCredit={(c) => setClaimOpen(c)}
           season={season}
+          world={world}
+          onWorld={(w) => { setWorld(w); window.scrollTo({ top: 0, behavior: "smooth" }); }}
         />
       ) : (
         <Admin
@@ -2895,11 +2929,273 @@ function HeroSlider({ products, settings, onPickCategory, onAdd, favs = [], onTo
   );
 }
 
+/* ---------- Los 3 mundos ---------- */
+const scrollToId = (id) => setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+const SPA_ROSALIA = spaArt(GUIDES.rosalia.art);
+const ART = (html, className = "glow-world-art") => <span className={className} aria-hidden="true" dangerouslySetInnerHTML={{ __html: html }} />;
+
+function WorldSwitcher({ world, onPick }) {
+  return (
+    <nav className="glow-worlds" aria-label="Secciones de la tienda">
+      <div>
+        {WORLD_KEYS.map((k) => (
+          <button key={k} className={world === k ? "is-on" : ""} aria-pressed={world === k} onClick={() => onPick(k)}>
+            <span aria-hidden="true">{WORLDS[k].emoji}</span> {WORLDS[k].name}
+          </button>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+function SkinHero({ onRoutine, onAll, empty }) {
+  return (
+    <section className="glow-whero is-skin">
+      <div className="glow-whero-text">
+        <span className="glow-whero-eb">Glow Skin · cuidado de la piel</span>
+        <h2>Tu piel también <em>merece mimos</em></h2>
+        <p>Rutinas sencillas con productos originales y con Notificación Sanitaria. Te ayudo a elegir según tu tipo de piel.</p>
+        {!empty && (
+          <div className="glow-whero-btns">
+            <button className="glow-whero-cta" onClick={onRoutine}>Arma tu rutina</button>
+            <button className="glow-whero-ghost" onClick={onAll}>Ver todo</button>
+          </div>
+        )}
+      </div>
+      <div className="glow-whero-mascot">
+        <span className="glow-whero-bubble">Yo también cuido mi piel 🧖‍♀️</span>
+        {ART(SPA_ROSALIA)}
+      </div>
+    </section>
+  );
+}
+
+function KidsHero({ onFit, onAll, empty }) {
+  return (
+    <section className="glow-whero is-kids">
+      <div className="glow-whero-text">
+        <span className="glow-whero-eb">Glow Kids · ropita cute</span>
+        <h2>Ropita linda para <em>tu peque</em></h2>
+        <p>Casual, suave y con mucho estilo. Pruébala en el muñequito antes de comprar y te decimos qué talla le queda.</p>
+        {!empty && (
+          <div className="glow-whero-btns">
+            <button className="glow-whero-cta" onClick={onFit}>Vestir al muñequito 👕</button>
+            <button className="glow-whero-ghost" onClick={onAll}>Ver todo</button>
+          </div>
+        )}
+      </div>
+      <div className="glow-whero-mascot">
+        <span className="glow-whero-bubble">¡Cuí cuí! Te ayudo a elegir la talla 🎈</span>
+        {ART(GUIDES.cuyito.art)}
+      </div>
+    </section>
+  );
+}
+
+// Mundo sin productos todavía.
+function ComingSoon({ world, onBack }) {
+  const w = WORLDS[world];
+  return (
+    <div className={`glow-soon is-${world}`}>
+      <b>{w.emoji} {w.name} llega muy pronto</b>
+      <p>{world === "skin" ? "Rosalía está eligiendo con cariño los productos para tu piel." : "Estamos preparando ropita linda para los peques."} ¡Vuelve pronto!</p>
+      <button onClick={onBack}>Mientras tanto, mira la Michitienda 🐾</button>
+    </div>
+  );
+}
+
+// Aviso al final de la Michitienda: invita a pasar a Glow Skin.
+function CrossToSkin({ hasSkin, onGo }) {
+  return (
+    <section className="glow-cross">
+      {ART(SPA_ROSALIA, "glow-cross-art")}
+      <div>
+        <b>Rosalía también cuida tu piel ✨</b>
+        <span>{hasSkin ? "Sérums, tónicos y labiales elegidos con cariño. ¡Tus Michipuntos también valen allá!" : "Muy pronto: sérums, tónicos y labiales elegidos con cariño."}</span>
+      </div>
+      <button onClick={onGo}>{hasSkin ? "Conocer Glow Skin →" : "Echar un vistazo →"}</button>
+    </section>
+  );
+}
+
+// Chips de una tarjeta de Skin: para qué piel es, contenido y detalles.
+function SkinTags({ p, onInfo }) {
+  const d = p.details || {};
+  const tags = [...(d.skinTypes || []).map((t) => (t === "Todo tipo" ? "Todo tipo de piel" : `Piel ${t.toLowerCase()}`)), ...(d.concerns || [])].slice(0, 3);
+  return (
+    <div className="glow-skin-tags">
+      {d.size && <small>{d.size}</small>}
+      {tags.map((t) => <span key={t}>{t}</span>)}
+      {(d.ingredients || d.usage || d.nso) && <button onClick={(e) => { e.stopPropagation(); onInfo(); }}>Ver detalles</button>}
+    </div>
+  );
+}
+
+function SkinInfo({ p, onClose, onAdd }) {
+  const d = p.details || {};
+  const step = ROUTINE_STEPS.find((s) => s.key === d.step);
+  return (
+    <div className="glow-modal-bg" onClick={onClose}>
+      <div className="glow-ship glow-skin-info" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={p.name}>
+        <button className="glow-join-x" onClick={onClose} aria-label="Cerrar"><X size={20} /></button>
+        <div className="glow-skin-info-top">
+          {p.images?.[0] ? <img src={p.images[0]} alt="" /> : <span className="glow-skin-info-noimg">✨</span>}
+          <div>
+            <small>{p.category}{d.size ? ` · ${d.size}` : ""}</small>
+            <h3>{p.name}</h3>
+            <b>{money(p.price)}</b>
+          </div>
+        </div>
+        {step && <p><b>Paso de la rutina:</b> {step.emoji} {step.label}</p>}
+        {d.skinTypes?.length > 0 && <p><b>Para piel:</b> {d.skinTypes.join(", ").toLowerCase()}</p>}
+        {d.concerns?.length > 0 && <p><b>Ayuda con:</b> {d.concerns.join(", ").toLowerCase()}</p>}
+        {d.ingredients && <p><b>Ingredientes clave:</b> {d.ingredients}</p>}
+        {d.usage && <p><b>Modo de uso:</b> {d.usage}</p>}
+        {d.nso && <p className="glow-skin-info-nso">✓ Notificación Sanitaria: <b>{d.nso}</b></p>}
+        <button className="glow-whero-cta" disabled={p.stock <= 0} onClick={onAdd} style={{ width: "100%", marginTop: 8 }}>{p.stock > 0 ? "Añadir al carrito" : "Agotado"}</button>
+      </div>
+    </div>
+  );
+}
+
+// "Arma tu rutina": 3 preguntas y la rutina en orden con productos de la tienda.
+function RoutineBuilder({ products, onAddAll }) {
+  const [a, setA] = useState({ piel: "Mixta", meta: "Hidratación", budget: BUDGETS[1] });
+  const [added, setAdded] = useState(false);
+  const steps = buildRoutine(products, a);
+  const total = steps.reduce((t, s) => t + s.product.price, 0);
+  const q = (k, label, opts) => (
+    <div className="glow-rq">
+      <p>{label}</p>
+      <div>{opts.map((o) => <button key={o} className={a[k] === o ? "is-on" : ""} onClick={() => { setA((x) => ({ ...x, [k]: o })); setAdded(false); }}>{o}</button>)}</div>
+    </div>
+  );
+  return (
+    <section id="glow-rutina" className="glow-routine">
+      <div>
+        <h3>Arma tu rutina 🌿</h3>
+        <span className="glow-routine-sub">Responde 3 preguntas y te digo qué usar y en qué orden.</span>
+        {q("piel", "1. ¿Cómo es tu piel?", SKIN_TYPES.filter((t) => t !== "Todo tipo"))}
+        {q("meta", "2. ¿Qué te gustaría mejorar?", CONCERNS)}
+        {q("budget", "3. ¿Cuánto quieres invertir?", BUDGETS)}
+      </div>
+      <div className="glow-routine-out">
+        <h4>Tu rutina para piel {a.piel.toLowerCase()} ✨</h4>
+        {steps.length === 0 ? (
+          <p className="glow-routine-sub">Aún no tenemos productos para armar esta rutina. ¡Muy pronto!</p>
+        ) : (
+          <>
+            {steps.map(({ step, product }, i) => (
+              <div key={step.key} className="glow-rstep" style={{ animationDelay: `${i * 0.06}s` }}>
+                <i>{i + 1}</i>
+                {product.images?.[0] ? <img src={product.images[0]} alt="" /> : <span className="glow-rstep-emoji">{step.emoji}</span>}
+                <div><b>{step.label}</b><small>{product.name}</small></div>
+                <em>{money(product.price)}</em>
+              </div>
+            ))}
+            <div className="glow-routine-tot">
+              <span>Total: {money(total)} · +{Math.floor(total * 1.25)} Michipuntos</span>
+              <button onClick={() => { onAddAll(steps.map((s) => s.product)); setAdded(true); }}>{added ? "✓ Añadida" : "Añadir la rutina"}</button>
+            </div>
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// "Viste a tu peque": muñequito ilustrado (sin fotos) que se viste con la
+// ropa de la tienda y recomienda la talla según la edad.
+function KidsFitting({ products, kid, setKid, onAddLook }) {
+  const items = products.filter((p) => SHAPES[p.details?.fit?.shape]);
+  const [look, setLook] = useState({}); // slot → id de producto
+  const [added, setAdded] = useState(false);
+  if (!items.length) return null;
+  const byId = (id) => items.find((p) => p.id === id);
+  const fitOf = (slot) => byId(look[slot])?.details.fit;
+  const toggle = (p) => {
+    const sh = SHAPES[p.details.fit.shape];
+    setAdded(false);
+    setLook((l) => {
+      const next = { ...l };
+      if (l[sh.slot] === p.id) { delete next[sh.slot]; return next; }
+      next[sh.slot] = p.id;
+      if (sh.full) delete next.bottom; // vestido: cubre arriba y abajo
+      if (sh.slot === "bottom" && l.top && SHAPES[byId(l.top)?.details.fit.shape]?.full) delete next.top;
+      return next;
+    });
+  };
+  const picked = Object.values(look).map(byId).filter(Boolean);
+  const total = picked.reduce((t, p) => t + p.price, 0);
+  const age = AGES[kid.age] || AGES[1];
+  const wa = () => {
+    const msg = `¡Hola! Me gustó este look para mi peque (${age.label}, talla ${age.size}):\n${picked.map((p) => `• ${p.name} — ${money(p.price)}`).join("\n")}\nTotal: ${money(total)}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  };
+  return (
+    <section id="glow-probador" className="glow-fit">
+      <div className="glow-fit-h"><h3>👕 Viste a tu peque</h3><span>Toca la ropa para probarla. No necesitas subir fotos.</span></div>
+      <div className="glow-fit-b">
+        <div className="glow-fit-stage">
+          <div className="glow-fit-size">📏 Para {age.label} ({age.cm} cm) le recomendamos <b>talla {age.size}</b><small> · calzado {age.shoe}</small></div>
+          <span className="glow-fit-star" style={{ left: "14%", top: "30%" }}>✦</span>
+          <span className="glow-fit-star" style={{ right: "12%", top: "42%", animationDelay: "-1s" }}>✦</span>
+          {ART(kidSvg(kid, { top: fitOf("top"), outer: fitOf("outer"), bottom: fitOf("bottom"), shoes: fitOf("shoes"), hat: fitOf("hat") }), "glow-fit-kid")}
+        </div>
+        <div className="glow-fit-ctrl">
+          <div className="glow-fit-row"><label>Tono de piel</label>{SKIN_TONES.map((c, i) => <button key={c} className={`glow-fit-sw${kid.skin === i ? " is-on" : ""}`} style={{ background: c }} onClick={() => setKid({ skin: i })} aria-label={`Tono ${i + 1}`} />)}</div>
+          <div className="glow-fit-row"><label>Peinado</label>{HAIR_STYLES.map((h) => <button key={h} className={`glow-fit-pill${kid.hair === h ? " is-on" : ""}`} onClick={() => setKid({ hair: h })}>{h}</button>)}{HAIR_COLORS.map((c, i) => <button key={c} className={`glow-fit-sw${kid.hairColor === i ? " is-on" : ""}`} style={{ background: c }} onClick={() => setKid({ hairColor: i })} aria-label={`Color de pelo ${i + 1}`} />)}</div>
+          <div className="glow-fit-row"><label>Edad</label>{AGES.map((x, i) => <button key={x.label} className={`glow-fit-pill${kid.age === i ? " is-on" : ""}`} onClick={() => setKid({ age: i })}>{x.label}</button>)}</div>
+          <div className="glow-fit-ward">
+            {items.map((p) => {
+              const on = look[SHAPES[p.details.fit.shape].slot] === p.id;
+              return (
+                <button key={p.id} className={`glow-fit-it${on ? " is-on" : ""}`} onClick={() => toggle(p)} aria-pressed={on}>
+                  {p.images?.[0] ? <img src={p.images[0]} alt="" /> : ART(garmentSvg(p.details.fit), "glow-fit-thumb")}
+                  <b>{p.name}</b><small>{money(p.price)}</small>
+                </button>
+              );
+            })}
+          </div>
+          <div className="glow-fit-look">
+            <b>Look: {money(total)}</b>
+            <span>{picked.length} prenda{picked.length === 1 ? "" : "s"} · talla {age.size}</span>
+            {picked.length > 0 && <button className="is-wa" onClick={wa}>Enviar por WhatsApp</button>}
+            <button className="is-add" disabled={!picked.length} onClick={() => { onAddLook(picked); setAdded(true); }}>{added ? "✓ Añadido" : "Añadir el look"}</button>
+          </div>
+          <p className="glow-fit-privacy">🔒 No pedimos fotos de tu peque: el muñequito es solo un dibujo.</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* =========================================================================
    VISTA CLIENTE — catálogo + pedido por WhatsApp
 ========================================================================= */
-function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, customer, onCustomer, onJoin, accountPage, wallet, onClaimCredit, season }) {
+function Shop({ products: allProducts, settings, favs = [], onToggleFav, panel, onPanel, customer, onCustomer, onJoin, accountPage, wallet, onClaimCredit, season, world = "michi", onWorld }) {
   const [cat, setCat] = useState("Todos");
+  // Solo los productos del mundo elegido (el carrito usa todos).
+  const products = useMemo(() => allProducts.filter((p) => worldOf(p.category) === world), [allProducts, world]);
+  useEffect(() => { setCat("Todos"); }, [world]);
+  const worldCats = ["Todos", ...WORLDS[world].cats.filter((c) => products.some((p) => p.category === c))];
+  const [skinInfo, setSkinInfo] = useState(null); // producto de Skin con sus detalles abiertos
+  // Peque del probador (edad → talla recomendada en las tarjetas de Kids).
+  const [kid, setKidState] = useState(() => {
+    try { return { skin: 1, hairColor: 0, hair: "colitas", age: 1, ...JSON.parse(localStorage.getItem("glow:peque") || "{}") }; } catch { return { skin: 1, hairColor: 0, hair: "colitas", age: 1 }; }
+  });
+  const setKid = (patch) => setKidState((k) => {
+    const next = { ...k, ...patch };
+    try { localStorage.setItem("glow:peque", JSON.stringify(next)); } catch { /* sin almacenamiento */ }
+    return next;
+  });
+  const [sizePick, setSizePick] = useState({}); // talla elegida en cada tarjeta de Kids
+  const sizeFor = (p) => {
+    const sizes = p.details?.sizes || [];
+    if (!sizes.length) return "";
+    if (sizePick[p.id] && sizes.includes(sizePick[p.id])) return sizePick[p.id];
+    return recommendedSize(sizes, kid.age);
+  };
   const [q, setQ] = useState("");
   const [cart, setCart] = useState(loadCart); // { [productId]: qty }
   const [cartOpen, setCartOpen] = useState(false);
@@ -2937,30 +3233,33 @@ function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, cust
   );
 
   // Líneas del carrito (resuelve cada id contra el producto actual y respeta el stock).
+  // La clave es el id, o "id::talla" en la ropa de Kids.
   const cartLines = useMemo(
     () =>
       Object.entries(cart)
-        .map(([id, qty]) => {
-          const p = products.find((x) => x.id === id);
+        .map(([key, qty]) => {
+          const [id, size = ""] = key.split("::");
+          const p = allProducts.find((x) => x.id === id);
           if (!p) return null;
-          return { ...p, qty: Math.min(qty, p.stock) };
+          return { ...p, key, size, name: size ? `${p.name} · Talla ${size}` : p.name, qty: Math.min(qty, p.stock) };
         })
         .filter((l) => l && l.qty > 0),
-    [cart, products]
+    [cart, allProducts]
   );
 
   const cartCount = cartLines.reduce((n, l) => n + l.qty, 0);
   const cartTotal = cartLines.reduce((n, l) => n + l.price * l.qty, 0);
 
   const [guideEvent, setGuideEvent] = useState(null);
-  const addToCart = (p) => {
+  const addToCart = (p, size = "") => {
     setGuideEvent({ type: "added", product: p, at: Date.now() });
-    addToCartRaw(p);
+    addToCartRaw(p, size);
   };
-  const addToCartRaw = (p) =>
+  const addToCartRaw = (p, size = "") =>
     setCart((c) => {
-      const next = Math.min((c[p.id] || 0) + 1, p.stock);
-      return { ...c, [p.id]: next };
+      const key = size ? `${p.id}::${size}` : p.id;
+      const next = Math.min((c[key] || 0) + 1, p.stock);
+      return { ...c, [key]: next };
     });
   const setQty = (id, qty) =>
     setCart((c) => {
@@ -3000,21 +3299,29 @@ function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, cust
         <AccountPage customer={customer} favs={favs} products={products} onToggleFav={onToggleFav} onAdd={addToCart} onPanel={onPanel} settings={settings} wallet={wallet} onClaimCredit={onClaimCredit} />
       ) : (
       <>
-      <HeroSlider products={products} settings={settings} onPickCategory={goToCategory} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} season={season} />
-      {season?.key === "halloween" && <HalloweenBand season={season} onGo={() => goToCategory("Todos")} />}
+      <WorldSwitcher world={world} onPick={onWorld} />
+      {world === "michi" && (
+        <>
+          <HeroSlider products={products} settings={settings} onPickCategory={goToCategory} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} season={season} />
+          {season?.key === "halloween" && <HalloweenBand season={season} onGo={() => goToCategory("Todos")} />}
+        </>
+      )}
+      {world === "skin" && <SkinHero onRoutine={() => scrollToId("glow-rutina")} onAll={() => goToCategory("Todos")} empty={!products.length} />}
+      {world === "kids" && <KidsHero onFit={() => scrollToId("glow-probador")} onAll={() => goToCategory("Todos")} empty={!products.length} />}
+      {!products.length ? <ComingSoon world={world} onBack={() => onWorld("michi")} /> : (<>
 
       <div id="catalogo" className="glow-wrap" style={{ paddingTop: 28, scrollMarginTop: 70 }}>
         {/* filtros */}
         <div className="glow-filters">
           <div className="glow-cats">
-            {CATEGORIES.map((c) => (
+            {worldCats.map((c) => (
               <button
                 key={c}
                 onClick={() => setCat(c)}
                 style={{
                   padding: "6px 14px", borderRadius: 999, fontSize: 14, fontWeight: 500,
-                  border: `1px solid ${cat === c ? C.primary : C.line}`,
-                  background: cat === c ? C.primary : "transparent",
+                  border: `1px solid ${cat === c ? `var(--wacc, ${C.primary})` : C.line}`,
+                  background: cat === c ? `var(--wacc, ${C.primary})` : "transparent",
                   color: cat === c ? C.primaryInk : C.plum,
                 }}
               >
@@ -3042,13 +3349,14 @@ function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, cust
           {visible.map((p) => {
             const out = p.stock <= 0;
             return (
-              <div key={p.id} id={`prod-${p.id}`} className="glow-pcard" onPointerEnter={(e) => { if (e.pointerType === "mouse") e.currentTarget._seen = setTimeout(() => markSeen(p.id), 1000); }} onPointerLeave={(e) => clearTimeout(e.currentTarget._seen)} onClick={() => markSeen(p.id)} style={{ borderRadius: 18, overflow: "hidden", display: "flex", flexDirection: "column", background: C.surface, border: `1px solid ${C.line}`, boxShadow: "0 6px 20px rgba(214,53,127,0.08)" }}>
+              <div key={p.id} id={`prod-${p.id}`} className={`glow-pcard is-${world}`} onPointerEnter={(e) => { if (e.pointerType === "mouse") e.currentTarget._seen = setTimeout(() => markSeen(p.id), 1000); }} onPointerLeave={(e) => clearTimeout(e.currentTarget._seen)} onClick={() => markSeen(p.id)} style={{ borderRadius: 18, overflow: "hidden", display: "flex", flexDirection: "column", background: C.surface, border: `1px solid ${C.line}`, boxShadow: "0 6px 20px rgba(214,53,127,0.08)" }}>
                 {/* foto con marco kawaii */}
                 <div className="glow-card-pad" style={{ padding: 10 }}>
                   <div className="glow-card-img" style={{ position: "relative", overflow: "hidden", display: "grid", placeItems: "center", borderRadius: 14, background: `linear-gradient(135deg, ${C.blush}, ${C.bg})`, border: "2px solid #fff", boxShadow: `0 0 0 2px ${C.blush}` }}>
                     <ProductGallery images={p.images} alt={p.name} />
-                    {season?.key === "halloween" && svg(HALLOWEEN.cardWeb, "glow-card-web")}
-                    {season?.key === "halloween" && svg(SPIDER, "glow-card-spider")}
+                    {season?.key === "halloween" && world === "michi" && svg(HALLOWEEN.cardWeb, "glow-card-web")}
+                    {season?.key === "halloween" && world === "michi" && svg(SPIDER, "glow-card-spider")}
+                    {p.details?.nso && <span className="glow-nso">NSO ✓</span>}
                     <FavButton active={favs.includes(p.id)} onClick={() => onToggleFav(p.id)} style={{ bottom: 8, right: 8 }} />
                     {p.doublePoints && <span className="glow-x2 is-card">×2 Michipuntos</span>}
                     {p.bestSeller && (
@@ -3080,14 +3388,22 @@ function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, cust
                       ✍️ Escribe tu reseña · +{REVIEW_PTS.photo}
                     </button>
                   )}
+                  {world === "skin" && <SkinTags p={p} onInfo={() => setSkinInfo(p)} />}
                   <p className="glow-card-desc">{p.desc}</p>
+                  {world === "kids" && p.details?.sizes?.length > 0 && (
+                    <div className="glow-sizes" role="group" aria-label="Talla">
+                      {p.details.sizes.map((t) => (
+                        <button key={t} className={sizeFor(p) === t ? "is-on" : ""} onClick={(e) => { e.stopPropagation(); setSizePick((m) => ({ ...m, [p.id]: t })); }}>{t}</button>
+                      ))}
+                    </div>
+                  )}
                   <div style={{ marginTop: "auto", paddingTop: 12 }}>
                     <span className="glow-card-price" style={{ color: C.aubergine }}>{money(p.price)}</span>
                   </div>
                   <div style={{ marginTop: 12 }}>
                     <button
                       disabled={out}
-                      onClick={() => addToCart(p)}
+                      onClick={() => addToCart(p, world === "kids" ? sizeFor(p) : "")}
                       className="glow-card-btn"
                       style={{
                         width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -3113,8 +3429,14 @@ function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, cust
         )}
       </div>
 
+      {world === "michi" && <CrossToSkin hasSkin={allProducts.some((p) => worldOf(p.category) === "skin")} onGo={() => onWorld("skin")} />}
+      {world === "skin" && <RoutineBuilder products={products} onAddAll={(list) => list.forEach((p) => addToCart(p))} />}
+      {world === "kids" && <KidsFitting products={products} kid={kid} setKid={setKid} onAddLook={(list) => list.forEach((p) => addToCart(p, sizeFor(p)))} />}
+
       {/* Sección "Más vendidos" */}
-      <BestSellers products={products} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} />
+      {world === "michi" && <BestSellers products={products} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} />}
+      </>)}
+      {skinInfo && <SkinInfo p={skinInfo} onClose={() => setSkinInfo(null)} onAdd={() => { addToCart(skinInfo); setSkinInfo(null); }} />}
       </>
       )}
 
@@ -3260,8 +3582,8 @@ const NoteLetter = React.forwardRef(function NoteLetter({ order }, ref) {
       <div className="glow-letter-stamp"><div><RosaliaFace /></div></div>
       <p className="glow-letter-hi">¡Hola!</p>
       <h3 className="glow-letter-title">¡Gracias por<br />tu compra!</h3>
-      {order.items.map((l) => (
-        <div key={l.id} className="glow-letter-row">
+      {order.items.map((l, i) => (
+        <div key={`${l.id}-${i}`} className="glow-letter-row">
           {l.image ? <img src={l.image} alt="" /> : <span className="glow-letter-noimg" />}
           <div>{l.name}<small>{l.gift ? "🎁 SORPRESAA!!!" : `${l.qty} × ${money(l.price)}`}</small></div>
           <b>{l.gift ? "Regalo" : money(l.qty * l.price)}</b>
@@ -3567,7 +3889,7 @@ function YapeCheckout({ settings, lines, total: itemsTotal, discount = 0, discou
     setErr("");
     try {
       const capture = await fileToDataURL(file, 1400, 0.85);
-      const o = await createOrder({ items: lines.map((l) => ({ id: l.id, qty: l.qty })), yapeOp: op, capture, test: TEST_MODE, reward, delivery, useCredit });
+      const o = await createOrder({ items: lines.map((l) => ({ id: l.id, qty: l.qty, size: l.size || "" })), yapeOp: op, capture, test: TEST_MODE, reward, delivery, useCredit });
       creditsChanged();
       onDone(o);
       setStep("done");
@@ -3812,21 +4134,21 @@ function CartDrawer({ lines, total: subtotal, onClose, onSetQty, onClear, onOrde
             <p className="glow-soft" style={{ textAlign: "center", fontSize: 19, marginTop: 40 }}>Tu carrito está vacío.</p>
           ) : (
             lines.map((l) => (
-              <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: `1px solid ${C.line}` }}>
+              <div key={l.key || l.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: `1px solid ${C.line}` }}>
                 <Thumb src={l.images?.[0]} alt={l.name} size={52} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 600 }}>{l.name}</div>
                   <div style={{ color: C.plum, fontSize: 13 }}>{money(l.price)} c/u</div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <button onClick={() => onSetQty(l.id, l.qty - 1)} aria-label="Quitar uno" style={{ width: 28, height: 28, borderRadius: 8, border: `1px solid ${C.line}`, background: C.bg, color: C.ink, display: "grid", placeItems: "center", cursor: "pointer" }}>
+                  <button onClick={() => onSetQty(l.key || l.id, l.qty - 1)} aria-label="Quitar uno" style={{ width: 28, height: 28, borderRadius: 8, border: `1px solid ${C.line}`, background: C.bg, color: C.ink, display: "grid", placeItems: "center", cursor: "pointer" }}>
                     <Minus size={14} />
                   </button>
                   <span style={{ minWidth: 20, textAlign: "center", fontWeight: 600 }}>{l.qty}</span>
-                  <button onClick={() => onSetQty(l.id, Math.min(l.qty + 1, l.stock))} disabled={l.qty >= l.stock} aria-label="Agregar uno" style={{ width: 28, height: 28, borderRadius: 8, border: `1px solid ${C.line}`, background: C.bg, color: l.qty >= l.stock ? C.inkSoft : C.ink, display: "grid", placeItems: "center", cursor: l.qty >= l.stock ? "not-allowed" : "pointer" }}>
+                  <button onClick={() => onSetQty(l.key || l.id, Math.min(l.qty + 1, l.stock))} disabled={l.qty >= l.stock} aria-label="Agregar uno" style={{ width: 28, height: 28, borderRadius: 8, border: `1px solid ${C.line}`, background: C.bg, color: l.qty >= l.stock ? C.inkSoft : C.ink, display: "grid", placeItems: "center", cursor: l.qty >= l.stock ? "not-allowed" : "pointer" }}>
                     <Plus size={14} />
                   </button>
-                  <button onClick={() => onSetQty(l.id, 0)} aria-label="Eliminar" style={{ width: 28, height: 28, borderRadius: 8, border: "none", background: "none", color: C.roseDeep, display: "grid", placeItems: "center", cursor: "pointer" }}>
+                  <button onClick={() => onSetQty(l.key || l.id, 0)} aria-label="Eliminar" style={{ width: 28, height: 28, borderRadius: 8, border: "none", background: "none", color: C.roseDeep, display: "grid", placeItems: "center", cursor: "pointer" }}>
                     <Trash2 size={15} />
                   </button>
                 </div>
@@ -4157,7 +4479,7 @@ function ProductForm({ initial, busy, onSave, onClose }) {
   const [f, setF] = useState({
     id: initial.id || "",
     name: initial.name || "",
-    category: initial.category || CATEGORIES[1],
+    category: initial.category || WORLDS.michi.cats[0],
     cost: initial.cost ?? "",
     price: initial.price ?? "",
     stock: initial.stock ?? "",
@@ -4165,7 +4487,14 @@ function ProductForm({ initial, busy, onSave, onClose }) {
     images: initial.images || (initial.image ? [initial.image] : []),
     desc: initial.desc || "",
     doublePoints: !!initial.doublePoints,
+    details: initial.details || {},
   });
+  const setD = (k, v) => setF((s) => ({ ...s, details: { ...s.details, [k]: v } }));
+  const toggleIn = (k, v) => setF((s) => {
+    const list = s.details[k] || [];
+    return { ...s, details: { ...s.details, [k]: list.includes(v) ? list.filter((x) => x !== v) : [...list, v] } };
+  });
+  const fw = worldOf(f.category);
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
   const valid = f.name.trim() && f.cost !== "" && f.price !== "" && f.stock !== "";
 
@@ -4202,7 +4531,12 @@ function ProductForm({ initial, busy, onSave, onClose }) {
 
   const submit = () => {
     if (!valid) return;
-    onSave({ ...f, cost: Number(f.cost), price: Number(f.price), stock: Number(f.stock) });
+    // Solo se guardan los datos extra de la sección del producto.
+    const d = f.details || {};
+    const details = fw === "skin"
+      ? { step: d.step, skinTypes: d.skinTypes, concerns: d.concerns, size: d.size, ingredients: d.ingredients, usage: d.usage, nso: d.nso }
+      : fw === "kids" ? { sizes: d.sizes, fit: d.fit?.shape ? d.fit : undefined } : {};
+    onSave({ ...f, details, cost: Number(f.cost), price: Number(f.price), stock: Number(f.stock) });
   };
 
   return (
@@ -4218,9 +4552,55 @@ function ProductForm({ initial, busy, onSave, onClose }) {
         <Field label="Nombre"><Inp value={f.name} onChange={(v) => set("name", v)} placeholder="Aretes Michi Cristal" /></Field>
         <Field label="Categoría">
           <select value={f.category} onChange={(e) => set("category", e.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 12, outline: "none", border: `1px solid ${C.line}`, background: C.bg, color: C.ink }}>
-            {CATEGORIES.filter((c) => c !== "Todos").map((c) => <option key={c}>{c}</option>)}
+            {WORLD_KEYS.map((k) => (
+              <optgroup key={k} label={`${WORLDS[k].emoji} ${WORLDS[k].name}`}>
+                {WORLDS[k].cats.map((c) => <option key={c}>{c}</option>)}
+              </optgroup>
+            ))}
           </select>
         </Field>
+        {fw === "skin" && (
+          <div className="glow-pf-extra is-skin">
+            <b>✨ Datos de Glow Skin</b>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <Field label="Contenido"><Inp value={f.details.size || ""} onChange={(v) => setD("size", v)} placeholder="30 ml" /></Field>
+              <Field label="Paso de la rutina">
+                <select value={f.details.step || ""} onChange={(e) => setD("step", e.target.value)} className="glow-pf-select">
+                  <option value="">— No va en la rutina —</option>
+                  {ROUTINE_STEPS.map((s) => <option key={s.key} value={s.key}>{s.emoji} {s.label}</option>)}
+                </select>
+              </Field>
+            </div>
+            <Field label="Para piel"><div className="glow-pf-chips">{SKIN_TYPES.map((t) => <button type="button" key={t} className={(f.details.skinTypes || []).includes(t) ? "is-on" : ""} onClick={() => toggleIn("skinTypes", t)}>{t}</button>)}</div></Field>
+            <Field label="Ayuda con"><div className="glow-pf-chips">{CONCERNS.map((t) => <button type="button" key={t} className={(f.details.concerns || []).includes(t) ? "is-on" : ""} onClick={() => toggleIn("concerns", t)}>{t}</button>)}</div></Field>
+            <Field label="Ingredientes clave"><Inp value={f.details.ingredients || ""} onChange={(v) => setD("ingredients", v)} placeholder="Vitamina C 10%, ácido hialurónico" /></Field>
+            <Field label="Modo de uso"><Inp value={f.details.usage || ""} onChange={(v) => setD("usage", v)} placeholder="3 gotitas en la noche sobre la piel limpia" /></Field>
+            <Field label="Notificación Sanitaria (NSO)"><Inp value={f.details.nso || ""} onChange={(v) => setD("nso", v)} placeholder="NSOC12345-23PE" /></Field>
+          </div>
+        )}
+        {fw === "kids" && (
+          <div className="glow-pf-extra is-kids">
+            <b>🧸 Datos de Glow Kids</b>
+            <Field label="Tallas disponibles"><div className="glow-pf-chips">{(f.category === "Zapatitos" ? SHOE_SIZES : KID_SIZES).map((t) => <button type="button" key={t} className={(f.details.sizes || []).includes(t) ? "is-on" : ""} onClick={() => toggleIn("sizes", t)}>{t}</button>)}</div></Field>
+            <Field label="En el muñequito se ve como">
+              <div className="glow-pf-fit">
+                <select value={f.details.fit?.shape || ""} onChange={(e) => setD("fit", e.target.value ? { color: "#FFB3CF", print: "liso", ...f.details.fit, shape: e.target.value } : undefined)} className="glow-pf-select">
+                  <option value="">— No aparece en el probador —</option>
+                  {SHAPE_KEYS.map((k) => <option key={k} value={k}>{SHAPES[k].label}</option>)}
+                </select>
+                {f.details.fit?.shape && (
+                  <>
+                    <input type="color" value={f.details.fit.color || "#FFB3CF"} onChange={(e) => setD("fit", { ...f.details.fit, color: e.target.value })} aria-label="Color" />
+                    <select value={f.details.fit.print || "liso"} onChange={(e) => setD("fit", { ...f.details.fit, print: e.target.value })} className="glow-pf-select" aria-label="Estampado">
+                      {PRINTS.map((x) => <option key={x}>{x}</option>)}
+                    </select>
+                    <span className="glow-pf-preview" dangerouslySetInnerHTML={{ __html: garmentSvg(f.details.fit) }} />
+                  </>
+                )}
+              </div>
+            </Field>
+          </div>
+        )}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
           <Field label="P. compra (S/)"><Inp type="number" value={f.cost} onChange={(v) => set("cost", v)} placeholder="8" /></Field>
           <Field label="P. venta (S/)"><Inp type="number" value={f.price} onChange={(v) => set("price", v)} placeholder="18" /></Field>

@@ -42,7 +42,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { pool, initSchema, rowToProduct, rowToSettings, rowToOrder, rowToCustomer, rowToReview, PE_DEPARTMENTS, shippingOf, shippingCost, publicProduct, publicSettings, seasonsOf } from "./db.js";
+import { pool, initSchema, rowToProduct, rowToSettings, rowToOrder, rowToCustomer, rowToReview, PE_DEPARTMENTS, shippingOf, shippingCost, publicProduct, publicSettings, seasonsOf, detailsOf } from "./db.js";
 import { RULES, addPoints, hasRef, balance, yearSpend, levelFor, orderPoints, maybeBirthday, pickSurprise } from "./points.js";
 import { CREDIT, grantCredit, revokeCredit, claimCredit, wallet, spendCredit } from "./credits.js";
 import { saveImage, deleteImage, setUploadsDir, usingCloudinary } from "./storage.js";
@@ -522,11 +522,17 @@ function genId() {
   return "p" + crypto.randomUUID().slice(0, 12);
 }
 
-// Marca opcional "×2 Michipuntos" de un producto.
+// Marca opcional "×2 Michipuntos" y datos extra (Skin / Kids) de un producto.
 async function saveDoublePoints(row, p) {
-  if (!("doublePoints" in p)) return row;
-  const { rows } = await pool.query("UPDATE products SET double_points=$2 WHERE id=$1 RETURNING *", [row.id, !!p.doublePoints]);
-  return rows[0];
+  if ("doublePoints" in p) {
+    const { rows } = await pool.query("UPDATE products SET double_points=$2 WHERE id=$1 RETURNING *", [row.id, !!p.doublePoints]);
+    row = rows[0];
+  }
+  if ("details" in p) {
+    const { rows } = await pool.query("UPDATE products SET details=$2::jsonb WHERE id=$1 RETURNING *", [row.id, JSON.stringify(detailsOf(p.details))]);
+    row = rows[0];
+  }
+  return row;
 }
 
 app.post("/api/products", requirePin, async (req, res, next) => {
@@ -671,7 +677,9 @@ app.post("/api/orders", async (req, res, next) => {
       const p = prods.find((x) => x.id === String(it.id));
       const qty = Math.max(1, Math.min(99, Math.floor(Number(it.qty) || 0)));
       if (!p) return res.status(400).json({ error: "Un producto del carrito ya no existe." });
-      lines.push({ id: p.id, name: p.name, qty, price: Number(p.price), image: (p.images || [])[0] || "", double: !!p.double_points });
+      // Ropa de Kids: la talla elegida va en el nombre para que se vea en todos lados.
+      const size = String(it.size ?? "").trim().slice(0, 12);
+      lines.push({ id: p.id, name: size ? `${p.name} · Talla ${size}` : p.name, qty, price: Number(p.price), image: (p.images || [])[0] || "", double: !!p.double_points, ...(size ? { size } : {}) });
     }
     const subtotal = lines.reduce((s, l) => s + l.qty * l.price, 0);
 
