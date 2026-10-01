@@ -1867,16 +1867,6 @@ export default function App() {
     setPage("tienda");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-  // Búsqueda: baja al catálogo y deja el cursor en el buscador.
-  const goSearch = () => {
-    leaveAdmin();
-    setView("shop");
-    setPage("tienda");
-    setTimeout(() => {
-      document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" });
-      document.getElementById("glow-search")?.focus({ preventScroll: true });
-    }, 50);
-  };
 
   return (
     <div style={{ background: `var(--world-bg, ${C.bg})`, color: C.ink, minHeight: "100vh", transition: "background .4s" }}>
@@ -1896,7 +1886,6 @@ export default function App() {
           {/* 1 · navegación */}
           <div className="glow-nav-links">
             <NavBtn active={view === "shop" && page === "tienda"} onClick={goHome} icon={<CatHomeIcon />} label="Inicio" />
-            <NavBtn onClick={goSearch} icon={<CatSearchIcon />} label="Búsqueda" />
             <NavBtn onClick={() => setShipInfo(true)} icon={<TruckIcon />} label="Envíos a todo el Perú" />
           </div>
           <span className="glow-nav-sep" aria-hidden="true" />
@@ -2117,18 +2106,6 @@ function CatHomeIcon() {
     </svg>
   );
 }
-function CatSearchIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5.3 7.2L4.6 2.6L8.6 4.9" />
-      <path d="M14.7 7.2L15.4 2.6L11.4 4.9" />
-      <circle cx="10" cy="11" r="6.3" />
-      <path d="M9 11.2h2l-1 1.2z" fill="currentColor" strokeWidth="1.2" />
-      <path d="M14.6 15.6L21 22" />
-    </svg>
-  );
-}
-
 // Marca simple para los botones de Yape (no es el logo oficial).
 function YapeMark() {
   return (
@@ -3385,6 +3362,7 @@ function Shop({ products: allProducts, settings, favs = [], onToggleFav, panel, 
       <>
       <HeroSlider key={world} world={world} products={products} settings={settings} onPickCategory={goToCategory} onAction={(a) => { if (a === "rutina") window.dispatchEvent(new Event("glow:rutina")); scrollToId(a === "rutina" ? "glow-rutina" : "glow-tallas"); }} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} season={season} />
       {world === "michi" && season?.key === "halloween" && <HalloweenBand season={season} onGo={() => goToCategory("Todos")} />}
+      {world === "skin" && products.length > 0 && <RoutineBuilder products={products} onAddAll={(list) => list.forEach((p) => addToCart(p))} />}
       {!products.length ? <ComingSoon world={world} onBack={() => onWorld("michi")} /> : (<>
 
       <div id="catalogo" className="glow-wrap" style={{ paddingTop: 28, scrollMarginTop: 70 }}>
@@ -3507,7 +3485,6 @@ function Shop({ products: allProducts, settings, favs = [], onToggleFav, panel, 
       </div>
 
       {world === "michi" && <CrossToSkin hasSkin={allProducts.some((p) => worldOf(p.category) === "skin")} onGo={() => onWorld("skin")} />}
-      {world === "skin" && <RoutineBuilder products={products} onAddAll={(list) => list.forEach((p) => addToCart(p))} />}
       {world === "kids" && <SizeBoard products={products} kid={kid} setKid={setKid} onAdd={(p, size) => addToCart(p, size || sizeFor(p))} />}
 
       {/* Sección "Más vendidos" */}

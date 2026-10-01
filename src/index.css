@@ -4887,11 +4887,10 @@ button {
 .glow-skin-info-btn:disabled { opacity: .5; cursor: not-allowed; }
 
 /* botones lejos del carrito y del chat flotantes (abajo a la derecha) */
-.glow-routine-tot, .glow-rask { padding-right: 96px; }
+.glow-routine-tot { padding-right: 96px; }
 .glow-routine-tot { justify-content: flex-start; }
 @media (max-width: 760px) {
   .glow-routine-tot { padding-right: 74px; padding-bottom: 16px; }
-  .glow-rask { padding-right: 74px; }
   .glow-hw-cat { bottom: -27px; }
   .glow-routine-tot button { flex: 1 1 100%; }
   .glow-routine { padding-bottom: 150px; }
@@ -4946,12 +4945,12 @@ button {
 }
 
 /* ---------- rutina: primero la pregunta ---------- */
-.glow-routine.is-ask { padding: 22px 0; }
-.glow-rask { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-.glow-rask-art { width: 86px; flex: none; }
+.glow-routine.is-ask { padding: 20px 0 6px; margin: 0; background: none; }
+.glow-rask { display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; max-width: 860px !important; margin: 0 auto; padding: 14px 24px !important; border-radius: 26px; background: linear-gradient(120deg, #FBF1EA, #F1F5EF); box-shadow: 0 10px 26px rgba(217, 130, 107, .14); }
+.glow-rask-art { width: 72px; flex: none; }
 .glow-rask-art svg { display: block; width: 100%; height: auto; }
-.glow-rask > div:not(.glow-rask-btns) { flex: 1; min-width: 220px; }
-.glow-rask b { display: block; font-family: "Cormorant Garamond", serif; font-style: italic; font-weight: 600; font-size: 30px; line-height: 1.15; }
+.glow-rask > div:not(.glow-rask-btns) { flex: 0 1 auto; min-width: 220px; }
+.glow-rask b { display: block; font-family: "Cormorant Garamond", serif; font-style: italic; font-weight: 600; font-size: 28px; line-height: 1.15; }
 .glow-rask span { color: #7A6A62; font-size: 14.5px; }
 .glow-rask-btns { display: flex; gap: 10px; flex-wrap: wrap; }
 .glow-rask-btns button { border: none; border-radius: 999px; padding: 13px 22px; font: 800 15px Manrope, sans-serif; cursor: pointer; }
@@ -4961,7 +4960,7 @@ button {
 .glow-routine-close { border: none; background: #fff; color: #7A6A62; border-radius: 999px; padding: 8px 14px; font: 700 13px Manrope, sans-serif; cursor: pointer; flex: none; }
 .glow-rqs, .glow-rpath { animation: glow-rpop .4s both; }
 @media (max-width: 640px) {
-  .glow-rask { text-align: center; justify-content: center; }
+  .glow-rask { text-align: center; justify-content: center; margin: 0 16px !important; padding: 16px !important; }
   .glow-rask-btns { width: 100%; justify-content: center; }
   .glow-rask b { font-size: 25px; }
 }
