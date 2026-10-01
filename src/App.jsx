@@ -3637,19 +3637,21 @@ function parseYapeText(text, yapeName) {
 const MONTHS_ES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "set", "oct", "nov", "dic"];
 
 // Revisión de la captura: qué se encontró y si se puede continuar.
-// Bloquea lo claro (no es un comprobante, monto menor, otra titular o captura
-// vieja); lo dudoso pasa y queda marcado en tu panel para revisarlo.
+// Bloquea si no es un comprobante, si el monto no es exacto o no se lee, si es
+// otra titular o si es una captura vieja; lo demás queda marcado en tu panel.
 function checkYape(r, total) {
   const days = r.date ? Math.round((Date.now() - r.date.getTime()) / 86400000) : null;
   const dateOk = days == null ? null : days >= -1 && days <= 2;
-  const amountOk = r.amount == null ? null : r.amount + 0.01 >= total;
+  // el monto debe ser exactamente el total del pedido
+  const amountOk = r.amount == null ? null : Math.abs(r.amount - total) < 0.01;
   // un comprobante real trae la app y además el nro. de operación o la fecha
   const isReceipt = r.labeled || (!!r.app && !!r.date);
   let block = "";
   if (r.storeShot) block = "Esa es la pantalla de pago de la tienda. Sube la captura del comprobante que te muestra Yape o Plin después de pagar.";
   else if (!isReceipt && r.amount == null && !r.toMe) block = "Esta imagen no parece un comprobante de Yape o Plin. Sube la captura de tu pago, donde se vean el monto y el nro. de operación.";
   else if (!isReceipt && !r.toMe) block = "No reconocemos esta captura como un pago de Yape o Plin a la tienda. Sube la captura completa del comprobante.";
-  else if (amountOk === false) block = `El monto de la captura (${money(r.amount)}) es menor al total del pedido (${money(total)}).`;
+  else if (amountOk === false) block = `El monto de la captura (${money(r.amount)}) no coincide con el total de tu pedido (${money(total)}). Yapea el monto exacto.`;
+  else if (amountOk === null) block = `No pudimos leer el monto en tu captura. Sube una captura clara donde se vea el monto (${money(total)}).`;
   else if (r.toMe === false) block = "En la captura no aparece el nombre de la titular de la tienda. Revisa que hayas pagado al número correcto.";
   else if (dateOk === false) block = `Esta captura es del ${r.date.toLocaleDateString("es-PE", { day: "numeric", month: "long" })}. Sube el comprobante de este pago.`;
   return { dateOk, amountOk, block };
@@ -4788,7 +4790,7 @@ function PayCheck({ c }) {
     <div className={`glow-paycheck${doubt ? " is-doubt" : ""}`}>
       <b>{doubt ? "⚠ Revisa bien esta captura" : "✓ La captura se ve bien"}</b>
       {item(c.app ? true : null, `App: ${c.app === "plin" ? "Plin" : "Yape"}`, "", "App: no reconocida")}
-      {item(c.amountOk, `Monto ✓${c.amount != null ? " " + money(c.amount) : ""}`, "Monto menor", "Monto: no leído")}
+      {item(c.amountOk, `Monto ✓${c.amount != null ? " " + money(c.amount) : ""}`, "Monto no coincide", "Monto: no leído")}
       {item(c.toMe, "Titular ✓", "Titular no coincide", "Titular: no leído")}
       {item(c.dateOk, "Fecha ✓", "Fecha antigua", "Fecha: no leída")}
     </div>
