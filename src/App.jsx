@@ -1093,61 +1093,70 @@ function markSeen(id) {
   }
 }
 
-// Reglas de Michipuntos explicadas a la clienta.
+// Reglas de Michipuntos explicadas a la clienta, en palabras sencillas.
 function PointsHelp({ info, onClose }) {
+  const ex = 40; // compra de ejemplo
+  const exPts = Math.floor(ex * info.perSol);
+  const first = info.rewards[0];
+  const pct = (m) => Math.round((m - 1) * 100);
   return (
     <div className="glow-modal-bg" onClick={onClose}>
       <div className="glow-ship glow-help" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Cómo funcionan los Michipuntos">
         <button className="glow-join-x" onClick={onClose} aria-label="Cerrar"><X size={20} /></button>
         <div className="glow-help-head"><YarnBasket points={600} size={64} /><h3>¿Cómo funcionan los Michipuntos?</h3></div>
 
-        <div className="glow-ship-sec">
-          <h4>🧶 Cómo los ganas</h4>
-          <ul className="glow-help-list">
-            <li>Ganas <b>{info.perSol} Michipuntos por cada S/ 1</b> de tus compras.</li>
-            <li>Se suman a tu cesto cuando <b>confirmamos tu pago</b>.</li>
-            <li>Los productos con la etiqueta <b>×2 Michipuntos</b> te dan el doble.</li>
-            <li><b>+{info.welcome}</b> de regalo al unirte al club y <b>+{info.birthday}</b> en tu mes de cumpleaños 🎂</li>
-            <li>⭐ Reseña lo que compraste: <b>+{info.reviewText}</b> con texto y <b>+{info.reviewPhoto}</b> si subes una foto con tu producto (se suman al aprobar la reseña).</li>
-            <li>El costo de envío no suma Michipuntos.</li>
-          </ul>
+        {/* 3 pasos */}
+        <div className="glow-steps3">
+          <div><span>🛍️</span><b>1. Compra</b><small>Cada compra te da Michipuntos</small></div>
+          <div><span>🧶</span><b>2. Junta</b><small>Se guardan en tu cesto</small></div>
+          <div><span>🎁</span><b>3. Canjea</b><small>Úsalos como descuento</small></div>
+        </div>
+
+        <div className="glow-help-example">
+          <b>Ejemplo:</b> compras <b>{money(ex)}</b> → ganas <b>{exPts} Michipuntos</b>.<br />
+          Cuando juntes <b>{fmtPts(first.points)}</b>, tienes <b>S/ {first.value} de descuento</b> 🎉
         </div>
 
         <div className="glow-ship-sec">
-          <h4>👑 Tu nivel</h4>
-          <p className="glow-ship-sub">Mientras más compras en el año, más Michipuntos ganas en cada compra:</p>
-          <div className="glow-help-levels">
-            {info.levels.map((l) => (
-              <div key={l.key} className={info.level.key === l.key ? "is-on" : ""}>
-                <b>{l.name}</b>
-                <span>{l.min ? `desde ${money(l.min)} al año` : "al unirte"}</span>
-                <em>×{l.mult}</em>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="glow-ship-sec">
-          <h4>🎁 Cómo los canjeas</h4>
-          <p className="glow-ship-sub">Eliges tu canje en el carrito, antes de pagar. Uno por pedido.</p>
+          <h4>🎁 ¿Qué puedo canjear?</h4>
           <div className="glow-help-levels">
             {info.rewards.map((r) => (
               <div key={r.key}>
-                <b>{r.surprise ? "🎁 ¡Sorpresa!" : `S/ ${r.value} de descuento`}</b>
+                <b>{r.surprise ? "🎁 Un regalo sorpresa" : `S/ ${r.value} de descuento`}</b>
                 <span>en compras desde {money(r.min)}</span>
-                <em>{fmtPts(r.points)}</em>
+                <em>{fmtPts(r.points)} puntos</em>
+              </div>
+            ))}
+          </div>
+          <p className="glow-ship-sub" style={{ margin: "8px 0 0" }}>Lo eliges en tu carrito antes de pagar (uno por compra).</p>
+        </div>
+
+        <div className="glow-ship-sec">
+          <h4>✨ Más formas de ganar</h4>
+          <div className="glow-help-chips">
+            <span>🐾 Al unirte <b>+{info.welcome}</b></span>
+            <span>🎂 En tu cumpleaños <b>+{info.birthday}</b></span>
+            <span>⭐ Reseña <b>+{info.reviewText}</b></span>
+            <span>📸 Reseña con foto <b>+{info.reviewPhoto}</b></span>
+          </div>
+        </div>
+
+        <div className="glow-ship-sec">
+          <h4>👑 Mientras más compras, más ganas</h4>
+          <div className="glow-help-levels">
+            {info.levels.map((l) => (
+              <div key={l.key} className={info.level.key === l.key ? "is-on" : ""}>
+                <b>{l.name}{info.level.key === l.key ? " · tu nivel" : ""}</b>
+                <span>{l.min ? `si compras ${money(l.min)} o más en el año` : "al unirte"}</span>
+                <em>{l.mult > 1 ? `+${pct(l.mult)}% puntos` : "normal"}</em>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="glow-ship-sec">
-          <h4>⏳ Importante</h4>
-          <ul className="glow-help-list">
-            <li>Tus Michipuntos vencen a los <b>{info.expiryMonths} meses</b> de ganarlos (se usan primero los más antiguos).</li>
-            <li>Si un pago no se puede confirmar, esos Michipuntos no se suman y el canje se te devuelve.</li>
-          </ul>
-        </div>
+        <p className="glow-help-fine">
+          Los puntos se suman cuando confirmamos tu pago · el envío no suma puntos · vencen al año de ganarlos.
+        </p>
       </div>
     </div>
   );
@@ -1160,7 +1169,7 @@ function HelpModal({ settings, onClose, onPoints }) {
     ["¿Cómo pago?", `Por Yape al ${(settings.yapeNumber || "").replace(/(\d{3})(?=\d)/g, "$1 ")}. Subes la captura de tu comprobante y nosotras confirmamos el pago.`],
     ["¿Hacen entregas en Juliaca?", "Sí, gratis. Eliges el punto de encuentro, el día y la hora exacta al pagar."],
     ["¿Envían a otras ciudades?", "Sí, por Shalom a todo el Perú. Recoges en la agencia que elijas con tu DNI. El costo depende del departamento."],
-    ["¿Qué son los Michipuntos?", "Puntos que ganas con cada compra y que canjeas por descuentos o una sorpresa."],
+    ["¿Qué son los Michipuntos?", "Son puntos que ganas con cada compra. Por ejemplo, si compras S/ 40 ganas 50 Michipuntos. Cuando juntas 500, los cambias por S/ 5 de descuento en tu carrito."],
     ["¿Qué es el Michi-crédito?", "Cuando confirmamos tu pago te devolvemos hasta S/ 5 en crédito. Reclámalo en 48 horas y úsalo en los siguientes 10 días en una compra desde S/ 30. Es un beneficio por pedido: crédito o Michipuntos."],
     ["¿Dónde veo mi pedido?", "En Mi cuenta → Mis compras. Ahí ves si tu pago está en verificación, confirmado o enviado."],
   ];
@@ -1309,9 +1318,8 @@ function AccountPage({ customer, favs, products, onToggleFav, onAdd, onPanel, se
             })}
           </div>
           <p className="glow-acc-how">
-            Ganas <b>{info.perSol} Michipuntos por cada S/ 1</b> cuando confirmamos tu pago · +{info.welcome} al unirte ·
-            +{info.birthday} en tu cumpleaños · +{info.reviewPhoto} por reseña con foto · vencen a los {info.expiryMonths} meses.{" "}
-            <button className="glow-inline-link" onClick={() => setModal("puntos")}>Ver todas las reglas</button>
+            🛍️ Compras <b>S/ 40</b> → ganas <b>{Math.floor(40 * info.perSol)} Michipuntos</b>. Junta <b>{fmtPts(info.rewards[0].points)}</b> y tienes <b>S/ {info.rewards[0].value} de descuento</b>.{" "}
+            <button className="glow-inline-link" onClick={() => setModal("puntos")}>¿Cómo funciona?</button>
           </p>
         </section>
       )}
@@ -1726,7 +1734,7 @@ export default function App() {
         </div>
       )}
       <header className="glow-header" style={{ "--pat": catPattern(C.roseDeep) }}>
-        <BrandName name={settings.storeName} />
+        <BrandName name={settings.storeName} onClick={goHome} />
 
         <nav className="glow-nav">
           {/* 1 · navegación */}
@@ -1813,14 +1821,14 @@ export default function App() {
 
 // Nombre de la tienda: "Glow" en letra script con degradado brillante y
 // "by Rosalía" en cursiva debajo. Si el nombre no lleva " by ", va entero.
-function BrandName({ name }) {
+function BrandName({ name, onClick }) {
   const [main, sub] = name.split(/\s+by\s+/i);
   return (
-    <span className="glow-brand" aria-label={name}>
+    <button type="button" className="glow-brand" aria-label={`${name} · ir al inicio`} title="Ir al inicio" onClick={onClick}>
       <span className="glow-brand-main">{main}</span>
       <Sparkle style={{ position: "static", width: 14, color: C.gold, alignSelf: "flex-start" }} />
       {sub && <span className="glow-brand-sub" style={{ color: C.roseDeep }}>by {sub}</span>}
-    </span>
+    </button>
   );
 }
 
