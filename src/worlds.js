@@ -60,7 +60,9 @@ export const BUDGETS = ["Hasta S/ 100", "S/ 100 – 200", "Lo mejor"];
 
 // Rutina recomendada con los productos de la tienda. Cada producto de Skin
 // guarda en details: step, skinTypes[], concerns[].
-export function buildRoutine(products, { piel, meta, budget }) {
+// meta: lista de cosas a mejorar (se pueden elegir varias).
+export function buildRoutine(products, { piel, meta = [], budget }) {
+  const metas = Array.isArray(meta) ? meta : [meta];
   const score = (p) => {
     const d = p.details || {};
     let s = 0;
@@ -68,13 +70,13 @@ export function buildRoutine(products, { piel, meta, budget }) {
     if (types.includes(piel)) s += 3;
     else if (types.includes("Todo tipo") || types.length === 0) s += 1;
     else s -= 2; // pensado para otra piel
-    if ((d.concerns || []).includes(meta)) s += 3;
+    s += 3 * (d.concerns || []).filter((c) => metas.includes(c)).length; // +3 por cada cosa que ayuda a mejorar
     return s;
   };
   const cheap = budget === BUDGETS[0];
   const best = budget === BUDGETS[2];
   const steps = ROUTINE_STEPS.filter((st) =>
-    !cheap || ["limpia", "tonifica", "hidrata"].includes(st.key) || (st.key === "protege" && meta === "Manchas")
+    !cheap || ["limpia", "tonifica", "hidrata"].includes(st.key) || (st.key === "protege" && metas.includes("Manchas"))
   );
   return ROUTINE_STEPS.map((st) => {
     if (!steps.includes(st)) return { step: st, product: null, skipped: true };

@@ -3089,7 +3089,7 @@ function SkinInfo({ p, onClose, onAdd }) {
 
 // "Arma tu rutina": 3 preguntas arriba y los 5 pasos en fila con fotos reales.
 function RoutineBuilder({ products, onAddAll }) {
-  const [a, setA] = useState({ piel: "Mixta", meta: "Hidratación", budget: BUDGETS[1] });
+  const [a, setA] = useState({ piel: "Mixta", meta: ["Hidratación"], budget: BUDGETS[1] });
   const [added, setAdded] = useState(false);
   const [open, setOpen] = useState(null); // null: pregunta · true: abierta · false: "no, gracias"
   // El botón "Arma tu rutina" de la portada la abre directamente.
@@ -3124,12 +3124,24 @@ function RoutineBuilder({ products, onAddAll }) {
   const steps = buildRoutine(products, a);
   const chosen = steps.filter((s) => s.product);
   const total = chosen.reduce((t, s) => t + s.product.price, 0);
-  const q = (k, label, opts) => (
-    <div className="glow-rq">
-      <p>{label}</p>
-      <div>{opts.map((o) => <button key={o} className={a[k] === o ? "is-on" : ""} onClick={() => { setA((x) => ({ ...x, [k]: o })); setAdded(false); }}>{o}</button>)}</div>
-    </div>
-  );
+  // multi: se pueden marcar varias opciones (siempre queda al menos una).
+  const q = (k, label, opts, multi = false) => {
+    const isOn = (o) => (multi ? a[k].includes(o) : a[k] === o);
+    const pick = (o) => {
+      setAdded(false);
+      setA((x) => {
+        if (!multi) return { ...x, [k]: o };
+        const list = x[k].includes(o) ? x[k].filter((v) => v !== o) : [...x[k], o];
+        return { ...x, [k]: list.length ? list : x[k] };
+      });
+    };
+    return (
+      <div className="glow-rq">
+        <p>{label}</p>
+        <div>{opts.map((o) => <button key={o} className={isOn(o) ? "is-on" : ""} aria-pressed={isOn(o)} onClick={() => pick(o)}>{multi && isOn(o) ? "✓ " : ""}{o}</button>)}</div>
+      </div>
+    );
+  };
   return (
     <section id="glow-rutina" className="glow-routine">
       <div className="glow-wrap">
@@ -3142,7 +3154,7 @@ function RoutineBuilder({ products, onAddAll }) {
         </div>
         <div className="glow-rqs">
           {q("piel", "1. ¿Cómo es tu piel?", SKIN_TYPES.filter((t) => t !== "Todo tipo"))}
-          {q("meta", "2. ¿Qué quieres mejorar?", CONCERNS)}
+          {q("meta", "2. ¿Qué quieres mejorar? (elige varias)", CONCERNS, true)}
           {q("budget", "3. ¿Cuánto quieres invertir?", BUDGETS)}
         </div>
         <div className="glow-rpath">
