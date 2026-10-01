@@ -660,7 +660,7 @@ const saveDataUrl = (dataUrl) => saveImage(dataUrl, "yape", 6 * 1024 * 1024);
 
 app.post("/api/orders", async (req, res, next) => {
   try {
-    const { items, yapeOp, capture, reward, delivery, useCredit } = req.body || {};
+    const { items, yapeOp, capture, reward, delivery, useCredit, payCheck } = req.body || {};
     const test = TEST_MODE_ON && !!req.body?.test; // al publicar, nadie puede crear pedidos "de prueba"
     if (reward && useCredit) return res.status(400).json({ error: "Elige un solo beneficio por pedido: Michi-crédito o Michipuntos." });
     const customerEmail = readSession(req.get("x-customer-token"));
@@ -785,6 +785,19 @@ app.post("/api/orders", async (req, res, next) => {
       [JSON.stringify(lines), total, op, captureUrl, !!test, customerEmail, subtotal, discount, tier ? tier.points : 0, JSON.stringify(deliv), shipping]
     ));
       if (takeStock) await client.query("UPDATE orders SET stock_taken=true WHERE id=$1", [rows[0].id]);
+      // Lo que leyó la tienda en la captura (solo orientativo: el pago se confirma en la app).
+      if (payCheck && typeof payCheck === "object") {
+        const tri = (v) => (v === true ? true : v === false ? false : null);
+        const amt = payCheck.amount == null ? null : Number(payCheck.amount);
+        const pc = {
+          app: ["yape", "plin"].includes(payCheck.app) ? payCheck.app : null,
+          amount: Number.isFinite(amt) ? amt : null,
+          amountOk: tri(payCheck.amountOk), toMe: tri(payCheck.toMe), dateOk: tri(payCheck.dateOk),
+          date: String(payCheck.date || "").slice(0, 20),
+        };
+        await client.query("UPDATE orders SET pay_check=$2::jsonb WHERE id=$1", [rows[0].id, JSON.stringify(pc)]);
+        rows[0].pay_check = pc;
+      }
       if (creditUsed) {
         await client.query("UPDATE orders SET credit_used=$2 WHERE id=$1", [rows[0].id, creditUsed]);
         rows[0].credit_used = creditUsed;

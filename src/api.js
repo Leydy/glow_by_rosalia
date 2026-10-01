@@ -111,12 +111,12 @@ export async function sendWelcomeMail(email, test = false) {
 
 /* ---------- Pedidos ---------- */
 // items: [{ id, qty }]. capture: data URL de la captura del Yape.
-export async function createOrder({ items, yapeOp, capture, test = false, reward = "", delivery = null, useCredit = false }) {
+export async function createOrder({ items, yapeOp, capture, test = false, reward = "", delivery = null, useCredit = false, payCheck = null }) {
   return handle(
     await fetch("/api/orders", {
       method: "POST",
       headers: customerHeaders(),
-      body: JSON.stringify({ items, yapeOp, capture, test, reward, delivery, useCredit }),
+      body: JSON.stringify({ items, yapeOp, capture, test, reward, delivery, useCredit, payCheck }),
     })
   );
 }

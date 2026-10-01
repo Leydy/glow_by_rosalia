@@ -119,6 +119,8 @@ export async function initSchema() {
     ALTER TABLE settings ADD COLUMN IF NOT EXISTS seasons JSONB;
     ALTER TABLE orders   ADD COLUMN IF NOT EXISTS delivery JSONB;
     ALTER TABLE orders   ADD COLUMN IF NOT EXISTS shipping NUMERIC NOT NULL DEFAULT 0;
+    -- Revisión automática de la captura (app, monto, titular, fecha) para el panel.
+    ALTER TABLE orders   ADD COLUMN IF NOT EXISTS pay_check JSONB;
     -- true cuando el pedido descontó stock (se devuelve si se rechaza).
     ALTER TABLE orders   ADD COLUMN IF NOT EXISTS stock_taken BOOLEAN NOT NULL DEFAULT false;
 
@@ -216,6 +218,7 @@ export function rowToOrder(r) {
     items: Array.isArray(r.items) ? r.items : [],
     total: Number(r.total),
     yapeOp: r.yape_op,
+    payCheck: r.pay_check || null,
     capture: r.capture || "",
     status: r.status,
     isTest: !!r.is_test,

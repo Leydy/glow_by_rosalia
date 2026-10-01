@@ -3611,10 +3611,48 @@ function parseYapeText(text, yapeName) {
   // "S/ 25": el OCR a veces lee la barra como I, l o 1, y la S como 5
   const a = /\b[S5$]\s*[/|Il1]\s*\.?\s*(\d{1,5}(?:[.,]\d{1,2})?)\b/.exec(flat);
   const amount = a ? Number(a[1].replace(",", ".")) : null;
-  const words = plain(yapeName || "").split(/\s+/).filter((w) => w.length >= 4);
-  const hits = words.filter((w) => plain(flat).includes(w)).length;
-  const toMe = words.length ? hits >= Math.min(2, words.length) : null;
-  return { op, amount, toMe };
+  const low = plain(flat);
+
+  // ¿De qué app es? Yape y Plin (y los bancos con Plin) se pueden pagar entre sí.
+  const app = /yape/.test(low) ? "yape" : /plin|interbank|bbva|scotiabank/.test(low) ? "plin" : null;
+
+  // Titular: Yape y Plin la muestran recortada ("Leydy Coy.", "Leydy Coyllo M."),
+  // así que basta el primer nombre + el comienzo (3 letras o más) de otro nombre o apellido.
+  const tokens = low.split(/[^a-zñ]+/).filter((t) => t.length >= 3 && !MONTHS_ES.includes(t));
+  const words = plain(yapeName || "").split(/\s+/).filter((w) => w.length >= 3);
+  const match = (w) => tokens.some((t) => w.startsWith(t) || (t.length >= 4 && t.startsWith(w)));
+  const toMe = words.length ? match(words[0]) && (words.length === 1 || words.slice(1).some(match)) : null;
+
+  // Fecha del comprobante ("1 oct. 2026", "01 de octubre de 2026").
+  let date = null;
+  const dm = /\b(\d{1,2})\s*(?:de\s*)?(ene|feb|mar|abr|may|jun|jul|ago|set|sep|oct|nov|dic)[a-z.]*\s*(?:de\s*)?(\d{4})?/.exec(low);
+  if (dm) {
+    const mi = MONTHS_ES.indexOf(dm[2] === "sep" ? "set" : dm[2]);
+    date = new Date(Number(dm[3]) || new Date().getFullYear(), mi, Number(dm[1]));
+  }
+  // captura de la pantalla de pago de la tienda (no es un comprobante)
+  const storeShot = /monto a yapear|pagar con yape|numero yape|escanea el qr/.test(low);
+  return { op, amount, toMe, app, date, labeled: !!m, storeShot };
+}
+const MONTHS_ES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "set", "oct", "nov", "dic"];
+
+// Revisión de la captura: qué se encontró y si se puede continuar.
+// Bloquea lo claro (no es un comprobante, monto menor, otra titular o captura
+// vieja); lo dudoso pasa y queda marcado en tu panel para revisarlo.
+function checkYape(r, total) {
+  const days = r.date ? Math.round((Date.now() - r.date.getTime()) / 86400000) : null;
+  const dateOk = days == null ? null : days >= -1 && days <= 2;
+  const amountOk = r.amount == null ? null : r.amount + 0.01 >= total;
+  // un comprobante real trae la app y además el nro. de operación o la fecha
+  const isReceipt = r.labeled || (!!r.app && !!r.date);
+  let block = "";
+  if (r.storeShot) block = "Esa es la pantalla de pago de la tienda. Sube la captura del comprobante que te muestra Yape o Plin después de pagar.";
+  else if (!isReceipt && r.amount == null && !r.toMe) block = "Esta imagen no parece un comprobante de Yape o Plin. Sube la captura de tu pago, donde se vean el monto y el nro. de operación.";
+  else if (!isReceipt && !r.toMe) block = "No reconocemos esta captura como un pago de Yape o Plin a la tienda. Sube la captura completa del comprobante.";
+  else if (amountOk === false) block = `El monto de la captura (${money(r.amount)}) es menor al total del pedido (${money(total)}).`;
+  else if (r.toMe === false) block = "En la captura no aparece el nombre de la titular de la tienda. Revisa que hayas pagado al número correcto.";
+  else if (dateOk === false) block = `Esta captura es del ${r.date.toLocaleDateString("es-PE", { day: "numeric", month: "long" })}. Sube el comprobante de este pago.`;
+  return { dateOk, amountOk, block };
 }
 
 async function readYapeCapture(file) {
@@ -3937,7 +3975,7 @@ function YapeCheckout({ settings, lines, total: itemsTotal, discount = 0, discou
     setErr("");
     setStep("reading");
     const started = Date.now();
-    let r = { op: "", amount: null, toMe: null };
+    let r = { op: "", amount: null, toMe: null, app: null, date: null, labeled: false, storeShot: false };
     try {
       r = parseYapeText(await readYapeCapture(f), settings.yapeName);
     } catch {
@@ -3950,11 +3988,16 @@ function YapeCheckout({ settings, lines, total: itemsTotal, discount = 0, discou
   };
 
   const confirm = async () => {
+    if (verdict.block) return;
     setSending(true);
     setErr("");
     try {
       const capture = await fileToDataURL(file, 1400, 0.85);
-      const o = await createOrder({ items: lines.map((l) => ({ id: l.id, qty: l.qty, size: l.size || "" })), yapeOp: op, capture, test: TEST_MODE, reward, delivery, useCredit });
+      const payCheck = {
+        app: read.app, amount: read.amount, amountOk: verdict.amountOk, toMe: read.toMe, dateOk: verdict.dateOk,
+        date: read.date ? read.date.toISOString().slice(0, 10) : "",
+      };
+      const o = await createOrder({ items: lines.map((l) => ({ id: l.id, qty: l.qty, size: l.size || "" })), yapeOp: op, capture, test: TEST_MODE, reward, delivery, useCredit, payCheck });
       creditsChanged();
       onDone(o);
       setStep("done");
@@ -3986,7 +4029,8 @@ function YapeCheckout({ settings, lines, total: itemsTotal, discount = 0, discou
   };
 
   const dots = { entrega: 1, pay: 2, upload: 3, reading: 4, review: 5 }[step];
-  const amountOk = read.amount == null ? null : Math.abs(read.amount - total) < 0.01;
+  const verdict = checkYape(read, total);
+  const amountOk = verdict.amountOk;
 
   return (
     <div className="glow-yape">
@@ -4090,7 +4134,27 @@ function YapeCheckout({ settings, lines, total: itemsTotal, discount = 0, discou
                 <span>{read.toMe ? `✓ ${settings.yapeName}` : "⚠ no se reconoce el destinatario"}</span>
               </div>
             )}
+            <div className={read.app ? "is-ok" : ""}>
+              <span>App</span>
+              <span>{read.app ? `✓ ${read.app === "yape" ? "Yape" : "Plin"}` : "no se reconoce"}</span>
+            </div>
+            {verdict.dateOk != null && (
+              <div className={verdict.dateOk ? "is-ok" : "is-warn"}>
+                <span>Fecha</span>
+                <span>{verdict.dateOk ? "✓ reciente" : "⚠ captura antigua"}</span>
+              </div>
+            )}
           </div>
+          {verdict.block && (
+            <div className="glow-pay-block">
+              <b>No podemos continuar con esta captura</b>
+              <span>{verdict.block}</span>
+              <span className="glow-pay-block-help">
+                ¿Tu pago es correcto y no lo reconocemos?{" "}
+                <a href={`https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(`Hola, hice un pago de ${money(total)} y la tienda no reconoce mi captura. ¿Me ayudan?`)}`} target="_blank" rel="noreferrer">Escríbenos por WhatsApp</a>
+              </span>
+            </div>
+          )}
           <label className="glow-field-label">Nro. de operación {read.op ? "(leído de tu captura)" : ""}</label>
           <input
             className="glow-op-input"
@@ -4102,7 +4166,7 @@ function YapeCheckout({ settings, lines, total: itemsTotal, discount = 0, discou
           />
           <p className="glow-hint">Está en tu comprobante de Yape, debajo del monto.</p>
           {err && <p className="glow-err">{err}</p>}
-          <button className="glow-pay-btn" onClick={confirm} disabled={op.length < 4 || sending} style={{ background: op.length < 4 ? C.line : C.yape, marginTop: 14 }}>
+          <button className="glow-pay-btn" onClick={confirm} disabled={op.length < 4 || sending || !!verdict.block} style={{ background: op.length < 4 || verdict.block ? C.line : C.yape, marginTop: 14 }}>
             {sending ? "Enviando…" : "Confirmar y ver mi notita"}
           </button>
         </>
@@ -4715,6 +4779,22 @@ const STATUS_INFO = {
   rechazado: { label: "Rechazado", color: "#C0392B", bg: "#FDECEA" },
 };
 
+// Lo que la tienda leyó en la captura del cliente (orientativo: el pago real
+// siempre se confirma viendo el movimiento en tu Yape).
+function PayCheck({ c }) {
+  const item = (v, ok, warn, unknown) => <span className={v === true ? "is-ok" : v === false ? "is-warn" : ""}>{v === true ? ok : v === false ? warn : unknown}</span>;
+  const doubt = c.toMe !== true || c.amountOk !== true || c.dateOk === false || !c.app;
+  return (
+    <div className={`glow-paycheck${doubt ? " is-doubt" : ""}`}>
+      <b>{doubt ? "⚠ Revisa bien esta captura" : "✓ La captura se ve bien"}</b>
+      {item(c.app ? true : null, `App: ${c.app === "plin" ? "Plin" : "Yape"}`, "", "App: no reconocida")}
+      {item(c.amountOk, `Monto ✓${c.amount != null ? " " + money(c.amount) : ""}`, "Monto menor", "Monto: no leído")}
+      {item(c.toMe, "Titular ✓", "Titular no coincide", "Titular: no leído")}
+      {item(c.dateOk, "Fecha ✓", "Fecha antigua", "Fecha: no leída")}
+    </div>
+  );
+}
+
 function OrdersPanel() {
   const [orders, setOrders] = useState(null);
   const [err, setErr] = useState("");
@@ -4787,6 +4867,7 @@ function OrdersPanel() {
                 {o.creditUsed > 0 && <span style={{ fontSize: 12, color: C.antique, fontWeight: 700 }}>(usó Michi-crédito −{money(o.creditUsed)})</span>}
                 <span style={{ fontSize: 13 }}>Yape op. <b style={{ fontFamily: "monospace", color: C.yape }}>{o.yapeOp}</b></span>
               </div>
+              {o.payCheck && <PayCheck c={o.payCheck} />}
               <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8, flexWrap: "wrap" }}>
                 {o.status === "pendiente" && (
                   <>
