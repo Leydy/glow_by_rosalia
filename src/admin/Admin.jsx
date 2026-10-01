@@ -6,11 +6,13 @@ import { CONCERNS, KID_SIZES, ROUTINE_STEPS, SHOE_SIZES, SKIN_TYPES, WORLDS, WOR
 import { daysUntil, inRange, seasonList } from "../seasons.js";
 import { DAY_SHORT, HALF_HOURS, REVIEW_PTS, fileToDataURL, fmtPts, hour12, readBrowserProducts, readBrowserSettings, whenText, imgUrl } from "../lib/util.js";
 import { CatAvatar, Field, Inp, Stars, Thumb, YapeMark } from "../components/ui.jsx";
+import { TemuImport } from "./TemuImport.jsx";
 
 /* =========================================================================
    VISTA ADMINISTRACIÓN — inventario, márgenes, ganancias, stock
 ========================================================================= */
 export function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSaveSettings, onSaveSeasons, onImportFromBrowser, onAuthed }) {
+  const [temu, setTemu] = useState(false); // ventana "Importar de Temu"
   const [authed, setAuthed] = useState(false);
   const [pin, setPin] = useState("");
   const [err, setErr] = useState("");
@@ -186,9 +188,14 @@ export function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSa
         <div style={{ borderRadius: 16, overflow: "hidden", background: C.surface, border: `1px solid ${C.line}` }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: `1px solid ${C.line}` }}>
             <span style={{ fontWeight: 600 }}>Productos ({products.length})</span>
-            <button onClick={() => setEditing({})} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 8, border: "none", color: C.primaryInk, background: C.primary, fontWeight: 600 }}>
-              <Plus size={16} /> Agregar
-            </button>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button onClick={() => setTemu(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.line}`, color: C.ink, background: C.surface, fontWeight: 600 }}>
+                📦 Importar de Temu
+              </button>
+              <button onClick={() => setEditing({})} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 8, border: "none", color: C.primaryInk, background: C.primary, fontWeight: 600 }}>
+                <Plus size={16} /> Agregar
+              </button>
+            </div>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
@@ -251,6 +258,7 @@ export function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSa
         <SettingsPanel settings={settings} onSave={onSaveSettings} />
       )}
 
+      {temu && <TemuImport onSave={onSaveProduct} onClose={() => setTemu(false)} />}
       {editing && <ProductForm initial={editing} busy={busy} onSave={saveProduct} onClose={() => setEditing(null)} />}
     </div>
   );

@@ -14,6 +14,7 @@
 //   PUT    /api/settings          → guarda ajustes               (requiere PIN)
 //   PUT    /api/seasons           → guarda las temporadas        (requiere PIN)
 //   POST   /api/upload            → sube imágenes (base64) y devuelve sus URLs (requiere PIN)
+//   POST   /api/import-images     → trae fotos de Temu y las sube a la tienda (requiere PIN)
 //   GET    /api/config            → datos públicos de configuración (ID de Google)
 //   GET    /api/shalom/agencies   → agencias Shalom de un departamento (si hay SHALOM_API_KEY)
 //   POST   /api/customers/google  → registro/inicio de sesión con Google (opcional)
@@ -938,6 +939,31 @@ app.put("/api/seasons", requirePin, async (req, res, next) => {
   try {
     const { rows } = await pool.query("UPDATE settings SET seasons=$1::jsonb WHERE id=1 RETURNING *", [JSON.stringify(seasonsOf(req.body?.seasons))]);
     res.json(rowToSettings(rows[0]));
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Importar de Temu: trae las fotos desde los servidores de imágenes de Temu
+// (solo esos, por seguridad) y las sube a la tienda (Cloudinary).
+app.post("/api/import-images", requirePin, async (req, res, next) => {
+  try {
+    const list = (Array.isArray(req.body?.urls) ? req.body.urls : []).slice(0, 12);
+    const urls = [];
+    for (const u of list) {
+      let x;
+      try { x = new URL(String(u)); } catch { continue; }
+      if (x.protocol !== "https:" || !/(^|\.)kwcdn\.com$/.test(x.hostname)) continue;
+      try {
+        const r = await fetch(x.origin + x.pathname, { headers: { Accept: "image/jpeg,image/png,image/webp,*/*;q=0.5", "User-Agent": "Mozilla/5.0" } });
+        const type = (r.headers.get("content-type") || "").split(";")[0].trim();
+        if (!r.ok || !/^image\/(png|jpe?g|webp|avif|gif)$/.test(type)) continue;
+        const buf = Buffer.from(await r.arrayBuffer());
+        const saved = await saveImage(`data:${type};base64,${buf.toString("base64")}`, "productos");
+        if (saved) urls.push(saved);
+      } catch { /* una foto que no se pudo traer: se sigue con las demás */ }
+    }
+    res.json({ urls });
   } catch (e) {
     next(e);
   }

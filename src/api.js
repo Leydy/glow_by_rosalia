@@ -224,6 +224,11 @@ export async function updateSeasons(seasons) {
   return handle(await fetch("/api/seasons", { method: "PUT", headers: writeHeaders(), body: JSON.stringify({ seasons }) }));
 }
 
+// Importar de Temu: el servidor trae las fotos y devuelve sus nuevas URLs.
+export async function importImages(urls) {
+  return handle(await fetch("/api/import-images", { method: "POST", headers: writeHeaders(), body: JSON.stringify({ urls }) }));
+}
+
 /* ---------- Imágenes ----------
    Recibe data URLs (ya comprimidas en el navegador) y devuelve las rutas
    públicas guardadas en el servidor, p. ej. ["/uploads/abc.jpg"]. */
