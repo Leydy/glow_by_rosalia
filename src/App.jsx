@@ -1885,7 +1885,6 @@ export default function App() {
         <nav className="glow-nav">
           {/* 1 · navegación */}
           <div className="glow-nav-links">
-            <NavBtn active={view === "shop" && page === "tienda"} onClick={goHome} icon={<CatHomeIcon />} label="Inicio" />
             <NavBtn onClick={() => setShipInfo(true)} icon={<TruckIcon />} label="Envíos a todo el Perú" />
           </div>
           <span className="glow-nav-sep" aria-hidden="true" />
