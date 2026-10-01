@@ -608,6 +608,7 @@ function GuidePicker({ current, onPick, onClose }) {
             );
           })}
         </div>
+        <p className="glow-gpick-sel">{GUIDES[sel].desc}</p>
         <button className="glow-pay-btn" style={{ background: C.primary, marginTop: 14 }} onClick={() => onPick(sel)}>
           Elegir a {GUIDES[sel].name} 🐾
         </button>
