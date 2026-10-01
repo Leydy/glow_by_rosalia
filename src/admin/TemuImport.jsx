@@ -6,6 +6,7 @@ import { C, money } from "../theme.js";
 import { WORLDS, WORLD_KEYS, worldOf } from "../worlds.js";
 import { importImages } from "../api.js";
 import { temuBookmarklet, parseTemuPaste } from "./temuBookmarklet.js";
+import { suggestName, autoDesc } from "./temuText.js";
 
 const DEFAULT_CAT = { michi: "Aretes", skin: "Sérums", kids: "Conjuntos" };
 
@@ -32,7 +33,10 @@ export function TemuImport({ onSave, onClose }) {
       const nuevos = list.filter((p) => !urls.has(p.url)).map((p) => ({
         url: p.url,
         sel: true,
-        name: p.nombre,
+        title: p.nombre, // título original de Temu (largo)
+        name: suggestName(p.nombre),
+        desc: autoDesc(p.nombre, DEFAULT_CAT.michi),
+        descEdited: false,
         cost: p.precio ?? "",
         price: p.precio ? String(Math.ceil(p.precio * 3)) : "",
         stock: "5",
@@ -48,6 +52,12 @@ export function TemuImport({ onSave, onClose }) {
   };
 
   const set = (i, patch) => setItems((l) => l.map((it, k) => (k === i ? { ...it, ...patch } : it)));
+  // Borra una foto del producto (la principal pasa a ser la primera que quede).
+  const removePhoto = (i, k) => setItems((l) => l.map((it, n) => {
+    if (n !== i) return it;
+    const main = k === it.main ? 0 : k < it.main ? it.main - 1 : it.main;
+    return { ...it, fotos: it.fotos.filter((_, j) => j !== k), keep: it.keep.filter((_, j) => j !== k), main };
+  }));
   const chosen = items.filter((it) => it.sel);
   const valid = (it) => it.name.trim() && Number(it.price) > 0 && it.cost !== "" && it.stock !== "" && it.keep.some(Boolean);
 
@@ -66,7 +76,7 @@ export function TemuImport({ onSave, onClose }) {
         if (!images.length) throw new Error("no se pudieron traer las fotos");
         await onSave({
           name: it.name.trim(), category: it.category, cost: Number(it.cost) || 0, price: Number(it.price), stock: Number(it.stock) || 0,
-          emoji: "✨", bestSeller: false, images, desc: "", details: worldOf(it.category) === "kids" ? { sizes: [] } : {},
+          emoji: "✨", bestSeller: false, images, desc: it.desc.trim(), details: worldOf(it.category) === "kids" ? { sizes: [] } : {},
         });
         setItems((l) => l.filter((x) => x.url !== it.url));
         setDone((d) => d + 1);
@@ -121,26 +131,28 @@ export function TemuImport({ onSave, onClose }) {
                   </label>
                   <div className="glow-temu-gal">
                     {it.fotos.map((u, k) => (
-                      <button
-                        key={u}
-                        type="button"
-                        className={`${k === it.main ? "is-main" : ""}${it.keep[k] ? "" : " is-out"}`}
-                        onClick={() => set(i, k === it.main ? { keep: it.keep.map((v, j) => (j === k ? !v : v)) } : { main: k, keep: it.keep.map((v, j) => (j === k ? true : v)) })}
-                        title={k === it.main ? "Foto principal (toca para quitarla)" : "Toca para hacerla principal"}
-                      >
-                        <img src={u + "?imageView2/2/w/240/q/70"} alt="" loading="lazy" referrerPolicy="no-referrer" />
-                        {k === it.main && <span>Principal</span>}
-                      </button>
+                      <div key={u} className={`glow-temu-ph${k === it.main ? " is-main" : ""}`}>
+                        <button type="button" className="glow-temu-pick" onClick={() => set(i, { main: k })} title={k === it.main ? "Foto principal" : "Toca para hacerla principal"}>
+                          <img src={u + "?imageView2/2/w/240/q/70"} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                          {k === it.main && <span>Principal</span>}
+                        </button>
+                        <button type="button" className="glow-temu-del" onClick={() => removePhoto(i, k)} aria-label="Borrar esta foto" title="Borrar esta foto">✕</button>
+                      </div>
                     ))}
-                    <div className="glow-temu-galbtns">
-                      <button type="button" onClick={() => set(i, { keep: it.keep.map(() => true) })}>Todas</button>
-                      <button type="button" onClick={() => set(i, { keep: it.keep.map((_, j) => j === it.main) })}>Solo la principal</button>
-                    </div>
+                    <p className="glow-temu-galhint">Toca una foto para hacerla <b>principal</b> · <b>✕</b> para borrarla</p>
+                    {it.fotos.length > 1 && (
+                      <div className="glow-temu-galbtns">
+                        <button type="button" onClick={() => set(i, { fotos: [it.fotos[it.main]], keep: [true], main: 0 })}>Dejar solo la principal</button>
+                      </div>
+                    )}
+                    {!it.fotos.length && <p className="glow-temu-galhint" style={{ color: "#C0394F" }}>Sin fotos: este producto no se puede crear.</p>}
                   </div>
                   <div className="glow-temu-fields">
-                    <label className="is-wide">Nombre en tu tienda<input value={it.name} onChange={(e) => set(i, { name: e.target.value })} /></label>
+                    <label className="is-wide">Nombre en tu tienda<input value={it.name} onChange={(e) => set(i, { name: e.target.value })} />
+                      <small className="glow-temu-orig" title={it.title}>En Temu: {it.title}</small>
+                    </label>
                     <label>Categoría
-                      <select value={it.category} onChange={(e) => set(i, { category: e.target.value })}>
+                      <select value={it.category} onChange={(e) => set(i, { category: e.target.value, ...(it.descEdited ? {} : { desc: autoDesc(it.title, e.target.value) }) })}>
                         {WORLD_KEYS.map((k) => (
                           <optgroup key={k} label={`${WORLDS[k].emoji} ${WORLDS[k].name}`}>
                             {WORLDS[k].cats.map((c) => <option key={c}>{c}</option>)}
@@ -151,6 +163,9 @@ export function TemuImport({ onSave, onClose }) {
                     <label>Stock<input type="number" min="0" value={it.stock} onChange={(e) => set(i, { stock: e.target.value })} /></label>
                     <label>Compraste a (S/)<input type="number" min="0" step="0.1" className="is-auto" value={it.cost} onChange={(e) => set(i, { cost: e.target.value })} /></label>
                     <label>Vendes a (S/)<input type="number" min="0" step="0.1" value={it.price} onChange={(e) => set(i, { price: e.target.value })} /></label>
+                    <label className="is-wide">Descripción {it.descEdited ? "" : <em className="glow-temu-sug">✨ sugerida, puedes cambiarla</em>}
+                      <textarea rows={2} value={it.desc} onChange={(e) => set(i, { desc: e.target.value, descEdited: true })} />
+                    </label>
                     <span className="glow-temu-gain">
                       {WORLDS[w].emoji} {WORLDS[w].name}
                       {it.cost !== "" && Number(it.price) > 0 && <> · {gain >= 0 ? `Ganas ${money(gain)} por unidad` : `⚠ Pierdes ${money(-gain)}`}</>}

@@ -235,11 +235,14 @@
 .glow-temu-item.is-off { opacity: .5; }
 .glow-temu-check { grid-column: span 2; display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 13px; color: #3B2146; }
 .glow-temu-gal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; align-content: start; }
-.glow-temu-gal > button { position: relative; padding: 0; border: 2px solid transparent; border-radius: 10px; overflow: hidden; background: #F6F0F4; cursor: pointer; aspect-ratio: 1; }
-.glow-temu-gal > button img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.glow-temu-gal > button.is-main { grid-column: span 3; border-color: #FF3D8B; }
-.glow-temu-gal > button.is-out { opacity: .3; }
-.glow-temu-gal > button span { position: absolute; left: 6px; top: 6px; background: #FF3D8B; color: #fff; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 99px; }
+.glow-temu-ph { position: relative; border: 2px solid transparent; border-radius: 10px; overflow: hidden; background: #F6F0F4; aspect-ratio: 1; }
+.glow-temu-ph.is-main { grid-column: span 3; border-color: #FF3D8B; }
+.glow-temu-pick { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: pointer; }
+.glow-temu-pick img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.glow-temu-pick span { position: absolute; left: 6px; top: 6px; background: #FF3D8B; color: #fff; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 99px; }
+.glow-temu-del { position: absolute; right: 4px; top: 4px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: rgba(43, 37, 48, .78); color: #fff; font-size: 12px; font-weight: 800; cursor: pointer; display: grid; place-items: center; }
+.glow-temu-del:hover { background: #C0394F; }
+.glow-temu-galhint { grid-column: span 3; margin: 2px 0 0; font-size: 12px; color: #6B5A63; line-height: 1.4; }
 .glow-temu-galbtns { grid-column: span 3; display: flex; gap: 6px; flex-wrap: wrap; }
 .glow-temu-galbtns button { border: 1px solid #EEDCE6; background: #fff; border-radius: 99px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
 .glow-temu-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-content: start; }
@@ -258,3 +261,6 @@
   .glow-temu-check { grid-column: auto; }
   .glow-temu-go { margin: 0 -16px -16px; padding: 12px 16px; bottom: -16px; }
 }
+.glow-temu-fields textarea { border: 1.5px solid #EEDCE6; border-radius: 10px; padding: 8px 10px; font: 500 13.5px Manrope, sans-serif; color: #2B2530; resize: vertical; min-width: 0; }
+.glow-temu-orig { font-weight: 500; font-size: 11.5px; color: #8E7F88; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.glow-temu-sug { font-style: normal; font-weight: 700; color: #B27A10; }

@@ -13,6 +13,8 @@ function copyFromTemu() {
       const x = new URL(u, location.href);
       if (!/(^|\.)kwcdn\.com$/.test(x.hostname)) return "";
       const p = x.origin + x.pathname;
+      // los banners, íconos y logos de Temu viven en /upload_aimg/; las fotos de productos no
+      if (/upload_aimg|\/icon|\/logo|\/avatar|\/emoji/i.test(p)) return "";
       return /\.(jpe?g|png|webp|avif)$/i.test(p) ? p : "";
     } catch (e) {
       return "";
@@ -33,14 +35,27 @@ function copyFromTemu() {
   const og = document.querySelector('meta[property="og:image"]');
   if (og) add(og.content);
 
-  // 2) Si faltan, las fotos grandes de la parte de arriba (la galería del producto),
-  //    sin bajar a las recomendaciones de otros productos.
+  // 2) Si faltan, la galería del producto: se parte de la foto más grande de
+  //    arriba (la principal) y se sube hasta el bloque que contiene sus
+  //    miniaturas. Así no entran fotos de recomendaciones ni banners.
   if (fotos.length < 3) {
-    document.querySelectorAll("img").forEach((im) => {
+    const src = (im) => im.currentSrc || im.src || im.getAttribute("data-src") || "";
+    const imgs = Array.from(document.querySelectorAll("img")).filter((im) => clean(src(im)));
+    let main = null;
+    let area = 0;
+    imgs.forEach((im) => {
       const r = im.getBoundingClientRect();
-      const top = r.top + window.scrollY;
-      if (top < 1400 && (r.width >= 90 || im.naturalWidth >= 400)) add(im.currentSrc || im.src || im.getAttribute("data-src"));
+      if (r.top + window.scrollY < 1200 && r.width * r.height > area) { area = r.width * r.height; main = im; }
     });
+    if (main) {
+      add(src(main));
+      let box = main.parentElement;
+      for (let k = 0; box && k < 8; k++, box = box.parentElement) {
+        const inside = Array.from(box.querySelectorAll("img")).filter((im) => clean(src(im)));
+        if (inside.length >= 3 && inside.length <= 20) { inside.forEach((im) => add(src(im))); break; }
+        if (inside.length > 20) break; // ya sería la página entera
+      }
+    }
   }
 
   const meta = (p) => { const m = document.querySelector('meta[property="' + p + '"]'); return m ? m.content : ""; };
