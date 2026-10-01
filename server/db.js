@@ -115,6 +115,8 @@ export async function initSchema() {
     -- Envíos: configuración (puntos de entrega en Juliaca y tarifas Shalom)
     -- y, en cada pedido, a dónde va y cuánto se cobró de envío.
     ALTER TABLE settings ADD COLUMN IF NOT EXISTS shipping JSONB;
+    -- Temporadas (Halloween, Navidad…): { clave: { on, from, to, title, text, cta } }
+    ALTER TABLE settings ADD COLUMN IF NOT EXISTS seasons JSONB;
     ALTER TABLE orders   ADD COLUMN IF NOT EXISTS delivery JSONB;
     ALTER TABLE orders   ADD COLUMN IF NOT EXISTS shipping NUMERIC NOT NULL DEFAULT 0;
     -- true cuando el pedido descontó stock (se devuelve si se rechaza).
@@ -285,6 +287,26 @@ export function shippingCost(cfg, department) {
   return Number.isFinite(r) && cfg.rates?.[department] !== "" && cfg.rates?.[department] != null ? r : cfg.defaultRate;
 }
 
+// Temporadas guardadas por la tienda. Las fechas son "MM-DD" (se repiten cada año).
+const MMDD = /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+export function seasonsOf(raw) {
+  const src = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  const txt = (v, n) => String(v ?? "").trim().slice(0, n);
+  return Object.fromEntries(
+    Object.entries(src)
+      .filter(([k, v]) => /^[a-z]{2,20}$/.test(k) && v && typeof v === "object")
+      .slice(0, 40)
+      .map(([k, v]) => [k, {
+        on: v.on !== false,
+        from: MMDD.test(v.from || "") ? v.from : "",
+        to: MMDD.test(v.to || "") ? v.to : "",
+        title: txt(v.title, 60),
+        text: txt(v.text, 140),
+        cta: txt(v.cta, 30),
+      }])
+  );
+}
+
 export function publicSettings(r) {
   const { pin, ...rest } = rowToSettings(r);
   return rest;
@@ -302,5 +324,6 @@ export function rowToSettings(r) {
     yapeName: r.yape_name || "",
     yapeQr: r.yape_qr || "",
     shipping: shippingOf(r.shipping),
+    seasons: seasonsOf(r.seasons),
   };
 }

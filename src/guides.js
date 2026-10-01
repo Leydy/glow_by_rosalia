@@ -62,30 +62,43 @@ const cat = () => `
   <path class="gd-heart" d="M154 44 C146 38 140 44 146 52 L154 58 L162 52 C168 44 162 38 154 44 Z" fill="#FF3D8B"/>
 </svg>`;
 
-// Doberman chibi (negro y fuego, con pañoleta)
-const dog = () => `
+// Comisario Willy: monito con uniforme de policía, saludando
+const monkey = () => `
 <svg viewBox="0 0 200 200">
-  <ellipse cx="100" cy="190" rx="54" ry="7" fill="#0000000f"/>
-  <path class="gd-tail" d="M142 150 C158 140 162 128 158 118" fill="none" stroke="${INK}" stroke-width="12" stroke-linecap="round"/>
-  <path class="gd-tail" d="M142 150 C158 140 162 128 158 118" fill="none" stroke="#2B2426" stroke-width="7" stroke-linecap="round"/>
+  <ellipse cx="100" cy="190" rx="56" ry="7" fill="#0000000f"/>
+  <path class="gd-tail" d="M140 166 C174 168 184 138 170 124 C160 114 148 124 156 132" fill="none" stroke="${INK}" stroke-width="11" stroke-linecap="round"/>
+  <path class="gd-tail" d="M140 166 C174 168 184 138 170 124 C160 114 148 124 156 132" fill="none" stroke="#8B5A3C" stroke-width="6" stroke-linecap="round"/>
   <g class="gd-bob">
-    <ellipse cx="100" cy="150" rx="48" ry="40" fill="#2B2426" stroke="${INK}" stroke-width="3.5"/>
-    <ellipse cx="100" cy="158" rx="22" ry="24" fill="#C8783A"/>
-    <path class="gd-ear" d="M62 66 L56 12 L90 44 Z" fill="#2B2426" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>
-    <path d="M138 66 L144 12 L110 44 Z" fill="#2B2426" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>
-    <path d="M64 54 L61 26 L80 44 Z M136 54 L139 26 L120 44 Z" fill="#C8783A" opacity=".85"/>
-    <ellipse cx="100" cy="82" rx="48" ry="42" fill="#2B2426" stroke="${INK}" stroke-width="3.5"/>
-    <ellipse cx="100" cy="104" rx="26" ry="20" fill="#C8783A"/>
-    <ellipse cx="80" cy="70" rx="7" ry="4" fill="#C8783A"/><ellipse cx="120" cy="70" rx="7" ry="4" fill="#C8783A"/>
-    <g class="gd-blink"><ellipse cx="82" cy="82" rx="7" ry="8" fill="#fff"/><ellipse cx="118" cy="82" rx="7" ry="8" fill="#fff"/>
-      <ellipse cx="83" cy="84" rx="4.5" ry="6" fill="#3A2416"/><ellipse cx="119" cy="84" rx="4.5" ry="6" fill="#3A2416"/>
-      <circle cx="85" cy="81" r="1.8" fill="#fff"/><circle cx="121" cy="81" r="1.8" fill="#fff"/></g>
-    <path class="gd-nose" d="M92 96 C94 91 106 91 108 96 C108 101 102 104 100 104 C98 104 92 101 92 96 Z" fill="#141012"/>
-    <path d="M100 104 v4 M100 108 C97 113 91 112 90 108 M100 108 C103 113 109 112 110 108" stroke="#141012" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-    <path d="M97 110 q3 8 6 0" fill="#FF7FA8" stroke="#141012" stroke-width="1.5"/>
-    <path d="M60 118 L140 118 L100 148 Z" fill="#FF3D8B" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>
-    <circle cx="86" cy="126" r="3" fill="#fff"/><circle cx="104" cy="130" r="3" fill="#fff"/><circle cx="118" cy="124" r="3" fill="#fff"/>
-    <ellipse cx="80" cy="184" rx="14" ry="8" fill="#C8783A" stroke="${INK}" stroke-width="3"/><ellipse cx="120" cy="184" rx="14" ry="8" fill="#C8783A" stroke="${INK}" stroke-width="3"/>
+    <!-- uniforme -->
+    <ellipse cx="100" cy="152" rx="46" ry="38" fill="#2E3F6E" stroke="${INK}" stroke-width="3.5"/>
+    <path d="M80 118 L100 140 L120 118 Z" fill="#9CC0EA" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M96 128 L104 128 L106 152 L100 160 L94 152 Z" fill="#1E2A4A" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M124 136 l3 6 6 1 -4.5 4 1 6 -5.5 -3 -5.5 3 1 -6 -4.5 -4 6 -1 z" fill="#F0B429" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/>
+    <circle cx="100" cy="168" r="2.4" fill="#F0B429"/><circle cx="100" cy="178" r="2.4" fill="#F0B429"/>
+    <path d="M70 138 h14 M116 138 h0" stroke="#F0B429" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="146" cy="160" rx="10" ry="16" fill="#2E3F6E" stroke="${INK}" stroke-width="3"/>
+    <circle cx="148" cy="176" r="8" fill="#F2D3B0" stroke="${INK}" stroke-width="2.5"/>
+    <ellipse cx="80" cy="186" rx="14" ry="7" fill="#F2D3B0" stroke="${INK}" stroke-width="3"/><ellipse cx="120" cy="186" rx="14" ry="7" fill="#F2D3B0" stroke="${INK}" stroke-width="3"/>
+    <!-- orejas -->
+    <g class="gd-ear"><circle cx="52" cy="90" r="16" fill="#8B5A3C" stroke="${INK}" stroke-width="3.5"/><circle cx="52" cy="90" r="8.5" fill="#F2D3B0"/></g>
+    <circle cx="148" cy="90" r="16" fill="#8B5A3C" stroke="${INK}" stroke-width="3.5"/><circle cx="148" cy="90" r="8.5" fill="#F2D3B0"/>
+    <!-- cabeza -->
+    <circle cx="100" cy="88" r="44" fill="#8B5A3C" stroke="${INK}" stroke-width="3.5"/>
+    <path d="M100 74 C88 60 62 64 64 90 C66 112 84 124 100 124 C116 124 134 112 136 90 C138 64 112 60 100 74 Z" fill="#F2D3B0"/>
+    <g class="gd-blink"><ellipse cx="86" cy="88" rx="6" ry="7.5" fill="${INK}"/><ellipse cx="114" cy="88" rx="6" ry="7.5" fill="${INK}"/>
+      <circle cx="88" cy="85" r="2.2" fill="#fff"/><circle cx="116" cy="85" r="2.2" fill="#fff"/></g>
+    <ellipse cx="74" cy="104" rx="7" ry="4" fill="#FF9FB6" opacity=".6"/><ellipse cx="126" cy="104" rx="7" ry="4" fill="#FF9FB6" opacity=".6"/>
+    <g class="gd-nose"><ellipse cx="96" cy="102" rx="2" ry="2.6" fill="#6B4430"/><ellipse cx="104" cy="102" rx="2" ry="2.6" fill="#6B4430"/></g>
+    <path d="M88 109 Q100 119 112 109" fill="none" stroke="${INK}" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- gorra de policía -->
+    <path d="M58 60 C56 30 144 30 142 60 Z" fill="#2E3F6E" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="58" y="52" width="84" height="10" fill="#1E2A4A" stroke="${INK}" stroke-width="2.5"/>
+    <path d="M58 62 Q100 78 142 62 Q100 70 58 62 Z" fill="#141012" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M100 34 l3.5 7 7.5 1 -5.5 5 1.4 7.5 -6.9 -3.6 -6.9 3.6 1.4 -7.5 -5.5 -5 7.5 -1 z" fill="#F0B429" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/>
+    <!-- saludo -->
+    <path d="M62 140 C44 124 40 92 54 68" fill="none" stroke="${INK}" stroke-width="17" stroke-linecap="round"/>
+    <path d="M62 140 C44 124 40 92 54 68" fill="none" stroke="#2E3F6E" stroke-width="11" stroke-linecap="round"/>
+    <ellipse cx="58" cy="62" rx="10" ry="8" transform="rotate(-30 58 62)" fill="#F2D3B0" stroke="${INK}" stroke-width="2.5"/>
   </g>
 </svg>`;
 
@@ -146,18 +159,18 @@ export const GUIDES = {
       "Si eres de Juliaca, te lo entrego <b>gratis</b> 📍",
     ],
   },
-  capitan: {
-    name: "Capitán", tag: "Doberman guardián", art: dog(), bg: "linear-gradient(160deg,#E7E2F5,#FFE9D9)",
-    desc: "Serio por fuera, tierno por dentro. Cuida tu carrito y tus puntos.",
-    hi: "¡Guau! Capitán a tu servicio. Yo cuido tu carrito 🐾",
-    pick: (p) => `¡Guau! Te recomiendo <b>${p}</b>, es de los más buscados 🐾`,
-    added: (p) => `¡Guau! <b>${p}</b> está a salvo en tu carrito 🛡️`,
-    pair: (p) => `Misión sugerida: sumar <b>${p}</b>. ¿Lo agrego, jefa?`,
-    go: (n) => `¡Guau! Tienes <b>${n} producto${n === 1 ? "" : "s"}</b> custodiados. ¿Vamos a pagar?`,
+  willy: {
+    name: "Comisario Willy", tag: "Mono policía", art: monkey(), bg: "linear-gradient(160deg,#E2EAF7,#FFE9D9)",
+    desc: "Pone orden en la tienda y cuida tu carrito y tus puntos.",
+    hi: "¡Alto ahí! 🚨 Comisario Willy a tu servicio. Yo cuido tu carrito 🐒",
+    pick: (p) => `Reporte del comisario: <b>${p}</b> es de los más buscados 🚨`,
+    added: (p) => `¡Asegurado! <b>${p}</b> queda bajo custodia en tu carrito 👮`,
+    pair: (p) => `Recomendación oficial: sumar <b>${p}</b>. ¿Lo agrego, jefa?`,
+    go: (n) => `Tienes <b>${n} producto${n === 1 ? "" : "s"}</b> bajo custodia. ¿Procedemos al pago? 🚨`,
     tips: [
-      "Tus <b>Michipuntos</b> están seguros conmigo. ¡Junta 500 y canjéalos! 🐾",
-      "Envíos por Shalom a <b>todo el Perú</b>, o gratis en Juliaca 🚚",
-      "Paga con Yape y sube tu captura: yo vigilo que todo llegue bien 🛡️",
+      "Tus <b>Michipuntos</b> están seguros conmigo. ¡Junta 500 y canjéalos! 🐒",
+      "Envíos por Shalom a <b>todo el Perú</b>, o gratis en Juliaca 🚓",
+      "Paga con Yape y sube tu captura: yo vigilo que todo llegue bien 👮",
     ],
   },
   cuyito: {
@@ -175,4 +188,4 @@ export const GUIDES = {
     ],
   },
 };
-export const GUIDE_KEYS = ["baneco", "rosalia", "capitan", "cuyito"];
+export const GUIDE_KEYS = ["baneco", "rosalia", "willy", "cuyito"];

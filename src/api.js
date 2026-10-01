@@ -220,6 +220,10 @@ export async function updateSettings(settings) {
   );
 }
 
+export async function updateSeasons(seasons) {
+  return handle(await fetch("/api/seasons", { method: "PUT", headers: writeHeaders(), body: JSON.stringify({ seasons }) }));
+}
+
 /* ---------- Imágenes ----------
    Recibe data URLs (ya comprimidas en el navegador) y devuelve las rutas
    públicas guardadas en el servidor, p. ej. ["/uploads/abc.jpg"]. */

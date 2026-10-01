@@ -12,6 +12,7 @@
 //   GET    /api/admin/settings    → ajustes completos             (requiere PIN)
 //   GET    /api/admin/products    → productos con costo           (requiere PIN)
 //   PUT    /api/settings          → guarda ajustes               (requiere PIN)
+//   PUT    /api/seasons           → guarda las temporadas        (requiere PIN)
 //   POST   /api/upload            → sube imágenes (base64) y devuelve sus URLs (requiere PIN)
 //   GET    /api/config            → datos públicos de configuración (ID de Google)
 //   GET    /api/shalom/agencies   → agencias Shalom de un departamento (si hay SHALOM_API_KEY)
@@ -41,7 +42,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { pool, initSchema, rowToProduct, rowToSettings, rowToOrder, rowToCustomer, rowToReview, PE_DEPARTMENTS, shippingOf, shippingCost, publicProduct, publicSettings } from "./db.js";
+import { pool, initSchema, rowToProduct, rowToSettings, rowToOrder, rowToCustomer, rowToReview, PE_DEPARTMENTS, shippingOf, shippingCost, publicProduct, publicSettings, seasonsOf } from "./db.js";
 import { RULES, addPoints, hasRef, balance, yearSpend, levelFor, orderPoints, maybeBirthday, pickSurprise } from "./points.js";
 import { CREDIT, grantCredit, revokeCredit, claimCredit, wallet, spendCredit } from "./credits.js";
 import { saveImage, deleteImage, setUploadsDir, usingCloudinary } from "./storage.js";
@@ -905,6 +906,16 @@ app.put("/api/settings", requirePin, async (req, res, next) => {
         JSON.stringify(shippingOf(s.shipping)),
       ]
     );
+    res.json(rowToSettings(rows[0]));
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Temporadas: se guardan aparte para no pisar el resto de los ajustes.
+app.put("/api/seasons", requirePin, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query("UPDATE settings SET seasons=$1::jsonb WHERE id=1 RETURNING *", [JSON.stringify(seasonsOf(req.body?.seasons))]);
     res.json(rowToSettings(rows[0]));
   } catch (e) {
     next(e);

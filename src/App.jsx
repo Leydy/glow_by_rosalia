@@ -14,11 +14,12 @@ import {
   getProducts, getSettings, updateSettings, uploadImages,
   createOrder, getOrders, setOrderStatus, deleteTestOrders, getAdminSettings, getAdminProducts, getCustomers, sendWelcomeMail,
   getConfig, googleLogin, testLogin, setCustomerToken, getMe, updateMe, getMyOrders, saveFavorites, getMyPoints, getShalomAgencies,
-  getMyReviews, createReview, getProductReviews, getAdminReviews, setReviewStatus, getMyCredits, claimMyCredit,
+  getMyReviews, createReview, getProductReviews, getAdminReviews, setReviewStatus, getMyCredits, claimMyCredit, updateSeasons,
 } from "./api.js";
 import { toPng } from "html-to-image";
 import UBIGEO from "./ubigeo.json"; // departamentos → provincias → distritos (INEI)
 import { GUIDES, GUIDE_KEYS } from "./guides.js";
+import { activeSeason, seasonList, guideArt, inRange, daysUntil, webSvg, SPIDER, catSkullSvg, batSvg, PUMPKIN, WITCH_HAT } from "./seasons.js";
 
 /* ---------- Carga local (solo el carrito del visitante) ----------
    Los productos y los ajustes ahora viven en la base de datos (Postgres) y se
@@ -567,13 +568,14 @@ function YarnBasket({ points = 0, size = 150 }) {
 }
 
 /* ---------- Guía de compras ----------
-   La clienta elige quién la acompaña (Doña Baneco, Rosalía, Capitán o
+   La clienta elige quién la acompaña (Doña Baneco, Rosalía, Comisario Willy o
    Cuyito). Vive abajo a la izquierda: saluda, da tips, celebra lo que añade al
    carrito, sugiere algo que combine y la lleva a pagar. Se puede cambiar o
    esconder cuando quiera (se recuerda en este navegador). */
 function loadGuide() {
   try {
-    return localStorage.getItem("glow:guia"); // clave | "none" | null (sin elegir)
+    const k = localStorage.getItem("glow:guia"); // clave | "none" | null (sin elegir)
+    return k === "capitan" ? "willy" : k; // el doberman ahora es el Comisario Willy
   } catch {
     return "none";
   }
@@ -585,9 +587,10 @@ function storeGuide(k) {
     /* sin almacenamiento: dura lo que la pestaña */
   }
 }
-const GuideArt = ({ k }) => <span className="glow-guide-art" dangerouslySetInnerHTML={{ __html: GUIDES[k].art }} />;
+// Con temporada activa la mascota se viste para la ocasión (ej. sombrero de bruja).
+const GuideArt = ({ k, season }) => <span className="glow-guide-art" dangerouslySetInnerHTML={{ __html: guideArt(GUIDES[k].art, k, season) }} />;
 
-function GuidePicker({ current, onPick, onClose }) {
+function GuidePicker({ current, onPick, onClose, season }) {
   const [sel, setSel] = useState(current && GUIDES[current] ? current : "rosalia");
   return (
     <div className="glow-modal-bg" onClick={onClose}>
@@ -600,7 +603,7 @@ function GuidePicker({ current, onPick, onClose }) {
             const g = GUIDES[k];
             return (
               <button key={k} type="button" className={`glow-gpick-card${sel === k ? " is-on" : ""}`} onClick={() => setSel(k)} aria-pressed={sel === k}>
-                <span className="glow-gpick-stage" style={{ background: g.bg }}><GuideArt k={k} /></span>
+                <span className="glow-gpick-stage" style={{ background: g.bg }}><GuideArt k={k} season={season} /></span>
                 <small>{g.tag}</small>
                 <b>{g.name}</b>
                 <span className="glow-gpick-desc">{g.desc}</span>
@@ -618,7 +621,7 @@ function GuidePicker({ current, onPick, onClose }) {
   );
 }
 
-function ShopGuide({ products, cartLines, cartCount, onAdd, onOpenCart, event }) {
+function ShopGuide({ products, cartLines, cartCount, onAdd, onOpenCart, event, season }) {
   const [k, setK] = useState(loadGuide);
   const [picker, setPicker] = useState(false);
   const [msg, setMsg] = useState(null); // { html, acts: [{ label, run, ghost }] }
@@ -723,7 +726,7 @@ function ShopGuide({ products, cartLines, cartCount, onAdd, onOpenCart, event })
 
   return (
     <>
-      {picker && <GuidePicker current={k} onPick={choose} onClose={() => { setPicker(false); if (k === null) choose("none"); }} />}
+      {picker && <GuidePicker current={k} season={season} onPick={choose} onClose={() => { setPicker(false); if (k === null) choose("none"); }} />}
       {g ? (
         <div className="glow-guide">
           {msg && (
@@ -738,7 +741,7 @@ function ShopGuide({ products, cartLines, cartCount, onAdd, onOpenCart, event })
             </div>
           )}
           <button key={jump} className="glow-guide-btn" onClick={menu} aria-label={`Tu guía ${g.name}`} title={g.name}>
-            <GuideArt k={k} />
+            <GuideArt k={k} season={season} />
           </button>
         </div>
       ) : (
@@ -1673,6 +1676,13 @@ export default function App() {
     return () => clearTimeout(t);
   }, []);
   const ready = !loading && !!settings && minDone;
+  // Temporada del día (Halloween, Navidad…); fuera de fecha es null.
+  const season = useMemo(() => (settings ? activeSeason(settings.seasons) : null), [settings]);
+  useEffect(() => {
+    const root = document.documentElement;
+    if (season && view === "shop") root.dataset.season = season.key;
+    else delete root.dataset.season;
+  }, [season, view]);
   useEffect(() => {
     if (!ready) return;
     const t = setTimeout(() => setLoaderGone(true), 600);
@@ -1797,7 +1807,7 @@ export default function App() {
         </div>
       )}
       <header className="glow-header" style={{ "--pat": catPattern(C.roseDeep) }}>
-        <BrandName name={settings.storeName} onClick={goHome} />
+        <BrandName name={settings.storeName} onClick={goHome} season={view === "shop" ? season : null} />
 
         <nav className="glow-nav">
           {/* 1 · navegación */}
@@ -1863,6 +1873,7 @@ export default function App() {
           accountPage={page === "cuenta" && !!customer}
           wallet={wallet}
           onClaimCredit={(c) => setClaimOpen(c)}
+          season={season}
         />
       ) : (
         <Admin
@@ -1872,6 +1883,7 @@ export default function App() {
           onSaveProduct={saveProduct}
           onRemoveProduct={removeProduct}
           onSaveSettings={saveSettings}
+          onSaveSeasons={async (v) => setSettings(await updateSeasons(v))}
           onImportFromBrowser={importFromBrowser}
         />
       )}
@@ -1884,11 +1896,14 @@ export default function App() {
 
 // Nombre de la tienda: "Glow" en letra script con degradado brillante y
 // "by Rosalía" en cursiva debajo. Si el nombre no lleva " by ", va entero.
-function BrandName({ name, onClick }) {
+function BrandName({ name, onClick, season }) {
   const [main, sub] = name.split(/\s+by\s+/i);
   return (
     <button type="button" className="glow-brand" aria-label={`${name} · ir al inicio`} title="Ir al inicio" onClick={onClick}>
-      <span className="glow-brand-main">{main}</span>
+      <span className="glow-brand-main">
+        {season?.key === "halloween" && <span className="glow-brand-hat" aria-hidden="true" dangerouslySetInnerHTML={{ __html: WITCH_HAT }} />}
+        {main}
+      </span>
       <Sparkle style={{ position: "static", width: 14, color: C.gold, alignSelf: "flex-start" }} />
       {sub && <span className="glow-brand-sub" style={{ color: C.roseDeep }}>by {sub}</span>}
     </button>
@@ -2137,6 +2152,52 @@ function SingleImage({ src, alt, size = 64, fit = "contain" }) {
       onError={() => setFailed(true)}
       style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: fit }}
     />
+  );
+}
+
+/* ---------- Halloween ----------
+   Decoración tenue: telarañas en las esquinas de la portada, una arañita que
+   se mece, murciélagos que cruzan despacio y una franja con calaveritas de
+   michi. No tapa fotos ni botones (pointer-events: none). */
+const HALLOWEEN = {
+  web: webSvg(),
+  cardWeb: webSvg("#3B2146", 0.22),
+  bandWeb: webSvg("#FFFFFF", 0.22),
+  skull: catSkullSvg(),
+  skull2: catSkullSvg("#F6EEF8"),
+  bat: batSvg("#3B2146", 0.45),
+  bat2: batSvg("#742284", 0.35),
+  batLight: batSvg("#FFB3D0", 0.7),
+};
+const svg = (html, className, style) => <span className={className} style={style} aria-hidden="true" dangerouslySetInnerHTML={{ __html: html }} />;
+
+function HalloweenHero() {
+  return (
+    <div className="glow-hw-hero" aria-hidden="true">
+      {svg(HALLOWEEN.web, "glow-hw-web is-left")}
+      {svg(HALLOWEEN.web, "glow-hw-web is-right")}
+      {svg(SPIDER, "glow-hw-spider")}
+      {svg(HALLOWEEN.bat, "glow-hw-bat is-1")}
+      {svg(HALLOWEEN.bat2, "glow-hw-bat is-2")}
+      {svg(HALLOWEEN.bat, "glow-hw-bat is-3")}
+    </div>
+  );
+}
+
+function HalloweenBand({ season, onGo }) {
+  return (
+    <section className="glow-hw-band">
+      {svg(HALLOWEEN.bandWeb, "glow-hw-band-web")}
+      {svg(HALLOWEEN.skull, "glow-hw-skull is-1")}
+      {svg(PUMPKIN, "glow-hw-pumpkin")}
+      <div className="glow-hw-band-text">
+        <b>{season.title} 🎃</b>
+        <span>{season.text}</span>
+      </div>
+      <button onClick={onGo}>{season.cta} <ChevronRight size={16} /></button>
+      {svg(HALLOWEEN.skull2, "glow-hw-skull is-2")}
+      {svg(HALLOWEEN.batLight, "glow-hw-band-bat")}
+    </section>
   );
 }
 
@@ -2638,7 +2699,7 @@ const firstPhoto = (p) => (p.images || []).find(Boolean);
 // Portada: slider con fotos reales de la tienda. Una diapositiva de bienvenida
 // + una por cada categoría que tenga productos. Avanza solo, se pausa al pasar
 // el mouse y en el celular se puede deslizar con el dedo.
-function HeroSlider({ products, settings, onPickCategory, onAdd, favs = [], onToggleFav }) {
+function HeroSlider({ products, settings, onPickCategory, onAdd, favs = [], onToggleFav, season }) {
   const withPhoto = products.filter(firstPhoto);
   const featured = [
     ...withPhoto.filter((p) => p.bestSeller),
@@ -2772,6 +2833,7 @@ function HeroSlider({ products, settings, onPickCategory, onAdd, favs = [], onTo
         </div>
       ))}
 
+      {season?.key === "halloween" && <HalloweenHero />}
       <div className="glow-yarn" aria-hidden="true">
         <svg viewBox="0 0 40 40">
           <circle cx="20" cy="20" r="18" fill={C.rose} />
@@ -2812,7 +2874,7 @@ function HeroSlider({ products, settings, onPickCategory, onAdd, favs = [], onTo
 /* =========================================================================
    VISTA CLIENTE — catálogo + pedido por WhatsApp
 ========================================================================= */
-function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, customer, onCustomer, onJoin, accountPage, wallet, onClaimCredit }) {
+function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, customer, onCustomer, onJoin, accountPage, wallet, onClaimCredit, season }) {
   const [cat, setCat] = useState("Todos");
   const [q, setQ] = useState("");
   const [cart, setCart] = useState(loadCart); // { [productId]: qty }
@@ -2914,7 +2976,8 @@ function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, cust
         <AccountPage customer={customer} favs={favs} products={products} onToggleFav={onToggleFav} onAdd={addToCart} onPanel={onPanel} settings={settings} wallet={wallet} onClaimCredit={onClaimCredit} />
       ) : (
       <>
-      <HeroSlider products={products} settings={settings} onPickCategory={goToCategory} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} />
+      <HeroSlider products={products} settings={settings} onPickCategory={goToCategory} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} season={season} />
+      {season?.key === "halloween" && <HalloweenBand season={season} onGo={() => goToCategory("Todos")} />}
 
       <div id="catalogo" className="glow-wrap" style={{ paddingTop: 28, scrollMarginTop: 70 }}>
         {/* filtros */}
@@ -2960,6 +3023,7 @@ function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, cust
                 <div className="glow-card-pad" style={{ padding: 10 }}>
                   <div className="glow-card-img" style={{ position: "relative", overflow: "hidden", display: "grid", placeItems: "center", borderRadius: 14, background: `linear-gradient(135deg, ${C.blush}, ${C.bg})`, border: "2px solid #fff", boxShadow: `0 0 0 2px ${C.blush}` }}>
                     <ProductGallery images={p.images} alt={p.name} />
+                    {season?.key === "halloween" && svg(HALLOWEEN.cardWeb, "glow-card-web")}
                     <FavButton active={favs.includes(p.id)} onClick={() => onToggleFav(p.id)} style={{ bottom: 8, right: 8 }} />
                     {p.doublePoints && <span className="glow-x2 is-card">×2 Michipuntos</span>}
                     {p.bestSeller && (
@@ -3070,6 +3134,7 @@ function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, cust
           onAdd={addToCart}
           onOpenCart={() => setCartOpen(true)}
           event={guideEvent}
+          season={season}
         />
       )}
 
@@ -3804,7 +3869,7 @@ function CartDrawer({ lines, total: subtotal, onClose, onSetQty, onClear, onOrde
 /* =========================================================================
    VISTA ADMINISTRACIÓN — inventario, márgenes, ganancias, stock
 ========================================================================= */
-function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSaveSettings, onImportFromBrowser, onAuthed }) {
+function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSaveSettings, onSaveSeasons, onImportFromBrowser, onAuthed }) {
   const [authed, setAuthed] = useState(false);
   const [pin, setPin] = useState("");
   const [err, setErr] = useState("");
@@ -3934,7 +3999,7 @@ function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSaveSetti
       </div>
 
       <div className="glow-admin-tabs">
-        {[["inventario", "Inventario"], ["pedidos", "Pedidos"], ["clientas", "Clientas"], ["resenas", "Reseñas"], ["ajustes", "Ajustes"]].map(([k, l]) => (
+        {[["inventario", "Inventario"], ["pedidos", "Pedidos"], ["clientas", "Clientas"], ["resenas", "Reseñas"], ["temporadas", "Temporadas"], ["ajustes", "Ajustes"]].map(([k, l]) => (
           <button
             key={k}
             onClick={() => setTab(k)}
@@ -4039,6 +4104,8 @@ function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSaveSetti
         <ReviewsPanel />
       ) : tab === "clientas" ? (
         <CustomersPanel />
+      ) : tab === "temporadas" ? (
+        <SeasonsPanel settings={settings} onSave={onSaveSeasons} />
       ) : (
         <SettingsPanel settings={settings} onSave={onSaveSettings} />
       )}
@@ -4543,6 +4610,97 @@ function ReviewsPanel() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// Pestaña "Temporadas": cada fecha se activa sola en sus semanas.
+const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "set", "oct", "nov", "dic"];
+const dayMonthText = (v) => { const [m, d] = v.split("-").map(Number); return `${d} ${MONTHS[m - 1]}`; };
+
+function DayMonth({ value, onChange }) {
+  const [m, d] = value.split("-");
+  const set = (mm, dd) => onChange(`${mm}-${dd}`);
+  return (
+    <span className="glow-dm">
+      <select value={d} onChange={(e) => set(m, e.target.value)} aria-label="Día">
+        {Array.from({ length: 31 }, (_, k) => String(k + 1).padStart(2, "0")).map((x) => <option key={x} value={x}>{Number(x)}</option>)}
+      </select>
+      <select value={m} onChange={(e) => set(e.target.value, d)} aria-label="Mes">
+        {MONTHS.map((x, k) => <option key={x} value={String(k + 1).padStart(2, "0")}>{x}</option>)}
+      </select>
+    </span>
+  );
+}
+
+function SeasonsPanel({ settings, onSave }) {
+  const [list, setList] = useState(() => seasonList(settings.seasons));
+  const [open, setOpen] = useState("");
+  const [state, setState] = useState(""); // '' | 'saving' | 'ok' | mensaje de error
+  const set = (key, patch) => { setList((l) => l.map((s) => (s.key === key ? { ...s, ...patch } : s))); setState(""); };
+  const save = async () => {
+    setState("saving");
+    try {
+      // Solo las que ya tienen diseño (las demás se encenderán al estar listas).
+      await onSave(Object.fromEntries(list.filter((s) => s.ready).map((s) => [s.key, { on: s.on, from: s.from, to: s.to, title: s.title, text: s.text, cta: s.cta }])));
+      setState("ok");
+    } catch (e) {
+      setState(e.message);
+    }
+  };
+  // Primero las listas, de la más próxima a la más lejana.
+  const sorted = [...list].sort((a, b) => Number(b.ready) - Number(a.ready) || daysUntil(a) - daysUntil(b));
+
+  return (
+    <div className="glow-seasons">
+      <p className="glow-seasons-intro">
+        La tienda se decora sola en estas fechas y vuelve a la normalidad al terminar. Cada una se puede apagar,
+        cambiar de fecha o cambiar el texto de su banner.
+      </p>
+      {sorted.map((s) => {
+        const now = s.on && inRange(s);
+        const days = daysUntil(s);
+        return (
+          <div key={s.key} className={`glow-season${now ? " is-now" : ""}${s.ready ? "" : " is-soon"}`}>
+            <div className="glow-season-row">
+              <span className="glow-season-emoji">{s.emoji}</span>
+              <div className="glow-season-info">
+                <b>{s.name}</b>
+                <small>
+                  {dayMonthText(s.from)} → {dayMonthText(s.to)}
+                  {!s.ready ? " · diseño en camino ✨" : now ? " · ¡activa ahora!" : s.on ? ` · empieza en ${days} día${days === 1 ? "" : "s"}` : " · apagada"}
+                </small>
+              </div>
+              {s.ready && (
+                <div className="glow-season-actions">
+                  <a className="glow-season-see" href={`/?tema=${s.key}`} target="_blank" rel="noreferrer">Ver cómo se ve</a>
+                  <button className="glow-season-edit" onClick={() => setOpen(open === s.key ? "" : s.key)}>{open === s.key ? "Cerrar" : "Editar"}</button>
+                  <label className="glow-switch" title={s.on ? "Encendida" : "Apagada"}>
+                    <input type="checkbox" checked={s.on} onChange={(e) => set(s.key, { on: e.target.checked })} aria-label={`${s.name} encendida`} />
+                    <span />
+                  </label>
+                </div>
+              )}
+            </div>
+            {open === s.key && (
+              <div className="glow-season-form">
+                <div className="glow-season-dates">
+                  <label>Desde <DayMonth value={s.from} onChange={(v) => set(s.key, { from: v })} /></label>
+                  <label>Hasta <DayMonth value={s.to} onChange={(v) => set(s.key, { to: v })} /></label>
+                </div>
+                <Field label="Título del banner"><Inp value={s.title} onChange={(v) => set(s.key, { title: v })} /></Field>
+                <Field label="Texto"><Inp value={s.text} onChange={(v) => set(s.key, { text: v })} /></Field>
+                <Field label="Botón"><Inp value={s.cta} onChange={(v) => set(s.key, { cta: v })} /></Field>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <div className="glow-seasons-save">
+        <button onClick={save} disabled={state === "saving"} style={{ background: C.ink }}>{state === "saving" ? "Guardando…" : "Guardar temporadas"}</button>
+        {state === "ok" && <span style={{ color: C.ok }}>✓ Guardado</span>}
+        {state && state !== "ok" && state !== "saving" && <span style={{ color: C.warn }}>{state}</span>}
+      </div>
     </div>
   );
 }
