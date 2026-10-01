@@ -124,6 +124,11 @@ export const SHAPES = {
     const path = "M60 136 Q62 126 80 124 L120 124 Q138 126 140 136 L152 160 L137 167 L133 208 L67 208 L63 167 L48 160 Z";
     return `<defs><clipPath id="${id}"><path d="${path}"/></clipPath></defs><path d="${path}" fill="${c}" stroke="${K}" stroke-width="2.5" stroke-linejoin="round"/>${pattern(pr, c, id)}${printOn(pr, c)}`;
   } },
+  polera: { label: "Polera / chompa", slot: "top", view: "36 118 128 96", draw: (c, pr, id) => {
+    const path = "M58 136 Q60 124 80 122 L120 122 Q140 124 142 136 L158 196 L144 202 L134 168 L134 210 L66 210 L66 168 L56 202 L42 196 Z";
+    const d = shade(c, -0.18);
+    return `<defs><clipPath id="${id}"><path d="${path}"/></clipPath></defs><path d="${path}" fill="${c}" stroke="${K}" stroke-width="2.5" stroke-linejoin="round"/>${pattern(pr, c, id)}<path d="M84 124 q16 10 32 0" fill="none" stroke="${d}" stroke-width="4"/><path d="M68 204 h64 M44 194 l12 6 M156 194 l-12 6" stroke="${d}" stroke-width="5" stroke-linecap="round"/>${printOn(pr, c, 100, 162)}`;
+  } },
   vestido: { label: "Vestido", slot: "top", full: true, view: "40 118 120 140", draw: (c, pr, id) => {
     const path = "M62 136 Q64 126 80 124 L120 124 Q136 126 138 136 L148 156 L136 162 L134 190 L156 250 Q100 262 44 250 L66 190 L64 162 L52 156 Z";
     return `<defs><clipPath id="${id}"><path d="${path}"/></clipPath></defs><path d="${path}" fill="${c}" stroke="${K}" stroke-width="2.5" stroke-linejoin="round"/>${pattern(pr, c, id)}<path d="M66 190 H134" stroke="${shade(c, -0.3)}" stroke-width="5"/>${printOn(pr, c)}`;
@@ -150,13 +155,29 @@ export const SHAPES = {
 export const SHAPE_KEYS = Object.keys(SHAPES);
 
 let uid = 0;
-// Dibujo de una prenda sola (miniatura).
+
+// Partes de una prenda: una sola, o dos en los conjuntos (shape2 = la de abajo).
+export function fitParts(fit) {
+  if (!fit || !SHAPES[fit.shape]) return [];
+  const parts = [{ shape: fit.shape, color: fit.color || "#FFB3CF", print: fit.print || "liso" }];
+  if (SHAPES[fit.shape2] && SHAPES[fit.shape2].slot !== SHAPES[fit.shape].slot) {
+    parts.push({ shape: fit.shape2, color: fit.color2 || "#8FB3DA", print: fit.print2 || "liso" });
+  }
+  return parts.map((p) => ({ ...p, slot: SHAPES[p.shape].slot }));
+}
+
+// Dibujo de la prenda (o del conjunto) sola, para miniaturas.
 export function garmentSvg(fit) {
-  const sh = SHAPES[fit?.shape];
-  if (!sh) return "";
-  const id = "gc" + ++uid;
-  const c = fit.color || "#FFB3CF";
-  return `<svg viewBox="${sh.view}">${sh.back ? sh.back(c) : ""}${sh.draw(c, fit.print || "liso", id)}</svg>`;
+  const parts = fitParts(fit);
+  if (!parts.length) return "";
+  // conjunto: se dibuja la de abajo primero (salvo el jardinero, que va encima)
+  const ordered = [...parts].sort((a, b) => (a.slot === "bottom" && !SHAPES[a.shape].over ? -1 : 0) - (b.slot === "bottom" && !SHAPES[b.shape].over ? -1 : 0));
+  const view = parts.length > 1 ? "36 112 128 184" : SHAPES[parts[0].shape].view;
+  const body = ordered.map((p) => {
+    const sh = SHAPES[p.shape];
+    return (sh.back ? sh.back(p.color) : "") + sh.draw(p.color, p.print, "gc" + ++uid);
+  }).join("");
+  return `<svg viewBox="${view}">${body}</svg>`;
 }
 
 const HAIR = {

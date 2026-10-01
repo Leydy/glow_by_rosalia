@@ -21,7 +21,7 @@ import UBIGEO from "./ubigeo.json"; // departamentos → provincias → distrito
 import { GUIDES, GUIDE_KEYS } from "./guides.js";
 import {
   WORLDS, WORLD_KEYS, worldOf, SKIN_TYPES, CONCERNS, ROUTINE_STEPS, BUDGETS, buildRoutine,
-  KID_SIZES, SHOE_SIZES, recommendedSize, AGES, SKIN_TONES, HAIR_COLORS, HAIR_STYLES, PRINTS, SHAPES, SHAPE_KEYS, garmentSvg, kidSvg, spaArt,
+  KID_SIZES, SHOE_SIZES, recommendedSize, fitParts, AGES, SKIN_TONES, HAIR_COLORS, HAIR_STYLES, PRINTS, SHAPES, SHAPE_KEYS, garmentSvg, kidSvg, spaArt,
 } from "./worlds.js";
 import { activeSeason, seasonList, guideArt, inRange, daysUntil, webSvg, SPIDER, catSkullSvg, batSvg, PUMPKIN, WITCH_HAT, GHOST, MOON, garlandSvg, candySvg } from "./seasons.js";
 
@@ -3112,20 +3112,24 @@ function KidsFitting({ products, kid, setKid, onAddLook }) {
   const [added, setAdded] = useState(false);
   if (!items.length) return null;
   const byId = (id) => items.find((p) => p.id === id);
-  const fitOf = (slot) => byId(look[slot])?.details.fit;
+  // Parte de la prenda que va en ese lugar (los conjuntos ocupan dos).
+  const fitOf = (slot) => fitParts(byId(look[slot])?.details.fit).find((x) => x.slot === slot);
   const toggle = (p) => {
-    const sh = SHAPES[p.details.fit.shape];
+    const parts = fitParts(p.details.fit);
     setAdded(false);
     setLook((l) => {
       const next = { ...l };
-      if (l[sh.slot] === p.id) { delete next[sh.slot]; return next; }
-      next[sh.slot] = p.id;
-      if (sh.full) delete next.bottom; // vestido: cubre arriba y abajo
-      if (sh.slot === "bottom" && l.top && SHAPES[byId(l.top)?.details.fit.shape]?.full) delete next.top;
+      const drop = (id) => Object.keys(next).forEach((k) => { if (next[k] === id) delete next[k]; });
+      if (Object.values(l).includes(p.id)) { drop(p.id); return next; }
+      parts.forEach(({ slot }) => { if (next[slot]) drop(next[slot]); }); // saca lo que estaba ahí (todo el conjunto)
+      parts.forEach(({ slot }) => { next[slot] = p.id; });
+      const top = byId(next.top);
+      if (parts.some((x) => SHAPES[x.shape].full) && next.bottom && next.bottom !== p.id) drop(next.bottom); // vestido: cubre arriba y abajo
+      if (parts.some((x) => x.slot === "bottom") && top && top.id !== p.id && fitParts(top.details.fit).some((x) => SHAPES[x.shape].full)) drop(top.id);
       return next;
     });
   };
-  const picked = Object.values(look).map(byId).filter(Boolean);
+  const picked = [...new Set(Object.values(look))].map(byId).filter(Boolean);
   const total = picked.reduce((t, p) => t + p.price, 0);
   const age = AGES[kid.age] || AGES[1];
   const wa = () => {
@@ -3148,7 +3152,7 @@ function KidsFitting({ products, kid, setKid, onAddLook }) {
           <div className="glow-fit-row"><label>Edad</label>{AGES.map((x, i) => <button key={x.label} className={`glow-fit-pill${kid.age === i ? " is-on" : ""}`} onClick={() => setKid({ age: i })}>{x.label}</button>)}</div>
           <div className="glow-fit-ward">
             {items.map((p) => {
-              const on = look[SHAPES[p.details.fit.shape].slot] === p.id;
+              const on = Object.values(look).includes(p.id);
               return (
                 <button key={p.id} className={`glow-fit-it${on ? " is-on" : ""}`} onClick={() => toggle(p)} aria-pressed={on}>
                   {p.images?.[0] ? <img src={p.images[0]} alt="" /> : ART(garmentSvg(p.details.fit), "glow-fit-thumb")}
@@ -4599,6 +4603,24 @@ function ProductForm({ initial, busy, onSave, onClose }) {
                 )}
               </div>
             </Field>
+            {f.details.fit?.shape && (
+              <Field label="¿Es un conjunto? Segunda prenda">
+                <div className="glow-pf-fit">
+                  <select value={f.details.fit.shape2 || ""} onChange={(e) => setD("fit", { color2: "#8FB3DA", print2: "liso", ...f.details.fit, shape2: e.target.value || undefined })} className="glow-pf-select">
+                    <option value="">— No, es una sola prenda —</option>
+                    {SHAPE_KEYS.filter((k) => SHAPES[k].slot !== SHAPES[f.details.fit.shape].slot).map((k) => <option key={k} value={k}>{SHAPES[k].label}</option>)}
+                  </select>
+                  {f.details.fit.shape2 && (
+                    <>
+                      <input type="color" value={f.details.fit.color2 || "#8FB3DA"} onChange={(e) => setD("fit", { ...f.details.fit, color2: e.target.value })} aria-label="Color de la segunda prenda" />
+                      <select value={f.details.fit.print2 || "liso"} onChange={(e) => setD("fit", { ...f.details.fit, print2: e.target.value })} className="glow-pf-select" aria-label="Estampado de la segunda prenda">
+                        {PRINTS.map((x) => <option key={x}>{x}</option>)}
+                      </select>
+                    </>
+                  )}
+                </div>
+              </Field>
+            )}
           </div>
         )}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
