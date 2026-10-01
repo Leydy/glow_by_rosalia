@@ -948,7 +948,7 @@ app.put("/api/seasons", requirePin, async (req, res, next) => {
 // (solo esos, por seguridad) y las sube a la tienda (Cloudinary).
 app.post("/api/import-images", requirePin, async (req, res, next) => {
   try {
-    const list = (Array.isArray(req.body?.urls) ? req.body.urls : []).slice(0, 12);
+    const list = (Array.isArray(req.body?.urls) ? req.body.urls : []).slice(0, 20);
     const urls = [];
     for (const u of list) {
       let x;

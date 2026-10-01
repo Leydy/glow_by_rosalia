@@ -35,25 +35,58 @@ function copyFromTemu() {
   const og = document.querySelector('meta[property="og:image"]');
   if (og) add(og.content);
 
-  // 2) Si faltan, la galería del producto: se parte de la foto más grande de
-  //    arriba (la principal) y se sube hasta el bloque que contiene sus
-  //    miniaturas. Así no entran fotos de recomendaciones ni banners.
-  if (fotos.length < 3) {
-    const src = (im) => im.currentSrc || im.src || im.getAttribute("data-src") || "";
-    const imgs = Array.from(document.querySelectorAll("img")).filter((im) => clean(src(im)));
-    let main = null;
-    let area = 0;
-    imgs.forEach((im) => {
-      const r = im.getBoundingClientRect();
-      if (r.top + window.scrollY < 1200 && r.width * r.height > area) { area = r.width * r.height; main = im; }
-    });
-    if (main) {
-      add(src(main));
-      let box = main.parentElement;
-      for (let k = 0; box && k < 8; k++, box = box.parentElement) {
-        const inside = Array.from(box.querySelectorAll("img")).filter((im) => clean(src(im)));
-        if (inside.length >= 3 && inside.length <= 20) { inside.forEach((im) => add(src(im))); break; }
-        if (inside.length > 20) break; // ya sería la página entera
+  // 2) La lista de fotos que la página guarda por dentro (aunque la galería
+  //    todavía no las haya mostrado): la primera lista "gallery…" con fotos.
+  const unesc = (t) => t.replace(/\\u002F/gi, "/").replace(/\\\//g, "/");
+  Array.from(document.scripts).some((sc) => {
+    const txt = sc.textContent || "";
+    if (txt.length < 200 || !/kwcdn/.test(txt)) return false;
+    const re = /"[a-zA-Z]*[gG]allery[a-zA-Z]*"\s*:\s*\[/g;
+    let m;
+    while ((m = re.exec(txt))) {
+      // el arreglo hasta su corchete de cierre
+      let depth = 0;
+      let end = m.index + m[0].length - 1;
+      for (; end < txt.length && end < m.index + 60000; end++) {
+        if (txt[end] === "[") depth++;
+        else if (txt[end] === "]" && --depth === 0) break;
+      }
+      const urls = unesc(txt.slice(m.index, end)).match(/https?:\/\/[a-z0-9.-]*kwcdn\.com\/[^"'\s\\)]+/gi) || [];
+      const ok = urls.map(clean).filter(Boolean);
+      if (ok.length >= 2) { ok.forEach(add); return true; }
+    }
+    return false;
+  });
+
+  // 3) La galería en pantalla: se parte de la foto más grande de arriba (la
+  //    principal) y se sube hasta el bloque que contiene sus miniaturas. Se leen
+  //    también las fotos que aún no cargan (data-src, srcset) y los fondos.
+  //    Así no entran fotos de recomendaciones ni banners.
+  const srcs = (el) => {
+    const out = [el.currentSrc, el.src, el.getAttribute && el.getAttribute("data-src"), el.getAttribute && el.getAttribute("data-original"), el.getAttribute && el.getAttribute("data-lazy-src")];
+    const ss = el.getAttribute && (el.getAttribute("srcset") || el.getAttribute("data-srcset"));
+    if (ss) ss.split(",").forEach((p) => out.push(p.trim().split(" ")[0]));
+    const bg = el.style && el.style.backgroundImage;
+    if (bg) { const mm = /url\(["']?([^"')]+)/.exec(bg); if (mm) out.push(mm[1]); }
+    return out.filter(Boolean);
+  };
+  const good = (el) => srcs(el).some((u) => clean(u));
+  const imgs = Array.from(document.querySelectorAll("img")).filter(good);
+  let main = null;
+  let area = 0;
+  imgs.forEach((im) => {
+    const r = im.getBoundingClientRect();
+    if (r.top + window.scrollY < 1200 && r.width * r.height > area) { area = r.width * r.height; main = im; }
+  });
+  if (main) {
+    srcs(main).forEach(add);
+    let box = main.parentElement;
+    for (let k = 0; box && k < 10; k++, box = box.parentElement) {
+      const inside = Array.from(box.querySelectorAll("img, [style*='background-image']")).filter(good);
+      if (inside.length > 40) break; // ya sería la página entera
+      if (inside.length >= 3) {
+        inside.forEach((el) => srcs(el).forEach(add));
+        break;
       }
     }
   }
@@ -96,12 +129,12 @@ function copyFromTemu() {
   try { lista = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { lista = []; }
   const url = location.origin + location.pathname;
   lista = lista.filter((x) => x.url !== url);
-  lista.push({ nombre, precio, fotos: fotos.slice(0, 12), url });
+  lista.push({ nombre, precio, fotos: fotos.slice(0, 20), url });
   try { localStorage.setItem(KEY, JSON.stringify(lista)); } catch (e) { /* sin almacenamiento: solo este producto */ }
   const texto = JSON.stringify({ glowTemu: 1, productos: lista });
 
   const resumen = "<b style=\"display:block;margin-bottom:4px\">🐾 ¡Copiado para Glow!</b>" + nombre.replace(/[<>&]/g, "").slice(0, 70) +
-    '<div style="opacity:.85;margin-top:6px">📸 ' + Math.min(fotos.length, 12) + " fotos · 💰 " + (precio ? "S/ " + precio.toFixed(2) : "sin precio") + " · 🧺 " + lista.length + (lista.length === 1 ? " producto copiado" : " productos copiados") + "</div>";
+    '<div style="opacity:.85;margin-top:6px">📸 ' + Math.min(fotos.length, 20) + " fotos · 💰 " + (precio ? "S/ " + precio.toFixed(2) : "sin precio") + " · 🧺 " + lista.length + (lista.length === 1 ? " producto copiado" : " productos copiados") + "</div>";
   const fin = () => aviso(resumen + '<div style="margin-top:6px">Ahora pégalo en tu panel → «Importar de Temu».</div>', true);
   const manual = () => {
     const box = aviso(resumen + '<div style="margin-top:6px">Copia este texto con <b>Ctrl + C</b> y pégalo en tu panel:</div><textarea style="width:100%;height:70px;margin-top:6px;border-radius:8px;font-size:11px"></textarea>', true);
@@ -129,7 +162,7 @@ export function parseTemuPaste(text) {
       .map((p) => ({
         nombre: String(p.nombre || "").slice(0, 160),
         precio: Number(p.precio) > 0 ? Number(p.precio) : null,
-        fotos: p.fotos.filter((u) => /^https:\/\/[a-z0-9.-]*kwcdn\.com\//i.test(u)).slice(0, 12),
+        fotos: p.fotos.filter((u) => /^https:\/\/[a-z0-9.-]*kwcdn\.com\//i.test(u)).slice(0, 20),
         url: String(p.url || ""),
       }))
       .filter((p) => p.fotos.length);
