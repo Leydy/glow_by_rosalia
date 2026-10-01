@@ -19,7 +19,7 @@ import {
 import { toPng } from "html-to-image";
 import UBIGEO from "./ubigeo.json"; // departamentos → provincias → distritos (INEI)
 import { GUIDES, GUIDE_KEYS } from "./guides.js";
-import { activeSeason, seasonList, guideArt, inRange, daysUntil, webSvg, SPIDER, catSkullSvg, batSvg, PUMPKIN, WITCH_HAT } from "./seasons.js";
+import { activeSeason, seasonList, guideArt, inRange, daysUntil, webSvg, SPIDER, catSkullSvg, batSvg, PUMPKIN, WITCH_HAT, GHOST, MOON, garlandSvg, candySvg } from "./seasons.js";
 
 /* ---------- Carga local (solo el carrito del visitante) ----------
    Los productos y los ajustes ahora viven en la base de datos (Postgres) y se
@@ -1808,6 +1808,7 @@ export default function App() {
       )}
       <header className="glow-header" style={{ "--pat": catPattern(C.roseDeep) }}>
         <BrandName name={settings.storeName} onClick={goHome} season={view === "shop" ? season : null} />
+        {season?.key === "halloween" && view === "shop" && <HalloweenGarland />}
 
         <nav className="glow-nav">
           {/* 1 · navegación */}
@@ -1890,6 +1891,7 @@ export default function App() {
 
       {/* Asistente de la tienda (solo para los clientes, no en el panel). */}
       {view === "shop" && <ChatBot products={products} settings={settings} />}
+      {season?.key === "halloween" && view === "shop" && <HalloweenFlock />}
     </div>
   );
 }
@@ -2168,8 +2170,25 @@ const HALLOWEEN = {
   bat: batSvg("#3B2146", 0.45),
   bat2: batSvg("#742284", 0.35),
   batLight: batSvg("#FFB3D0", 0.7),
+  batDark: batSvg("#2A1630", 0.8),
+  garland: garlandSvg(24),
+  candies: ["#F26D9C", "#F7A440", "#B48BE0", "#7BC67E"].map(candySvg),
 };
-const svg = (html, className, style) => <span className={className} style={style} aria-hidden="true" dangerouslySetInnerHTML={{ __html: html }} />;
+
+// Guirnalda de calabacitas colgando bajo la cabecera.
+function HalloweenGarland() {
+  return svg(HALLOWEEN.garland, "glow-hw-garland");
+}
+
+// Bandada de murciélagos que cruza la pantalla de vez en cuando.
+function HalloweenFlock() {
+  return (
+    <div className="glow-hw-flock" aria-hidden="true">
+      {[0, 1, 2, 3, 4].map((i) => svg(HALLOWEEN.batDark, `glow-hw-flock-bat is-${i}`, null, i))}
+    </div>
+  );
+}
+const svg = (html, className, style, key) => <span key={key} className={className} style={style} aria-hidden="true" dangerouslySetInnerHTML={{ __html: html }} />;
 
 function HalloweenHero() {
   return (
@@ -2180,6 +2199,10 @@ function HalloweenHero() {
       {svg(HALLOWEEN.bat, "glow-hw-bat is-1")}
       {svg(HALLOWEEN.bat2, "glow-hw-bat is-2")}
       {svg(HALLOWEEN.bat, "glow-hw-bat is-3")}
+      {svg(MOON, "glow-hw-moon")}
+      {[0, 1, 2].map((i) => svg(GHOST, `glow-hw-ghost is-${i}`, null, i))}
+      <span className="glow-hw-fog is-1" />
+      <span className="glow-hw-fog is-2" />
     </div>
   );
 }
@@ -2197,6 +2220,7 @@ function HalloweenBand({ season, onGo }) {
       <button onClick={onGo}>{season.cta} <ChevronRight size={16} /></button>
       {svg(HALLOWEEN.skull2, "glow-hw-skull is-2")}
       {svg(HALLOWEEN.batLight, "glow-hw-band-bat")}
+      {HALLOWEEN.candies.map((c, i) => svg(c, `glow-hw-candy is-${i}`, null, i))}
     </section>
   );
 }
@@ -3018,12 +3042,13 @@ function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, cust
           {visible.map((p) => {
             const out = p.stock <= 0;
             return (
-              <div key={p.id} id={`prod-${p.id}`} onPointerEnter={(e) => { if (e.pointerType === "mouse") e.currentTarget._seen = setTimeout(() => markSeen(p.id), 1000); }} onPointerLeave={(e) => clearTimeout(e.currentTarget._seen)} onClick={() => markSeen(p.id)} style={{ borderRadius: 18, overflow: "hidden", display: "flex", flexDirection: "column", background: C.surface, border: `1px solid ${C.line}`, boxShadow: "0 6px 20px rgba(214,53,127,0.08)" }}>
+              <div key={p.id} id={`prod-${p.id}`} className="glow-pcard" onPointerEnter={(e) => { if (e.pointerType === "mouse") e.currentTarget._seen = setTimeout(() => markSeen(p.id), 1000); }} onPointerLeave={(e) => clearTimeout(e.currentTarget._seen)} onClick={() => markSeen(p.id)} style={{ borderRadius: 18, overflow: "hidden", display: "flex", flexDirection: "column", background: C.surface, border: `1px solid ${C.line}`, boxShadow: "0 6px 20px rgba(214,53,127,0.08)" }}>
                 {/* foto con marco kawaii */}
                 <div className="glow-card-pad" style={{ padding: 10 }}>
                   <div className="glow-card-img" style={{ position: "relative", overflow: "hidden", display: "grid", placeItems: "center", borderRadius: 14, background: `linear-gradient(135deg, ${C.blush}, ${C.bg})`, border: "2px solid #fff", boxShadow: `0 0 0 2px ${C.blush}` }}>
                     <ProductGallery images={p.images} alt={p.name} />
                     {season?.key === "halloween" && svg(HALLOWEEN.cardWeb, "glow-card-web")}
+                    {season?.key === "halloween" && svg(SPIDER, "glow-card-spider")}
                     <FavButton active={favs.includes(p.id)} onClick={() => onToggleFav(p.id)} style={{ bottom: 8, right: 8 }} />
                     {p.doublePoints && <span className="glow-x2 is-card">×2 Michipuntos</span>}
                     {p.bestSeller && (

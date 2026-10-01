@@ -4,7 +4,7 @@
 // `ready` indica si la decoración ya está diseñada.
 
 export const SEASONS = [
-  { key: "halloween", emoji: "🎃", name: "Halloween", from: "10-18", to: "10-31", ready: true,
+  { key: "halloween", emoji: "🎃", name: "Halloween", from: "10-01", to: "10-31", ready: true,
     title: "Noche de michis", text: "Collares, aretes y regalitos con un toque misterioso.", cta: "Ver la colección" },
   { key: "santos", emoji: "🍞", name: "Todos los Santos", from: "11-01", to: "11-02",
     title: "Llegaron las tantawawas", text: "Recordamos con cariño a quienes amamos.", cta: "Regalitos para compartir" },
@@ -120,23 +120,61 @@ export function batSvg(color = ink, opacity = 0.55) {
   return `<svg viewBox="0 0 60 26"><path d="M30 8c2-4 4-5 4-5l1 5c6-3 13-4 25 3-6 0-9 3-10 8-3-3-7-3-9 1-2-3-6-3-8 2l-3-4-3 4c-2-5-6-5-8-2-2-4-6-4-9-1-1-5-4-8-10-8C12 4 19 5 25 8l1-5s2 1 4 5z" fill="${color}" fill-opacity="${opacity}"/></svg>`;
 }
 
-export const PUMPKIN = `<svg viewBox="0 0 60 54"><path d="M30 12c-2-6 0-10 5-11" stroke="#5B7A2E" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="18" cy="33" rx="14" ry="18" fill="#F7A440"/><ellipse cx="42" cy="33" rx="14" ry="18" fill="#F7A440"/><ellipse cx="30" cy="33" rx="13" ry="19" fill="#FFB65C"/><path d="M21 28l4 4h-6zM39 28l4 4h-6z" fill="${ink}" fill-opacity=".75"/><path d="M22 40q8 6 16 0" stroke="${ink}" stroke-opacity=".75" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>`;
+// Calabaza con ojos que brillan (clase hw-flicker: parpadeo de vela).
+export const PUMPKIN = `<svg viewBox="0 0 60 54"><path d="M30 12c-2-6 0-10 5-11" stroke="#5B7A2E" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="18" cy="33" rx="14" ry="18" fill="#F7A440"/><ellipse cx="42" cy="33" rx="14" ry="18" fill="#F7A440"/><ellipse cx="30" cy="33" rx="13" ry="19" fill="#FFB65C"/><g class="hw-flicker"><path d="M21 28l4 4h-6zM39 28l4 4h-6z" fill="#FFE27A"/><path d="M22 40q8 6 16 0" stroke="#FFE27A" stroke-width="2.6" fill="none" stroke-linecap="round"/></g><g fill="${ink}" fill-opacity=".55"><path d="M21 28l4 4h-6zM39 28l4 4h-6z"/></g></svg>`;
+
+// Fantasmita con orejas de michi.
+export const GHOST = `<svg viewBox="0 0 60 70"><path d="M8 34C8 16 18 8 30 8s22 8 22 26v28l-6-5-6 5-5-5-5 5-5-5-6 5-6-5-5 5z" fill="#FFFFFF" fill-opacity=".92" stroke="#3B2146" stroke-opacity=".25" stroke-width="2" stroke-linejoin="round"/><path d="M12 20 10 4l12 8M48 20l2-16-12 8" fill="#FFFFFF" stroke="#3B2146" stroke-opacity=".25" stroke-width="2" stroke-linejoin="round"/><ellipse cx="23" cy="32" rx="3.4" ry="4.4" fill="${ink}"/><ellipse cx="37" cy="32" rx="3.4" ry="4.4" fill="${ink}"/><circle cx="24" cy="30.5" r="1.2" fill="#fff"/><circle cx="38" cy="30.5" r="1.2" fill="#fff"/><path d="M27 39q3 3 6 0" stroke="${ink}" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="17" cy="39" rx="4" ry="2.4" fill="#FF9FB6" opacity=".6"/><ellipse cx="43" cy="39" rx="4" ry="2.4" fill="#FF9FB6" opacity=".6"/></svg>`;
+
+// Luna creciente con brillo.
+export const MOON = `<svg viewBox="0 0 80 80"><defs><radialGradient id="hwglow"><stop offset="0" stop-color="#FFF4C2" stop-opacity=".9"/><stop offset="1" stop-color="#FFF4C2" stop-opacity="0"/></radialGradient></defs><circle cx="40" cy="40" r="40" fill="url(#hwglow)"/><path d="M48 16a24 24 0 1 0 14 38A20 20 0 0 1 48 16z" fill="#FFE9A3"/><circle cx="34" cy="44" r="3" fill="#F2D27A"/><circle cx="28" cy="32" r="2" fill="#F2D27A"/></svg>`;
+
+// Guirnalda de calabacitas para el borde de la cabecera.
+export function garlandSvg(n = 14) {
+  const w = n * 60;
+  let s = `<svg viewBox="0 0 ${w} 34" preserveAspectRatio="none"><path d="M0 4 ${Array.from({ length: n }, (_, i) => `Q${i * 60 + 30} 22 ${(i + 1) * 60} 4`).join(" ")}" fill="none" stroke="#3B2146" stroke-opacity=".45" stroke-width="1.5"/>`;
+  for (let i = 0; i < n; i++) {
+    const x = i * 60 + 30;
+    if (i % 3 === 1) {
+      s += `<path transform="translate(${x - 12} 9)" d="M12 4c1-2 2-3 2-3l.5 3c3-1.5 6.5-2 12.5 1.5-3 0-4.5 1.5-5 4-1.5-1.5-3.5-1.5-4.5.5-1-1.5-3-1.5-4 1l-1.5-2-1.5 2c-1-2.5-3-2.5-4-1-1-2-3-2-4.5-.5-.5-2.5-2-4-5-4C6 2 9.5 2.5 12 4z" fill="#3B2146" fill-opacity=".7"/>`;
+    } else {
+      s += `<g transform="translate(${x - 9} 11)"><path d="M9 3c-.5-2 0-3 1.5-3.4" stroke="#5B7A2E" stroke-width="1.6" fill="none"/><ellipse cx="9" cy="10" rx="9" ry="7.5" fill="#F7A440"/><ellipse cx="9" cy="10" rx="4" ry="7.5" fill="#FFB65C"/><g class="hw-flicker" style="animation-delay:-${(i * 0.37) % 2}s"><path d="M5 8.5l1.5 1.5h-3zM13 8.5l1.5 1.5h-3zM6 12.5q3 2 6 0" fill="#FFE27A" stroke="#FFE27A" stroke-width=".8"/></g></g>`;
+    }
+  }
+  return s + "</svg>";
+}
+
+// Caramelo envuelto.
+export function candySvg(c = "#F26D9C") {
+  return `<svg viewBox="0 0 40 20"><path d="M10 10 1 3v14zM30 10l9-7v14z" fill="${c}" fill-opacity=".8"/><circle cx="20" cy="10" r="9" fill="${c}"/><path d="M14 6q6 8 12 0" stroke="#fff" stroke-opacity=".7" stroke-width="2" fill="none"/></svg>`;
+}
 
 export const WITCH_HAT = `<svg viewBox="0 0 60 50"><ellipse cx="30" cy="42" rx="29" ry="7" fill="${ink}"/><path d="M14 41 34 2q2 14 12 39z" fill="${ink}"/><rect x="16" y="33" width="29" height="6" fill="#F7A440"/><circle cx="35" cy="5" r="2.2" fill="#F7A440"/></svg>`;
 
 // Sombrero de bruja para las mascotas guía: se suma al dibujo (viewBox
 // 200×200) y se mece junto con ellas (misma animación gd-bob).
 const HAT_SHAPES = `<ellipse cx="30" cy="42" rx="29" ry="7" fill="${ink}" stroke="#1E1424" stroke-width="1.5"/><path d="M14 41 34 2q2 14 12 39z" fill="${ink}" stroke="#1E1424" stroke-width="1.5" stroke-linejoin="round"/><rect x="16" y="33" width="29" height="6" fill="#F7A440"/><circle cx="35" cy="5" r="2.6" fill="#F7A440"/>`;
+// Quienes no llevan nada en la cabeza usan sombrero de bruja.
 const HAT_AT = {
   baneco: [100, 46, 1.1, -12],
   rosalia: [100, 50, 0.95, -8],
-  willy: [100, 35, 0.9, 8], // encima de su gorra
-  cuyito: [100, 68, 1.2, -6],
 };
+// Willy ya tiene gorra de policía: va de vampiro (capa y colmillitos).
+const WILLY_CAPE = `<path d="M62 120 C44 140 36 168 40 188 L160 188 C164 168 156 140 138 120 Z" fill="#2A1630" stroke="${ink}" stroke-width="3" stroke-linejoin="round"/><path d="M70 126 C58 146 54 168 56 186 L144 186 C146 168 142 146 130 126 Z" fill="#B3263C"/>`;
+const WILLY_FRONT = `<path d="M66 128 L48 104 L84 122 Z M134 128 L152 104 L116 122 Z" fill="#2A1630" stroke="${ink}" stroke-width="2.5" stroke-linejoin="round"/><path d="M66 124 L56 110 L80 122 Z M134 124 L144 110 L120 122 Z" fill="#B3263C"/><path d="M93.5 113.5 l2.2 5.4 2.2 -4.6 z M102.1 114.3 l2.2 4.6 2.2 -5.4 z" fill="#fff" stroke="${ink}" stroke-width="1" stroke-linejoin="round"/>`;
+// Cuyito ya tiene chullo: lleva su baldecito-calabaza lleno de dulces.
+const CUY_BUCKET = `<g transform="translate(132 146)"><path d="M6 10 C6 -6 40 -6 40 10" fill="none" stroke="${ink}" stroke-width="2.5"/><circle cx="14" cy="10" r="4" fill="#F26D9C"/><circle cx="23" cy="8" r="4" fill="#7BC67E"/><circle cx="31" cy="11" r="4" fill="#B48BE0"/><ellipse cx="23" cy="24" rx="20" ry="16" fill="#F7A440" stroke="${ink}" stroke-width="2.5"/><path d="M23 9 v30 M12 12 q-4 12 0 24 M34 12 q4 12 0 24" stroke="#E08A2A" stroke-width="1.6" fill="none"/><g class="hw-flicker"><path d="M14 20l4 4h-6zM32 20l4 4h-6z" fill="#FFE27A"/><path d="M15 30q8 5 16 0" stroke="#FFE27A" stroke-width="2.4" fill="none" stroke-linecap="round"/></g></g>`;
+
 export function guideArt(art, key, season) {
-  const at = season?.key === "halloween" && HAT_AT[key];
+  if (season?.key !== "halloween") return art;
+  const add = (svg) => art.replace(/<\/svg>\s*$/, `<g class="gd-bob">${svg}</g></svg>`);
+  if (key === "willy") {
+    // la capa va detrás del cuerpo: dentro del mismo grupo, al principio
+    return add(WILLY_FRONT).replace('<g class="gd-bob">', `<g class="gd-bob">${WILLY_CAPE}`);
+  }
+  if (key === "cuyito") return add(CUY_BUCKET);
+  const at = HAT_AT[key];
   if (!at) return art;
   const [x, y, s, r] = at;
-  const hat = `<g class="gd-bob"><g transform="translate(${x - 30 * s} ${y - 42 * s}) scale(${s}) rotate(${r} 30 42)">${HAT_SHAPES}</g></g>`;
-  return art.replace(/<\/svg>\s*$/, `${hat}</svg>`);
+  return add(`<g transform="translate(${x - 30 * s} ${y - 42 * s}) scale(${s}) rotate(${r} 30 42)">${HAT_SHAPES}</g>`);
 }
