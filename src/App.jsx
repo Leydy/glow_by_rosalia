@@ -1364,7 +1364,7 @@ function AccountPage({ customer, favs, products, onToggleFav, onAdd, onPanel, se
               const ok = info.balance >= r.points;
               return (
                 <div key={r.key} className={`glow-acc-rw${ok ? " is-ok" : ""}${r.surprise ? " is-surprise" : ""}`}>
-                  {k === 1 && <span className="glow-acc-rw-tag">¡Más rinde!</span>}
+                  {k === 1 && <span className="glow-acc-rw-tag">⭐ Te conviene más</span>}
                   {r.surprise && <span className="glow-acc-rw-tag is-mystery">Misterio 🤫</span>}
                   {r.surprise ? (
                     <div className="glow-surprise-row">
