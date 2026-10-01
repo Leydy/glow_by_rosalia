@@ -18,6 +18,7 @@ import {
 } from "./api.js";
 import { toPng } from "html-to-image";
 import UBIGEO from "./ubigeo.json"; // departamentos → provincias → distritos (INEI)
+import { GUIDES, GUIDE_KEYS } from "./guides.js";
 
 /* ---------- Carga local (solo el carrito del visitante) ----------
    Los productos y los ajustes ahora viven en la base de datos (Postgres) y se
@@ -562,6 +563,189 @@ function YarnBasket({ points = 0, size = 150 }) {
       <path d="M88 104 L74 96 L74 112 Z M88 104 L102 96 L102 112 Z" fill="#FF3D8B" />
       <circle cx="88" cy="104" r="4" fill="#FF3D8B" stroke="#fff" strokeWidth="1.5" />
     </svg>
+  );
+}
+
+/* ---------- Guía de compras ----------
+   La clienta elige quién la acompaña (Doña Baneco, Rosalía, Capitán o
+   Cuyito). Vive abajo a la izquierda: saluda, da tips, celebra lo que añade al
+   carrito, sugiere algo que combine y la lleva a pagar. Se puede cambiar o
+   esconder cuando quiera (se recuerda en este navegador). */
+function loadGuide() {
+  try {
+    return localStorage.getItem("glow:guia"); // clave | "none" | null (sin elegir)
+  } catch {
+    return "none";
+  }
+}
+function storeGuide(k) {
+  try {
+    localStorage.setItem("glow:guia", k);
+  } catch {
+    /* sin almacenamiento: dura lo que la pestaña */
+  }
+}
+const GuideArt = ({ k }) => <span className="glow-guide-art" dangerouslySetInnerHTML={{ __html: GUIDES[k].art }} />;
+
+function GuidePicker({ current, onPick, onClose }) {
+  const [sel, setSel] = useState(current && GUIDES[current] ? current : "rosalia");
+  return (
+    <div className="glow-modal-bg" onClick={onClose}>
+      <div className="glow-gpick" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Elige tu guía">
+        <button className="glow-join-x" onClick={onClose} aria-label="Cerrar"><X size={20} /></button>
+        <h3>¿Quién te acompaña hoy?</h3>
+        <p className="glow-soft" style={{ fontSize: 18, margin: "0 0 14px" }}>Tu guía te da tips y te ayuda con tu carrito</p>
+        <div className="glow-gpick-grid">
+          {GUIDE_KEYS.map((k) => {
+            const g = GUIDES[k];
+            return (
+              <button key={k} type="button" className={`glow-gpick-card${sel === k ? " is-on" : ""}`} onClick={() => setSel(k)} aria-pressed={sel === k}>
+                <span className="glow-gpick-stage" style={{ background: g.bg }}><GuideArt k={k} /></span>
+                <small>{g.tag}</small>
+                <b>{g.name}</b>
+                <span className="glow-gpick-desc">{g.desc}</span>
+              </button>
+            );
+          })}
+        </div>
+        <button className="glow-pay-btn" style={{ background: C.primary, marginTop: 14 }} onClick={() => onPick(sel)}>
+          Elegir a {GUIDES[sel].name} 🐾
+        </button>
+        <button className="glow-link-btn" style={{ color: C.plum }} onClick={() => onPick("none")}>Prefiero comprar sin guía</button>
+      </div>
+    </div>
+  );
+}
+
+function ShopGuide({ products, cartLines, cartCount, onAdd, onOpenCart, event }) {
+  const [k, setK] = useState(loadGuide);
+  const [picker, setPicker] = useState(false);
+  const [msg, setMsg] = useState(null); // { html, acts: [{ label, run, ghost }] }
+  const [jump, setJump] = useState(0);
+  const timer = useRef(null);
+  const stats = useRef({ tips: 0, nudges: 0, last: Date.now() });
+  const g = GUIDES[k];
+
+  // Primera visita: ofrece elegir guía (sin interrumpir la carga).
+  useEffect(() => {
+    if (k !== null) return;
+    const t = setTimeout(() => setPicker(true), 4500);
+    return () => clearTimeout(t);
+  }, [k]);
+
+  const say = useCallback((html, acts = [], ms = 9000) => {
+    clearTimeout(timer.current);
+    setMsg({ html, acts });
+    setJump((j) => j + 1);
+    stats.current.last = Date.now();
+    if (ms) timer.current = setTimeout(() => setMsg(null), ms);
+  }, []);
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const inStock = products.filter((p) => p.stock > 0);
+  const best = () => {
+    const pool = inStock.filter((p) => p.bestSeller);
+    const list = pool.length ? pool : inStock;
+    return list[Math.floor(Math.random() * list.length)];
+  };
+  // Lleva la vista a un producto y lo resalta un momento.
+  const showProduct = (p) => {
+    const el = document.getElementById(`prod-${p.id}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("glow-card-hi");
+    setTimeout(() => el.classList.remove("glow-card-hi"), 2600);
+    setMsg(null);
+  };
+  const recommend = () => {
+    const p = best();
+    if (p) say(g.pick(p.name), [{ label: "Ver", run: () => showProduct(p) }, { label: "Luego", ghost: true, run: () => setMsg(null) }], 12000);
+  };
+
+  // Saludo al elegir guía o al volver.
+  useEffect(() => {
+    if (!g) return;
+    const t = setTimeout(() => say(g.hi, [{ label: "Recomiéndame algo", run: recommend }], 7000), 1800);
+    return () => clearTimeout(t);
+  }, [k]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Al añadir al carrito: celebra y sugiere algo que combine.
+  useEffect(() => {
+    if (!g || !event || event.type !== "added") return;
+    const p = event.product;
+    const inCart = new Set(cartLines.map((l) => l.id));
+    const cands = inStock.filter((x) => x.id !== p.id && !inCart.has(x.id));
+    const pair = cands.find((x) => x.category === p.category) || cands.find((x) => x.bestSeller) || cands[0];
+    if (pair && Math.random() < 0.7) {
+      say(`${g.added(p.name)}<br>${g.pair(pair.name)}`, [
+        { label: "¡Sí!", run: () => { onAdd(pair); setMsg(null); } },
+        { label: "No, gracias", ghost: true, run: () => setMsg(null) },
+      ], 12000);
+    } else {
+      say(g.added(p.name), [{ label: "Ver carrito", run: () => { onOpenCart(); setMsg(null); } }], 7000);
+    }
+  }, [event]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Tips y recordatorio del carrito, sin molestar: cada ~40 s y pocas veces.
+  useEffect(() => {
+    if (!g) return;
+    const t = setInterval(() => {
+      const st = stats.current;
+      if (msg || document.querySelector(".glow-modal-bg, .glow-drawer-bg") || Date.now() - st.last < 40000) return;
+      if (cartCount > 0 && st.nudges < 2) {
+        st.nudges++;
+        say(g.go(cartCount), [
+          { label: "Ir a pagar", run: () => { onOpenCart(); setMsg(null); } },
+          { label: "Seguir viendo", ghost: true, run: () => setMsg(null) },
+        ], 12000);
+      } else if (st.tips < 3) {
+        say(g.tips[st.tips % g.tips.length]);
+        st.tips++;
+      }
+    }, 8000);
+    return () => clearInterval(t);
+  }, [k, msg, cartCount]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const choose = (key) => {
+    storeGuide(key);
+    setK(key);
+    setPicker(false);
+    setMsg(null);
+  };
+  const menu = () =>
+    say(`¿En qué te ayudo? 🐾`, [
+      { label: "Recomiéndame", run: recommend },
+      ...(cartCount ? [{ label: `Mi carrito (${cartCount})`, run: () => { onOpenCart(); setMsg(null); } }] : []),
+      { label: "Cambiar guía", ghost: true, run: () => { setMsg(null); setPicker(true); } },
+      { label: "Esconder", ghost: true, run: () => choose("none") },
+    ], 15000);
+
+  return (
+    <>
+      {picker && <GuidePicker current={k} onPick={choose} onClose={() => { setPicker(false); if (k === null) choose("none"); }} />}
+      {g ? (
+        <div className="glow-guide">
+          {msg && (
+            <div className="glow-guide-bubble" role="status">
+              <button className="glow-guide-x" onClick={() => setMsg(null)} aria-label="Cerrar"><X size={14} /></button>
+              <span dangerouslySetInnerHTML={{ __html: msg.html }} />
+              {msg.acts.length > 0 && (
+                <span className="glow-guide-acts">
+                  {msg.acts.map((a) => <button key={a.label} className={a.ghost ? "is-ghost" : ""} onClick={a.run}>{a.label}</button>)}
+                </span>
+              )}
+            </div>
+          )}
+          <button key={jump} className="glow-guide-btn" onClick={menu} aria-label={`Tu guía ${g.name}`} title={g.name}>
+            <GuideArt k={k} />
+          </button>
+        </div>
+      ) : (
+        k === "none" && (
+          <button className="glow-guide-mini" onClick={() => setPicker(true)} aria-label="Elegir un guía" title="Elegir un guía">🐾</button>
+        )
+      )}
+    </>
   );
 }
 
@@ -2610,7 +2794,12 @@ function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, cust
   const cartCount = cartLines.reduce((n, l) => n + l.qty, 0);
   const cartTotal = cartLines.reduce((n, l) => n + l.price * l.qty, 0);
 
-  const addToCart = (p) =>
+  const [guideEvent, setGuideEvent] = useState(null);
+  const addToCart = (p) => {
+    setGuideEvent({ type: "added", product: p, at: Date.now() });
+    addToCartRaw(p);
+  };
+  const addToCartRaw = (p) =>
     setCart((c) => {
       const next = Math.min((c[p.id] || 0) + 1, p.stock);
       return { ...c, [p.id]: next };
@@ -2694,7 +2883,7 @@ function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, cust
           {visible.map((p) => {
             const out = p.stock <= 0;
             return (
-              <div key={p.id} onPointerEnter={(e) => { if (e.pointerType === "mouse") e.currentTarget._seen = setTimeout(() => markSeen(p.id), 1000); }} onPointerLeave={(e) => clearTimeout(e.currentTarget._seen)} onClick={() => markSeen(p.id)} style={{ borderRadius: 18, overflow: "hidden", display: "flex", flexDirection: "column", background: C.surface, border: `1px solid ${C.line}`, boxShadow: "0 6px 20px rgba(214,53,127,0.08)" }}>
+              <div key={p.id} id={`prod-${p.id}`} onPointerEnter={(e) => { if (e.pointerType === "mouse") e.currentTarget._seen = setTimeout(() => markSeen(p.id), 1000); }} onPointerLeave={(e) => clearTimeout(e.currentTarget._seen)} onClick={() => markSeen(p.id)} style={{ borderRadius: 18, overflow: "hidden", display: "flex", flexDirection: "column", background: C.surface, border: `1px solid ${C.line}`, boxShadow: "0 6px 20px rgba(214,53,127,0.08)" }}>
                 {/* foto con marco kawaii */}
                 <div className="glow-card-pad" style={{ padding: 10 }}>
                   <div className="glow-card-img" style={{ position: "relative", overflow: "hidden", display: "grid", placeItems: "center", borderRadius: 14, background: `linear-gradient(135deg, ${C.blush}, ${C.bg})`, border: "2px solid #fff", boxShadow: `0 0 0 2px ${C.blush}` }}>
@@ -2800,13 +2989,25 @@ function Shop({ products, settings, favs = [], onToggleFav, panel, onPanel, cust
         />
       )}
 
-      {/* Botón flotante del carrito */}
+      {/* Guía de compras */}
+      {!accountPage && (
+        <ShopGuide
+          products={products}
+          cartLines={cartLines}
+          cartCount={cartCount}
+          onAdd={addToCart}
+          onOpenCart={() => setCartOpen(true)}
+          event={guideEvent}
+        />
+      )}
+
+      {/* Botón flotante del carrito (encima del botón del chat) */}
       {cartCount > 0 && (
         <button
           onClick={() => setCartOpen(true)}
           aria-label="Abrir carrito"
           style={{
-            position: "fixed", bottom: 24, right: 24, zIndex: 40,
+            position: "fixed", bottom: 90, right: 20, zIndex: 55,
             display: "flex", alignItems: "center", gap: 8, padding: "14px 20px",
             borderRadius: 999, border: "none", color: C.primaryInk, background: C.primary,
             fontWeight: 600, fontSize: 15, cursor: "pointer",
