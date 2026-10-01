@@ -5,16 +5,16 @@
 
 export const WORLDS = {
   michi: {
-    key: "michi", emoji: "🐾", name: "Michitienda", logo: "by Rosalía",
+    key: "michi", emoji: "🐾", name: "Michitienda", short: "Michi", logo: "by Rosalía",
     cats: ["Aretes", "Collares", "Anillos", "Ropa", "Llaveros", "Bolsos"],
   },
   skin: {
-    key: "skin", emoji: "✨", name: "Glow Skin", logo: "Skin",
+    key: "skin", emoji: "✨", name: "Glow Skin", short: "Skin", logo: "Skin",
     cats: ["Limpiadores", "Tónicos", "Sérums", "Cremas", "Protector solar", "Labiales", "Maquillaje"],
     bg: "#FBF6F1", hdr: ["#F8EBE2", "#EEF3EC"],
   },
   kids: {
-    key: "kids", emoji: "🧸", name: "Glow Kids", logo: "Kids",
+    key: "kids", emoji: "🧸", name: "Glow Kids", short: "Kids", logo: "Kids",
     cats: ["Polos", "Vestidos", "Casacas", "Pantalones", "Faldas", "Zapatitos", "Gorritos", "Conjuntos"],
     bg: "#F5FAFF", hdr: ["#DDF0FF", "#FFF6D6"],
   },

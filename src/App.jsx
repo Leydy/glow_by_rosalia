@@ -714,6 +714,47 @@ function ShopGuide({ products, cartLines, cartCount, onAdd, onOpenCart, event, s
     return () => clearInterval(t);
   }, [k, msg, cartCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Se puede arrastrar a cualquier parte de la pantalla; la posición se recuerda.
+  const [pos, setPos] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("glow:guia-pos")) || null; } catch { return null; }
+  });
+  const drag = useRef(null);
+  const dragged = useRef(false);
+  const onDragStart = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    drag.current = { x: e.clientX, y: e.clientY, r, moved: false };
+    dragged.current = false;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const onDragMove = (e) => {
+    const d = drag.current;
+    if (!d) return;
+    const dx = e.clientX - d.x, dy = e.clientY - d.y;
+    if (!d.moved && Math.hypot(dx, dy) < 6) return;
+    d.moved = true;
+    setMsg(null);
+    const left = Math.max(4, Math.min(window.innerWidth - d.r.width - 4, d.r.left + dx));
+    const bottom = Math.max(4, Math.min(window.innerHeight - d.r.height - 4, window.innerHeight - d.r.bottom - dy));
+    setPos({ left, bottom, w: d.r.width });
+  };
+  const onDragEnd = () => {
+    const d = drag.current;
+    drag.current = null;
+    if (d?.moved) {
+      dragged.current = true;
+      setPos((p) => { try { localStorage.setItem("glow:guia-pos", JSON.stringify(p)); } catch { /* sin almacenamiento */ } return p; });
+    }
+  };
+  const guideStyle = (() => {
+    if (!pos) return undefined;
+    const w = pos.w || 124;
+    const left = Math.max(4, Math.min(window.innerWidth - w - 4, pos.left));
+    const bottom = Math.max(4, Math.min(window.innerHeight - w - 4, pos.bottom));
+    // en la mitad derecha, el globito sale hacia la izquierda
+    return left + w / 2 > window.innerWidth / 2 ? { left: "auto", right: window.innerWidth - left - w, bottom } : { left, bottom };
+  })();
+  const guideRight = !!guideStyle && guideStyle.left === "auto";
+
   const choose = (key) => {
     storeGuide(key);
     setK(key);
@@ -732,7 +773,7 @@ function ShopGuide({ products, cartLines, cartCount, onAdd, onOpenCart, event, s
     <>
       {picker && <GuidePicker current={k} season={season} onPick={choose} onClose={() => { setPicker(false); if (k === null) choose("none"); }} />}
       {g ? (
-        <div className="glow-guide">
+        <div className={`glow-guide${guideRight ? " is-right" : ""}`} style={guideStyle}>
           {msg && (
             <div className="glow-guide-bubble" role="status">
               <button className="glow-guide-x" onClick={() => setMsg(null)} aria-label="Cerrar"><X size={14} /></button>
@@ -744,7 +785,17 @@ function ShopGuide({ products, cartLines, cartCount, onAdd, onOpenCart, event, s
               )}
             </div>
           )}
-          <button key={jump} className="glow-guide-btn" onClick={menu} aria-label={`Tu guía ${g.name}`} title={g.name}>
+          <button
+            key={jump}
+            className="glow-guide-btn"
+            onClick={() => { if (dragged.current) { dragged.current = false; return; } menu(); }}
+            onPointerDown={onDragStart}
+            onPointerMove={onDragMove}
+            onPointerUp={onDragEnd}
+            onPointerCancel={onDragEnd}
+            aria-label={`Tu guía ${g.name} (puedes arrastrarla)`}
+            title={`${g.name} · arrástrame para moverme`}
+          >
             <GuideArt k={k} season={season} />
           </button>
         </div>
@@ -1838,6 +1889,7 @@ export default function App() {
       )}
       <header className="glow-header" style={{ "--pat": catPattern(C.roseDeep) }}>
         <BrandName name={settings.storeName} onClick={goHome} season={view === "shop" ? season : null} />
+        {view === "shop" && <WorldTabs world={world} onPick={(w) => { setWorld(w); setPage("tienda"); window.scrollTo({ top: 0, behavior: "smooth" }); }} />}
         {season?.key === "halloween" && view === "shop" && <HalloweenCat />}
 
         <nav className="glow-nav">
@@ -2977,32 +3029,18 @@ const scrollToId = (id) => setTimeout(() => document.getElementById(id)?.scrollI
 const SPA_ROSALIA = spaArt(GUIDES.rosalia.art);
 const ART = (html, className = "glow-world-art") => <span className={className} aria-hidden="true" dangerouslySetInnerHTML={{ __html: html }} />;
 
-// "Elige tu mundo": 3 tarjetas con foto real bajo la portada.
-function WorldPortals({ world, products, onPick }) {
-  const photoOf = (k) => {
-    const list = products.filter((p) => worldOf(p.category) === k && firstPhoto(p));
-    return firstPhoto(list.find((p) => p.bestSeller) || list[0] || {});
-  };
-  const tag = { michi: "Accesorios michi", skin: WORLD_HERO.skin.tagline, kids: WORLD_HERO.kids.tagline };
+// Pestañas de los mundos, al lado del logo (en el celular, debajo).
+function WorldTabs({ world, onPick }) {
   return (
-    <section className="glow-portals" aria-label="Secciones de la tienda">
-      <h2>Elige tu mundo ✨</h2>
-      <div>
-        {WORLD_KEYS.map((k) => {
-          const img = photoOf(k);
-          return (
-            <button key={k} className={`glow-portal is-${k}${world === k ? " is-on" : ""}`} onClick={() => onPick(k)} aria-pressed={world === k}>
-              {img ? <img src={img} alt="" loading="lazy" /> : <span className="glow-portal-noimg">{WORLDS[k].emoji}</span>}
-              <span>
-                <b>{WORLDS[k].emoji} {WORLDS[k].name}</b>
-                <small>{world === k ? "Estás aquí" : tag[k]}</small>
-              </span>
-              {world !== k && <ChevronRight size={18} className="glow-portal-go" />}
-            </button>
-          );
-        })}
-      </div>
-    </section>
+    <div className="glow-wtabs" role="tablist" aria-label="Secciones de la tienda">
+      {WORLD_KEYS.map((k) => (
+        <button key={k} role="tab" aria-selected={world === k} className={`is-${k}${world === k ? " is-on" : ""}`} onClick={() => onPick(k)}>
+          <span aria-hidden="true">{WORLDS[k].emoji}</span>
+          <span className="glow-wtabs-long">{WORLDS[k].name}</span>
+          <span className="glow-wtabs-short">{WORLDS[k].short}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -3076,6 +3114,36 @@ function SkinInfo({ p, onClose, onAdd }) {
 function RoutineBuilder({ products, onAddAll }) {
   const [a, setA] = useState({ piel: "Mixta", meta: "Hidratación", budget: BUDGETS[1] });
   const [added, setAdded] = useState(false);
+  const [open, setOpen] = useState(null); // null: pregunta · true: abierta · false: "no, gracias"
+  // El botón "Arma tu rutina" de la portada la abre directamente.
+  useEffect(() => {
+    const go = () => setOpen(true);
+    window.addEventListener("glow:rutina", go);
+    return () => window.removeEventListener("glow:rutina", go);
+  }, []);
+  if (open !== true) {
+    return (
+      <section id="glow-rutina" className="glow-routine is-ask">
+        <div className="glow-wrap glow-rask">
+          {ART(SPA_ROSALIA, "glow-rask-art")}
+          {open === null ? (
+            <>
+              <div><b>¿Quieres armar tu rutina skincare? 🌿</b><span>Te hago 3 preguntitas y te digo qué usar y en qué orden.</span></div>
+              <div className="glow-rask-btns">
+                <button className="is-yes" onClick={() => setOpen(true)}>Sí, ¡quiero!</button>
+                <button className="is-no" onClick={() => setOpen(false)}>No, gracias</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div><b>¡Está bien! 💕</b><span>Cuando quieras, armamos tu rutina juntas.</span></div>
+              <div className="glow-rask-btns"><button className="is-yes" onClick={() => setOpen(true)}>Armar mi rutina</button></div>
+            </>
+          )}
+        </div>
+      </section>
+    );
+  }
   const steps = buildRoutine(products, a);
   const chosen = steps.filter((s) => s.product);
   const total = chosen.reduce((t, s) => t + s.product.price, 0);
@@ -3088,8 +3156,13 @@ function RoutineBuilder({ products, onAddAll }) {
   return (
     <section id="glow-rutina" className="glow-routine">
       <div className="glow-wrap">
-        <h3>Arma tu rutina 🌿</h3>
-        <span className="glow-routine-sub">Responde y te armamos la rutina en orden, con productos de la tienda.</span>
+        <div className="glow-routine-top">
+          <div>
+            <h3>Arma tu rutina 🌿</h3>
+            <span className="glow-routine-sub">Responde y te armamos la rutina en orden, con productos de la tienda.</span>
+          </div>
+          <button className="glow-routine-close" onClick={() => setOpen(false)}>Cerrar ✕</button>
+        </div>
         <div className="glow-rqs">
           {q("piel", "1. ¿Cómo es tu piel?", SKIN_TYPES.filter((t) => t !== "Todo tipo"))}
           {q("meta", "2. ¿Qué quieres mejorar?", CONCERNS)}
@@ -3322,9 +3395,8 @@ function Shop({ products: allProducts, settings, favs = [], onToggleFav, panel, 
         <AccountPage customer={customer} favs={favs} products={products} onToggleFav={onToggleFav} onAdd={addToCart} onPanel={onPanel} settings={settings} wallet={wallet} onClaimCredit={onClaimCredit} />
       ) : (
       <>
-      <HeroSlider key={world} world={world} products={products} settings={settings} onPickCategory={goToCategory} onAction={(a) => scrollToId(a === "rutina" ? "glow-rutina" : "glow-tallas")} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} season={season} />
+      <HeroSlider key={world} world={world} products={products} settings={settings} onPickCategory={goToCategory} onAction={(a) => { if (a === "rutina") window.dispatchEvent(new Event("glow:rutina")); scrollToId(a === "rutina" ? "glow-rutina" : "glow-tallas"); }} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} season={season} />
       {world === "michi" && season?.key === "halloween" && <HalloweenBand season={season} onGo={() => goToCategory("Todos")} />}
-      <WorldPortals world={world} products={allProducts} onPick={onWorld} />
       {!products.length ? <ComingSoon world={world} onBack={() => onWorld("michi")} /> : (<>
 
       <div id="catalogo" className="glow-wrap" style={{ paddingTop: 28, scrollMarginTop: 70 }}>

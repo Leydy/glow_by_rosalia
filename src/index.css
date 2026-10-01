@@ -4684,22 +4684,23 @@ button {
   left: -60px;
   top: 30%;
   width: 34px;
-  animation: hw-flock 32s linear infinite;
+  animation: hw-flock 70s linear infinite;
 }
-.glow-hw-flock-bat.is-1 { top: 26%; width: 24px; animation-delay: .4s; }
-.glow-hw-flock-bat.is-2 { top: 34%; width: 28px; animation-delay: .9s; }
-.glow-hw-flock-bat.is-3 { top: 22%; width: 20px; animation-delay: 1.3s; }
-.glow-hw-flock-bat.is-4 { top: 38%; width: 22px; animation-delay: 1.7s; }
-.glow-hw-flock-bat svg { display: block; width: 100%; animation: hw-flap .25s ease-in-out infinite alternate; transform-origin: center; }
-@keyframes hw-flap { from { transform: scaleY(1); } to { transform: scaleY(.55); } }
+.glow-hw-flock-bat { width: 42px; }
+.glow-hw-flock-bat.is-1 { top: 26%; width: 30px; animation-delay: 1s; }
+.glow-hw-flock-bat.is-2 { top: 34%; width: 36px; animation-delay: 2.2s; }
+.glow-hw-flock-bat.is-3 { top: 22%; width: 26px; animation-delay: 3.1s; }
+.glow-hw-flock-bat.is-4 { top: 38%; width: 30px; animation-delay: 4s; }
+.glow-hw-flock-bat svg { display: block; width: 100%; height: auto; }
 /* cruza en unos 5 s y luego descansa hasta la siguiente pasada */
+/* cruza despacio (unos 17 s) y luego descansa hasta la siguiente pasada */
 @keyframes hw-flock {
   0% { transform: translate(0, 0); }
-  4% { transform: translate(35vw, -60px); }
-  8% { transform: translate(70vw, 20px); }
-  12%, 100% { transform: translate(calc(100vw + 120px), -80px); }
+  8% { transform: translate(35vw, -50px); }
+  16% { transform: translate(70vw, 15px); }
+  24%, 100% { transform: translate(calc(100vw + 120px), -70px); }
 }
-.glow-hw-bat svg { animation: hw-flap .3s ease-in-out infinite alternate; }
+
 
 .glow-hw-candy { position: absolute; width: 22px; pointer-events: none; animation: hw-candy 4s ease-in-out infinite; }
 .glow-hw-candy.is-0 { right: 300px; top: 10px; }
@@ -4835,39 +4836,6 @@ button {
 @keyframes glow-wd-up { to { transform: translate(30px, -640px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .glow-wd-bubble, .glow-wd-balloon { animation: none; display: none; } }
 
-/* ---------- Elige tu mundo ---------- */
-.glow-portals { max-width: 1180px; margin: 26px auto 6px; padding: 0 20px; }
-.glow-portals h2 { font-family: "Fraunces", serif; font-size: 24px; color: #3B2146; margin: 0 0 12px; }
-.glow-portals > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.glow-portal {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px;
-  border: 2px solid transparent;
-  border-radius: 20px;
-  cursor: pointer;
-  text-align: left;
-  font: inherit;
-  transition: transform .2s, box-shadow .2s;
-}
-.glow-portal:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(59, 33, 70, .1); }
-.glow-portal.is-michi { background: linear-gradient(120deg, #FFE0EC, #FFF3F8); color: #3B2146; }
-.glow-portal.is-skin { background: linear-gradient(120deg, #F9E6DB, #EEF3EC); color: #4A3A33; }
-.glow-portal.is-kids { background: linear-gradient(120deg, #DDF0FF, #FFF4CC); color: #24476B; }
-.glow-portal.is-on { border-color: currentColor; cursor: default; transform: none; box-shadow: none; }
-.glow-portal img, .glow-portal-noimg { width: 74px; height: 74px; border-radius: 14px; object-fit: cover; border: 3px solid #fff; flex: none; display: grid; place-items: center; font-size: 30px; background: #fff; }
-.glow-portal > span { flex: 1; min-width: 0; }
-.glow-portal b { display: block; font-size: 17px; }
-.glow-portal small { font-size: 13px; opacity: .75; }
-.glow-portal.is-on small { font-weight: 800; opacity: 1; }
-.glow-portal-go { flex: none; opacity: .6; }
-@media (max-width: 760px) {
-  .glow-portals { padding: 0 16px; margin-top: 20px; }
-  .glow-portals > div { grid-template-columns: 1fr; gap: 10px; }
-  .glow-portal img, .glow-portal-noimg { width: 58px; height: 58px; }
-}
-
 /* ---------- Arma tu rutina (camino) ---------- */
 .glow-routine { background: linear-gradient(120deg, #FBF1EA, #F1F5EF); color: #4A3A33; padding: 34px 0 40px; margin: 10px 0 0; scroll-margin-top: 70px; }
 .glow-routine h3 { margin: 0; font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 38px; font-weight: 600; }
@@ -4946,7 +4914,7 @@ button {
 .glow-sboard-look b { font-family: "Fredoka", "Manrope", sans-serif; font-size: 18px; }
 .glow-sboard-look span { font-size: 13px; color: #56677A; }
 .glow-sboard-look button { border: none; border-radius: 999px; padding: 11px 18px; font-weight: 800; cursor: pointer; color: #fff; }
-.glow-sboard-look .is-add { background: #4AA3F0; margin-left: auto; }
+.glow-sboard-look .is-add { background: #4AA3F0; }
 .glow-sboard-look .is-add:disabled { opacity: .5; cursor: not-allowed; }
 .glow-sboard-look .is-wa { background: #25D366; }
 @media (max-width: 760px) {
@@ -4977,3 +4945,88 @@ button {
 @media (prefers-reduced-motion: reduce) { .glow-hw-cat > span, .hw-legs, .hw-blink { animation: none; } .glow-hw-cat > span { right: 18%; left: auto; } }
 .glow-skin-info-btn { width: 100%; margin-top: 8px; border: none; border-radius: 999px; padding: 13px; font: 800 15px Manrope, sans-serif; color: #fff; background: #D9826B; cursor: pointer; }
 .glow-skin-info-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* botones lejos del carrito y del chat flotantes (abajo a la derecha) */
+.glow-sboard-look, .glow-routine-tot, .glow-rask { padding-right: 96px; }
+.glow-routine-tot { justify-content: flex-start; }
+@media (max-width: 760px) {
+  .glow-sboard-look, .glow-routine-tot { padding-right: 74px; padding-bottom: 16px; }
+  .glow-rask { padding-right: 74px; }
+  .glow-hw-cat { bottom: -27px; }
+  .glow-sboard-look button, .glow-routine-tot button { flex: 1 1 100%; }
+  .glow-sboard, .glow-routine { padding-bottom: 150px; }
+}
+
+/* ---------- pestañas de mundos en la cabecera ---------- */
+.glow-wtabs {
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+  margin-right: auto;
+  margin-left: 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .8);
+  box-shadow: inset 0 0 0 1px rgba(214, 53, 127, .14);
+}
+.glow-wtabs button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: none;
+  border-radius: 999px;
+  padding: 7px 13px;
+  font: 700 13.5px Manrope, sans-serif;
+  color: #6B5A63;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .25s, color .25s;
+}
+.glow-wtabs button:hover { color: #3B2146; }
+.glow-wtabs button.is-on { color: #fff; }
+.glow-wtabs button.is-michi.is-on { background: #FF3D8B; }
+.glow-wtabs button.is-skin.is-on { background: #D9826B; }
+.glow-wtabs button.is-kids.is-on { background: #4AA3F0; }
+.glow-wtabs-short { display: none; }
+@media (max-width: 1240px) {
+  .glow-wtabs-long { display: none; }
+  .glow-wtabs-short { display: inline; }
+  .glow-wtabs { margin-left: 10px; }
+}
+@media (max-width: 640px) {
+  .glow-header { flex-wrap: wrap; row-gap: 8px; }
+  .glow-wtabs { order: 3; width: 100%; margin: 0; justify-content: space-between; }
+  .glow-wtabs button { flex: 1; justify-content: center; padding: 7px 6px; }
+  .glow-wtabs-long { display: inline; }
+  .glow-wtabs-short { display: none; }
+}
+@media (max-width: 360px) {
+  .glow-wtabs-long { display: none; }
+  .glow-wtabs-short { display: inline; }
+}
+
+/* ---------- rutina: primero la pregunta ---------- */
+.glow-routine.is-ask { padding: 22px 0; }
+.glow-rask { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.glow-rask-art { width: 86px; flex: none; }
+.glow-rask-art svg { display: block; width: 100%; height: auto; }
+.glow-rask > div:not(.glow-rask-btns) { flex: 1; min-width: 220px; }
+.glow-rask b { display: block; font-family: "Cormorant Garamond", serif; font-style: italic; font-weight: 600; font-size: 30px; line-height: 1.15; }
+.glow-rask span { color: #7A6A62; font-size: 14.5px; }
+.glow-rask-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.glow-rask-btns button { border: none; border-radius: 999px; padding: 13px 22px; font: 800 15px Manrope, sans-serif; cursor: pointer; }
+.glow-rask-btns .is-yes { background: #D9826B; color: #fff; box-shadow: 0 8px 18px rgba(217, 130, 107, .35); }
+.glow-rask-btns .is-no { background: #fff; color: #4A3A33; box-shadow: inset 0 0 0 1.5px #EBDDD2; }
+.glow-routine-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.glow-routine-close { border: none; background: #fff; color: #7A6A62; border-radius: 999px; padding: 8px 14px; font: 700 13px Manrope, sans-serif; cursor: pointer; flex: none; }
+.glow-rqs, .glow-rpath { animation: glow-rpop .4s both; }
+@media (max-width: 640px) {
+  .glow-rask { text-align: center; justify-content: center; }
+  .glow-rask-btns { width: 100%; justify-content: center; }
+  .glow-rask b { font-size: 25px; }
+}
+
+/* ---------- mascota guía arrastrable ---------- */
+.glow-guide-btn { touch-action: none; cursor: grab; }
+.glow-guide-btn:active { cursor: grabbing; }
+.glow-guide.is-right { flex-direction: row-reverse; }

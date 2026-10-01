@@ -116,8 +116,17 @@ export function catSkullSvg(fill = "#FFFDF8") {
   return `<svg viewBox="0 0 60 56"><path d="M8 4 20 16Q30 12 40 16L52 4 54 26Q56 44 42 46V52H18V46Q4 44 6 26Z" fill="${fill}" stroke="${ink}" stroke-opacity=".55" stroke-width="2" stroke-linejoin="round"/><ellipse cx="21" cy="29" rx="6" ry="7" fill="${ink}" fill-opacity=".78"/><ellipse cx="39" cy="29" rx="6" ry="7" fill="${ink}" fill-opacity=".78"/><path d="M27 37h6l-3 4z" fill="${ink}" fill-opacity=".7"/><path d="M22 46v6M27 46v6M33 46v6M38 46v6" stroke="${ink}" stroke-opacity=".45" stroke-width="1.5"/><circle cx="22" cy="27" r="1.6" fill="#FF9F43"/><circle cx="40" cy="27" r="1.6" fill="#FF9F43"/><path d="M2 30h10M2 35l10-2M58 30H48M58 35l-10-2" stroke="${ink}" stroke-opacity=".3" stroke-linecap="round"/></svg>`;
 }
 
-export function batSvg(color = ink, opacity = 0.55) {
-  return `<svg viewBox="0 0 60 26"><path d="M30 8c2-4 4-5 4-5l1 5c6-3 13-4 25 3-6 0-9 3-10 8-3-3-7-3-9 1-2-3-6-3-8 2l-3-4-3 4c-2-5-6-5-8-2-2-4-6-4-9-1-1-5-4-8-10-8C12 4 19 5 25 8l1-5s2 1 4 5z" fill="${color}" fill-opacity="${opacity}"/></svg>`;
+// Murciélago: las alas aletean con una animación propia del dibujo (se ve
+// nítido a cualquier tamaño, sin estirar la imagen).
+export function batSvg(color = ink, opacity = 0.55, speed = 0.45) {
+  const wing = (side) => {
+    const d = side < 0
+      ? "M27 15 C22 6 12 4 2 9 C6 11 8 14 8 18 C11 15 14 15 16 18 C18 15 21 15 23 19 C24 17 26 16 27 17 Z"
+      : "M33 15 C38 6 48 4 58 9 C54 11 52 14 52 18 C49 15 46 15 44 18 C42 15 39 15 37 19 C36 17 34 16 33 17 Z";
+    const v = side < 0 ? "0 28 15; 28 28 15; 0 28 15; -14 28 15; 0 28 15" : "0 32 15; -28 32 15; 0 32 15; 14 32 15; 0 32 15";
+    return `<path d="${d}"><animateTransform attributeName="transform" type="rotate" values="${v}" dur="${speed}s" repeatCount="indefinite"/></path>`;
+  };
+  return `<svg viewBox="0 0 60 30" shape-rendering="geometricPrecision"><g fill="${color}" fill-opacity="${opacity}">${wing(-1)}${wing(1)}<ellipse cx="30" cy="16" rx="4.5" ry="6.5"/><circle cx="30" cy="9.5" r="4"/><path d="M26.8 7 L26 2.5 L28.8 5.6 Z M33.2 7 L34 2.5 L31.2 5.6 Z"/></g><circle cx="28.6" cy="9.2" r=".9" fill="#FFE27A"/><circle cx="31.4" cy="9.2" r=".9" fill="#FFE27A"/></svg>`;
 }
 
 // Calabaza con ojos que brillan (clase hw-flicker: parpadeo de vela).
