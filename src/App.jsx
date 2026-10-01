@@ -778,6 +778,7 @@ function timeLeft(iso) {
 
 // "¡Reclámalo!": aparece cuando se confirma un pago.
 function ClaimModal({ credit, onClaim, onClose }) {
+  const [help, setHelp] = useState(false);
   const [left, setLeft] = useState(0);
   const [done, setDone] = useState(false);
   useEffect(() => {
@@ -812,9 +813,58 @@ function ClaimModal({ credit, onClaim, onClose }) {
                 <span>{pad(left % 60)}<small>seg</small></span>
               </div>
               <button className="glow-link-btn" onClick={onClose} style={{ color: C.plum }}>Luego</button>
+              <button className="glow-inline-link" onClick={() => setHelp(true)} style={{ fontSize: 13 }}>¿Qué es el Michi-crédito?</button>
             </>
           )}
+          {help && <CreditHelp onClose={() => setHelp(false)} />}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Michi-crédito explicado en palabras sencillas.
+function CreditHelp({ onClose }) {
+  const ex = 170; // compra de ejemplo: la que da el máximo
+  const back = Math.min(5, Math.floor((ex * 0.03) / 0.5) * 0.5);
+  return (
+    <div className="glow-modal-bg" onClick={onClose}>
+      <div className="glow-ship glow-help" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Cómo funciona el Michi-crédito">
+        <button className="glow-join-x" onClick={onClose} aria-label="Cerrar"><X size={20} /></button>
+        <div className="glow-help-head"><CreditCoin size={58} /><h3>¿Cómo funciona el Michi-crédito?</h3></div>
+        <p className="glow-ship-sub" style={{ textAlign: "center", margin: "-4px 0 12px" }}>
+          Es <b>plata de vuelta</b>: en cada compra te devolvemos <b>hasta S/ 5</b> para la siguiente 💸
+        </p>
+
+        <div className="glow-steps3">
+          <div><span>🛍️</span><b>1. Compra</b><small>Confirmamos tu pago</small></div>
+          <div><span>💰</span><b>2. Reclámalo</b><small>Te devolvemos soles de crédito</small></div>
+          <div><span>🛒</span><b>3. Úsalo</b><small>Se descuenta en tu próxima compra</small></div>
+        </div>
+
+        <div className="glow-help-example">
+          <b>Ejemplo:</b> compras <b>{money(ex)}</b> → te regalamos <b>{money(back)}</b> 🎉<br />
+          En tu siguiente compra, esos <b>{money(back)}</b> los pagamos nosotras.
+        </div>
+
+        <div className="glow-ship-sec">
+          <h4>⏰ No lo dejes pasar</h4>
+          <div className="glow-help-levels">
+            <div><b>Reclámalo</b><span>toca «Reclamar» cuando aparezca</span><em>48 horas</em></div>
+            <div><b>Úsalo</b><span>después de reclamarlo</span><em>10 días</em></div>
+          </div>
+        </div>
+
+        <div className="glow-ship-sec">
+          <h4>💡 Bueno saber</h4>
+          <ul className="glow-help-list">
+            <li>Te devolvemos el <b>3%</b> de lo que pagas, hasta <b>S/ 5</b> por compra.</li>
+            <li>Se usa en compras desde <b>S/ {CREDIT_MIN}</b>.</li>
+            <li>Por compra usas <b>una cosa</b>: tu Michi-crédito <b>o</b> tus Michipuntos.</li>
+          </ul>
+        </div>
+
+        <p className="glow-help-fine">El Michi-crédito es saldo de la tienda: no se cambia por dinero en efectivo.</p>
       </div>
     </div>
   );
@@ -822,6 +872,7 @@ function ClaimModal({ credit, onClaim, onClose }) {
 
 // Billetera de Michi-crédito (en Mi cuenta).
 function WalletCard({ wallet, onClaim }) {
+  const [help, setHelp] = useState(false);
   if (!wallet) return null;
   const stateTxt = { reclamado: "", no_reclamado: "no se reclamó", vencido: "venció sin usar", anulado: "pago rechazado", por_reclamar: "por reclamar" };
   return (
@@ -855,7 +906,11 @@ function WalletCard({ wallet, onClaim }) {
           })}
         </div>
       )}
-      <p className="glow-wallet-rules">Se usa en compras desde S/ {CREDIT_MIN} (hasta el 20% del carrito) · un beneficio por pedido.</p>
+      <p className="glow-wallet-rules">
+        Se usa en compras desde S/ {CREDIT_MIN}.{" "}
+        <button className="glow-inline-link" onClick={() => setHelp(true)}>¿Cómo funciona?</button>
+      </p>
+      {help && <CreditHelp onClose={() => setHelp(false)} />}
     </div>
   );
 }
@@ -1095,6 +1150,7 @@ function markSeen(id) {
 
 // Reglas de Michipuntos explicadas a la clienta, en palabras sencillas.
 function PointsHelp({ info, onClose }) {
+  const [credit, setCredit] = useState(false);
   const ex = 40; // compra de ejemplo
   const exPts = Math.floor(ex * info.perSol);
   const first = info.rewards[0];
@@ -1153,6 +1209,13 @@ function PointsHelp({ info, onClose }) {
             ))}
           </div>
         </div>
+
+        <div className="glow-help-example" style={{ background: "#F6EEF8", borderColor: "#C9A0DC" }}>
+          <b>💰 ¿Y el Michi-crédito?</b> Es distinto: son <b>soles</b> que te devolvemos al confirmar tu pago (hasta S/ 5),
+          para usar en tu próxima compra.{" "}
+          <button className="glow-inline-link" onClick={() => setCredit(true)}>¿Cómo funciona?</button>
+        </div>
+        {credit && <CreditHelp onClose={() => setCredit(false)} />}
 
         <p className="glow-help-fine">
           Los puntos se suman cuando confirmamos tu pago · el envío no suma puntos · vencen al año de ganarlos.
