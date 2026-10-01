@@ -1,0 +1,11 @@
+/* ---------- revisión de la captura de pago ---------- */
+.glow-pay-block { display: flex; flex-direction: column; gap: 4px; margin: 12px 0 0; padding: 12px 14px; border-radius: 14px; background: #FFF0F2; border: 1.5px solid #F5B5C0; color: #8E2236; font-size: 13.5px; line-height: 1.45; }
+.glow-pay-block b { font-size: 14px; }
+.glow-pay-block-help { color: #6B5A63; font-size: 12.5px; }
+.glow-pay-block-help a { color: #742284; font-weight: 800; }
+.glow-paycheck { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; padding: 8px 10px; border-radius: 12px; background: #EEF8F1; font-size: 12px; }
+.glow-paycheck.is-doubt { background: #FFF6E5; }
+.glow-paycheck b { font-size: 12.5px; margin-right: 4px; }
+.glow-paycheck span { padding: 2px 8px; border-radius: 99px; background: #fff; color: #6B5A63; font-weight: 700; }
+.glow-paycheck span.is-ok { color: #2E8B57; }
+.glow-paycheck span.is-warn { color: #C0394F; background: #FFE9EC; }

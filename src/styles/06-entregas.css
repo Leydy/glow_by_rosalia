@@ -1,0 +1,615 @@
+/* ---------- Entrega / envío ---------- */
+.glow-deliv {
+  width: 100%;
+  text-align: left;
+}
+.glow-deliv-opts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.glow-deliv-opts button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 8px;
+  border: 2px solid #eadcef;
+  border-radius: 16px;
+  background: #fff;
+  color: #3b2146;
+  font-size: 13.5px;
+}
+.glow-deliv-opts button.is-on {
+  border-color: #742284;
+  background: #f7f0fa;
+}
+.glow-deliv-opts small {
+  color: #857c8a;
+  font-size: 11.5px;
+}
+.glow-deliv-opts .glow-free {
+  color: #1fa971;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.glow-deliv-ico {
+  font-size: 22px;
+}
+.glow-deliv .glow-field-label small {
+  font-weight: 500;
+  color: #857c8a;
+}
+.glow-points {
+  display: grid;
+  gap: 6px;
+}
+.glow-points label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1.5px solid #eadcef;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 13.5px;
+  color: #3b2146;
+  cursor: pointer;
+}
+.glow-points input {
+  position: absolute;
+  opacity: 0;
+}
+.glow-points label.is-on {
+  border-color: #742284;
+  background: #f7f0fa;
+}
+.glow-points label.is-on .glow-rw-dot {
+  border-color: #742284;
+  background: radial-gradient(circle, #742284 45%, transparent 50%);
+}
+.glow-input,
+.glow-select,
+.glow-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #e7dceb;
+  border-radius: 12px;
+  background: #fcfafd;
+  color: #2b2530;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+.glow-input:focus,
+.glow-select:focus,
+.glow-textarea:focus {
+  border-color: #742284;
+}
+.glow-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.glow-sum {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #f8f3f9;
+  font-size: 13.5px;
+}
+.glow-sum div {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  color: #6b5a63;
+}
+.glow-sum .is-gold {
+  color: #a8741a;
+  font-weight: 700;
+}
+.glow-sum .is-total {
+  margin-top: 4px;
+  padding-top: 7px;
+  border-top: 1px solid #eadcef;
+  color: #3b2146;
+  font-weight: 700;
+}
+.glow-sum .is-total b {
+  font-family: "Fraunces", serif;
+  font-size: 20px;
+}
+.glow-gift {
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 14px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #3b2146, #7a3f73);
+  color: #fff;
+  text-align: center;
+  animation: glow-gift-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes glow-gift-in {
+  0% { scale: 0.4; rotate: -8deg; opacity: 0; }
+  70% { scale: 1.06; rotate: 2deg; }
+}
+.glow-gift-title {
+  margin: 0 0 8px;
+  font-family: "Pacifico", cursive;
+  font-size: 24px;
+  color: #ffd27a;
+}
+.glow-gift img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 3px solid #ffd27a;
+}
+.glow-gift p:last-child {
+  margin: 8px 0 0;
+  font-size: 14px;
+}
+.glow-order-deliv {
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f8f3f9;
+  font-size: 12.5px;
+  color: #3b2146;
+  line-height: 1.5;
+}
+.glow-admin-ok,
+.glow-admin-no,
+.glow-admin-ship {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 13px;
+  color: #fff;
+}
+.glow-admin-ok {
+  background: #1fa971;
+}
+.glow-admin-no {
+  background: #fff;
+  color: #c0392b;
+  border: 1.5px solid #f3c1bb;
+}
+.glow-admin-ship {
+  background: #742284;
+}
+.glow-rates summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: #3b2146;
+  margin-bottom: 8px;
+}
+.glow-rates-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 10px;
+}
+.glow-rates-grid label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 12.5px;
+}
+.glow-rates-grid input {
+  width: 70px;
+  padding: 5px 6px;
+  border: 1px solid #f0e3ea;
+  border-radius: 8px;
+}
+
+/* ---------- Info de envíos ---------- */
+.glow-ship {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: 24px 22px;
+  border-radius: 24px;
+  background: #fffdf8;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+.glow-ship h3 {
+  margin: 0 0 10px;
+  font-family: "Fraunces", serif;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  font-size: 24px;
+  color: #3b2146;
+}
+.glow-ship-sec {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #f0e3ea;
+}
+.glow-ship-sec h4 {
+  margin: 0;
+  color: #3b2146;
+  font-size: 15px;
+}
+.glow-ship-sub {
+  margin: 4px 0 10px;
+  color: #857c8a;
+  font-size: 12.5px;
+}
+.glow-ship-point {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 10px;
+  padding: 8px 10px;
+  margin-top: 6px;
+  border-radius: 12px;
+  background: #f8f3f9;
+  font-size: 13.5px;
+  color: #3b2146;
+}
+.glow-ship-point span {
+  color: #6b5a63;
+  font-size: 12.5px;
+}
+.glow-ship-table {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 14px;
+}
+.glow-ship-table div {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 2px;
+  border-bottom: 1px dashed #efe3ec;
+  font-size: 13px;
+  color: #3b2146;
+}
+.glow-ship-table .is-home {
+  color: #742284;
+  font-weight: 700;
+}
+.glow-point-time {
+  display: block;
+  color: #857c8a;
+  font-size: 11.5px;
+}
+.glow-pt-edit {
+  display: grid;
+  gap: 6px;
+}
+.glow-pt-edit > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 6px;
+}
+.glow-pt-edit input {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #f0e3ea;
+  border-radius: 10px;
+  background: #fff7fb;
+  font: inherit;
+  font-size: 13px;
+}
+.glow-pt-edit > div button {
+  border: none;
+  background: none;
+  color: #d6357f;
+}
+.glow-pt-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 7px 12px;
+  border: 1px dashed #d9c3e3;
+  border-radius: 10px;
+  background: #fbf7fd;
+  color: #3b2146;
+  font-weight: 700;
+  font-size: 13px;
+}
+@media (max-width: 480px) {
+  .glow-ship-table {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Día y hora de entrega ---------- */
+.glow-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+.glow-chips button {
+  flex-shrink: 0;
+  min-width: 54px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 8px;
+  border: 1.5px solid #eadcef;
+  border-radius: 12px;
+  background: #fff;
+  color: #3b2146;
+  line-height: 1.15;
+}
+.glow-chips button b {
+  font-size: 17px;
+}
+.glow-chips button small {
+  font-size: 10.5px;
+  color: #857c8a;
+  text-transform: capitalize;
+}
+.glow-chips.is-time {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+.glow-chips.is-time button {
+  min-width: 0;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.glow-chips button.is-on {
+  border-color: #742284;
+  background: #742284;
+  color: #fff;
+}
+.glow-chips button.is-on small {
+  color: #eadcf2;
+}
+.glow-when {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #eaf8f1;
+  color: #13744d;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+.glow-when::first-letter {
+  text-transform: uppercase;
+}
+.glow-pt-row {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #fbf7fd;
+  border: 1px solid #efe3f3;
+}
+.glow-pt-top {
+  display: flex;
+  gap: 6px;
+}
+.glow-pt-top input {
+  flex: 1;
+}
+.glow-pt-top button {
+  border: none;
+  background: none;
+  color: #d6357f;
+}
+.glow-pt-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.glow-pt-row .glow-pt-days button {
+  padding: 4px 8px;
+  border: 1px solid #e3d3e8;
+  border-radius: 8px;
+  background: #fff;
+  color: #6b5a63;
+  font-size: 12px;
+  font-weight: 700;
+}
+.glow-pt-row .glow-pt-days button.is-on {
+  border-color: #742284;
+  background: #742284;
+  color: #fff;
+}
+.glow-pt-hours {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: #3b2146;
+}
+.glow-pt-hours select,
+.glow-pt-hours input {
+  margin-left: 4px;
+  padding: 4px 6px;
+  border: 1px solid #f0e3ea;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.glow-map-link {
+  display: inline-block;
+  margin-top: 8px;
+  color: #742284;
+  font-size: 13px;
+  font-weight: 700;
+}
+.glow-agency-edit {
+  display: grid;
+  gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.glow-agency-edit label {
+  display: grid;
+  gap: 3px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #3b2146;
+}
+.glow-agency-edit textarea {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #f0e3ea;
+  border-radius: 8px;
+  background: #fff7fb;
+  font: inherit;
+  font-weight: 400;
+  font-size: 12.5px;
+  resize: vertical;
+}
+
+/* Tarjeta ¡Sorpresa! */
+.glow-acc-rw.is-surprise {
+  border: 2px solid transparent;
+  background: linear-gradient(#fff, #fff) padding-box, linear-gradient(120deg, #7a3f73, #ff3d8b, #f0b429, #7a3f73) border-box;
+  background-size: 100% 100%, 300% 300%;
+  animation: glow-mystery 6s ease-in-out infinite;
+}
+@keyframes glow-mystery {
+  0%, 100% { background-position: 0 0, 0% 50%; }
+  50% { background-position: 0 0, 100% 50%; }
+}
+.glow-surprise-row {
+  position: relative;
+}
+.glow-surprise-row .glow-gift-ico {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 46px;
+  height: 46px;
+}
+.glow-surprise-row > div {
+  padding-right: 44px;
+}
+.glow-surprise-row h3 {
+  margin: 0;
+  font-family: "Fraunces", serif;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  font-size: 26px;
+  color: #3b2146;
+}
+.glow-surprise-row p {
+  margin: 2px 0 10px;
+}
+.glow-gift-ico {
+  flex-shrink: 0;
+  overflow: visible;
+}
+.glow-gift-lid {
+  transform-box: fill-box;
+  transform-origin: 20% 100%;
+  animation: glow-lid 3.2s ease-in-out infinite;
+}
+@keyframes glow-lid {
+  0%, 70%, 100% { translate: 0 0; rotate: 0deg; }
+  78% { translate: 0 -7px; rotate: -8deg; }
+  86% { translate: 0 0; rotate: 0deg; }
+}
+.glow-acc-rw-tag.is-mystery {
+  background: #3b2146;
+  color: #ffd27a;
+}
+.glow-tile-q {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 2.2px solid #d6357f;
+  border-radius: 50%;
+  color: #d6357f;
+  font-weight: 800;
+  font-size: 16px;
+}
+.glow-inline-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #742284;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+}
+.glow-help-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.glow-help-head h3 {
+  margin: 0;
+}
+.glow-help-list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  color: #3b2146;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+.glow-help-levels {
+  display: grid;
+  gap: 6px;
+}
+.glow-help-levels div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #f8f3f9;
+  color: #3b2146;
+  font-size: 13.5px;
+}
+.glow-help-levels div span {
+  grid-column: 1;
+  color: #857c8a;
+  font-size: 12px;
+}
+.glow-help-levels div em {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  font-style: normal;
+  font-weight: 800;
+  color: #a8741a;
+}
+.glow-help-levels div.is-on {
+  background: #3b2146;
+  color: #fff;
+}
+.glow-help-levels div.is-on span {
+  color: #d9c6e2;
+}
+.glow-help-levels div.is-on em {
+  color: #ffd27a;
+}
+.glow-faq {
+  margin-top: 8px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid #f0e3ea;
+}
+.glow-faq summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #3b2146;
+}
+.glow-faq p {
+  margin: 8px 0 0;
+  color: #6b5a63;
+  font-size: 13.5px;
+  line-height: 1.55;
+}

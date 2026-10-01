@@ -1,0 +1,231 @@
+/* ---------- Michi-crédito ---------- */
+.glow-coin {
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe7a3, #f0b429 55%, #b8861c);
+  box-shadow: 0 6px 14px rgba(192, 138, 44, 0.4), inset 0 -3px 0 #a87818;
+}
+.glow-coin svg {
+  fill: #7a4e0b;
+}
+.glow-coin.is-spin {
+  animation: glow-coin-flip 3s ease-in-out infinite;
+}
+@keyframes glow-coin-flip {
+  0%, 70%, 100% { transform: rotateY(0); }
+  80% { transform: rotateY(180deg); }
+  90% { transform: rotateY(360deg); }
+}
+.glow-claim {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  overflow: hidden;
+  padding: 22px 20px 16px;
+  border-radius: 26px;
+  background: #fff;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  animation: glow-gift-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.glow-claim-rays {
+  position: absolute;
+  inset: -45% -25% auto;
+  height: 300px;
+  background: repeating-conic-gradient(from 0deg at 50% 60%, #fff3d1 0 10deg, transparent 10deg 20deg);
+  opacity: 0.7;
+  animation: glow-rays 18s linear infinite;
+}
+@keyframes glow-rays {
+  to { rotate: 360deg; }
+}
+.glow-claim-in {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.glow-claim-in > small {
+  color: #857c8a;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.glow-claim-in .glow-coin {
+  margin: 10px 0 6px;
+}
+.glow-claim-amt {
+  font-family: "Fraunces", serif;
+  font-size: 44px;
+  font-weight: 800;
+  color: #3b2146;
+}
+.glow-claim-in p {
+  margin: 0 0 12px;
+  color: #6b5a63;
+  font-size: 14px;
+}
+.glow-claim-ok {
+  color: #13744d !important;
+  font-weight: 700;
+}
+.glow-pay-btn.is-gold {
+  background: linear-gradient(90deg, #c08a2c, #f0b429);
+  color: #3a2a00;
+}
+.glow-timer {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.glow-timer span {
+  min-width: 40px;
+  padding: 5px 7px;
+  border-radius: 8px;
+  background: #3b2146;
+  color: #ffd27a;
+  font-weight: 800;
+  font-size: 14px;
+}
+.glow-timer small {
+  display: block;
+  font-size: 8.5px;
+  color: #d9c6e2;
+}
+.glow-credit-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 3px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: #3b2146;
+  font-weight: 800;
+  font-size: 13px;
+  box-shadow: 0 3px 10px rgba(192, 138, 44, 0.3);
+  white-space: nowrap;
+}
+.glow-credit-pill em {
+  font-style: normal;
+  font-size: 11px;
+  color: #c0392b;
+}
+.glow-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  z-index: 75;
+  translate: -50% 0;
+  width: min(440px, calc(100% - 32px));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #3b2146;
+  color: #fff;
+  font-size: 13.5px;
+  box-shadow: 0 12px 24px rgba(59, 33, 70, 0.35);
+  animation: glow-toast-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.glow-toast b {
+  color: #ffd27a;
+}
+.glow-toast button {
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: #d9c6e2;
+}
+@keyframes glow-toast-in {
+  from { translate: -50% 30px; opacity: 0; }
+}
+.glow-wallet {
+  width: 330px;
+  max-width: 100%;
+  padding: 16px 18px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 14px 30px rgba(59, 33, 70, 0.14);
+}
+.glow-wallet-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.glow-wallet-top small {
+  color: #857c8a;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.glow-wallet-top b {
+  display: block;
+  font-family: "Fraunces", serif;
+  font-size: 32px;
+  color: #3b2146;
+}
+.glow-wallet-exp {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #fdecea;
+  color: #c0392b;
+  font-size: 12px;
+  font-weight: 800;
+}
+.glow-wallet-hint {
+  font-size: 12px;
+  color: #857c8a;
+}
+.glow-wallet-claim {
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #c08a2c, #f0b429);
+  color: #3a2a00;
+  font-weight: 800;
+  font-size: 13px;
+}
+.glow-wallet-hist {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #f0e3ea;
+  font-size: 13px;
+}
+.glow-wallet-hist div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: #3b2146;
+}
+.glow-wallet-hist small {
+  display: block;
+  color: #857c8a;
+  font-size: 11.5px;
+}
+.glow-wallet-hist .is-plus {
+  color: #1fa971;
+}
+.glow-wallet-hist .is-lost {
+  color: #b5a9b1;
+  text-decoration: line-through;
+}
+.glow-wallet-rules {
+  margin: 10px 0 0;
+  color: #857c8a;
+  font-size: 11.5px;
+}
+@media (max-width: 640px) {
+  .glow-credit-pill em {
+    display: none;
+  }
+}

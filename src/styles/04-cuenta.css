@@ -1,0 +1,642 @@
+/* ---------- Modo prueba ---------- */
+.glow-testbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 12px;
+  background: #3b2146;
+  color: #fff;
+  font-size: 13px;
+  text-align: center;
+}
+.glow-testbar button {
+  padding: 3px 12px;
+  border: 1px solid #fff8;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+}
+.glow-test-tag {
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: #3b2146;
+  color: #fff;
+  font-size: 10px;
+  letter-spacing: 1px;
+  vertical-align: 2px;
+}
+
+/* ---------- Registro / saludo ---------- */
+.glow-join-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(59, 33, 70, 0.25);
+}
+.glow-hello {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 4px 3px 12px;
+  border: none;
+  border-radius: 999px;
+  background: #ffffffb3;
+}
+.glow-hello-text {
+  font-family: "Fraunces", serif;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  font-weight: 600;
+  font-size: 15px;
+  color: #3b2146;
+  white-space: nowrap;
+}
+.glow-hello-text b {
+  font-style: italic;
+  font-weight: 700;
+  background: linear-gradient(90deg, #d6357f, #c08a2c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-right: 3px;
+}
+/* avatar con orejitas de gato */
+.glow-cat-avatar {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b2146, #7a3f73);
+  color: #fff;
+  font-family: "Fraunces", serif;
+  font-size: 16px;
+  box-shadow: 0 0 0 2px #fff;
+}
+.glow-cat-avatar::before,
+.glow-cat-avatar::after {
+  content: "";
+  position: absolute;
+  top: -7px;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 13px solid #3b2146;
+  z-index: -1;
+}
+.glow-cat-avatar::before {
+  left: 0;
+  rotate: -22deg;
+}
+.glow-cat-avatar::after {
+  right: 0;
+  rotate: 22deg;
+}
+.glow-cat-avatar img,
+.glow-cat-avatar b {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  object-fit: cover;
+  font-weight: 700;
+}
+.glow-cat-avatar {
+  animation: glow-ear-wiggle 5s ease-in-out infinite;
+}
+@keyframes glow-ear-wiggle {
+  0%, 88%, 100% { rotate: 0deg; }
+  91% { rotate: -8deg; }
+  94% { rotate: 6deg; }
+}
+.glow-modal-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: #2e1b2c80;
+}
+.glow-join {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  padding: 26px 22px 20px;
+  border-radius: 24px;
+  background: #fffdf8;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+.glow-join h3 {
+  margin: 6px 0 0;
+  font-family: "Fraunces", serif;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  font-size: 25px;
+  color: #3b2146;
+}
+.glow-join-x {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: none;
+  color: #857c8a;
+}
+.glow-join-face {
+  width: 86px;
+  height: 86px;
+  margin: 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(160deg, #ffe0ec, #ece0ff);
+  border: 3px solid #c08a2c;
+}
+.glow-join-face svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.glow-join-perks {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  font-size: 14px;
+  line-height: 2;
+  color: #3b2146;
+}
+.glow-join-gbtn {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+.glow-join-legal {
+  margin: 14px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #857c8a;
+}
+@media (max-width: 640px) {
+  .glow-hello-text {
+    font-size: 13px;
+  }
+}
+@media (max-width: 420px) {
+  .glow-hello-text {
+    display: none;
+  }
+}
+
+/* ---------- Favoritos ---------- */
+.glow-fav {
+  position: absolute;
+  z-index: 3;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #ffffffe6;
+  color: #3b2146;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease;
+}
+.glow-fav:hover {
+  transform: scale(1.08);
+}
+.glow-fav.is-on {
+  color: #ff3d8b;
+  animation: glow-heart-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes glow-heart-pop {
+  0% { scale: 0.7; }
+  60% { scale: 1.25; }
+  100% { scale: 1; }
+}
+.glow-heart-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(214, 53, 127, 0.15);
+}
+.glow-heart-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  animation: glow-heart-pop 0.35s ease;
+}
+
+/* ---------- Menú de cuenta ---------- */
+.glow-account {
+  position: relative;
+}
+.glow-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 60;
+  width: 250px;
+  padding: 8px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(59, 33, 70, 0.22);
+  animation: glow-menu-in 0.18s ease;
+}
+@keyframes glow-menu-in {
+  from { opacity: 0; translate: 0 -6px; }
+}
+.glow-menu-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #f0e3ea;
+}
+.glow-menu-head > div > b {
+  display: block;
+  color: #3b2146;
+}
+.glow-menu-head > div > small {
+  display: block;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #857c8a;
+  font-size: 12px;
+}
+.glow-menu button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: #3b2146;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+.glow-menu button:hover {
+  background: #f8f1f6;
+}
+.glow-menu button.is-out {
+  margin-top: 4px;
+  border-top: 1px solid #f0e3ea;
+  border-radius: 0 0 12px 12px;
+  color: #c0392b;
+}
+
+/* ---------- Panel lateral de la cuenta ---------- */
+.glow-drawer-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  justify-content: flex-end;
+  background: #2e1b2c66;
+}
+.glow-drawer {
+  width: 100%;
+  max-width: 420px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #fffdfb;
+  animation: glow-drawer-in 0.25s ease;
+}
+@keyframes glow-drawer-in {
+  from { translate: 40px 0; opacity: 0.6; }
+}
+.glow-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 12px;
+}
+.glow-drawer-head h3 {
+  margin: 0;
+  font-family: "Fraunces", serif;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  font-size: 24px;
+  color: #3b2146;
+}
+.glow-drawer-head button {
+  border: none;
+  background: none;
+  color: #857c8a;
+}
+.glow-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 0 20px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #f4ecf3;
+}
+.glow-tabs button {
+  flex: 1;
+  padding: 8px 6px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: #6b5a63;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.glow-tabs button.is-on {
+  background: #fff;
+  color: #3b2146;
+  box-shadow: 0 2px 6px rgba(59, 33, 70, 0.12);
+}
+.glow-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 24px;
+}
+.glow-empty {
+  padding: 40px 10px;
+  text-align: center;
+}
+.glow-empty-heart {
+  width: 70px;
+  height: 70px;
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #ffe6f0;
+  color: #d6357f;
+}
+.glow-fav-tip {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px dashed #d9c3e3;
+  border-radius: 12px;
+  background: #fbf7fd;
+  color: #3b2146;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+}
+.glow-fav-list {
+  display: grid;
+  gap: 10px;
+}
+.glow-fav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #f0e3ea;
+}
+.glow-fav-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+.glow-fav-info b {
+  font-size: 15px;
+}
+.glow-fav-info button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.glow-profile-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 6px 0 18px;
+}
+.glow-profile-head small {
+  display: block;
+  color: #857c8a;
+  font-size: 13px;
+}
+.glow-profile .glow-cat-avatar {
+  font-size: 26px;
+}
+.glow-profile .glow-cat-avatar::before,
+.glow-profile .glow-cat-avatar::after {
+  top: -12px;
+  border-left-width: 12px;
+  border-right-width: 12px;
+  border-bottom-width: 22px;
+}
+.glow-switch {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 6px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #f8f1f6;
+  cursor: pointer;
+}
+.glow-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.glow-switch > span {
+  position: relative;
+  flex-shrink: 0;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: #d8cbd6;
+  transition: background 0.2s;
+}
+.glow-switch > span::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: translate 0.2s;
+}
+.glow-switch input:checked + span {
+  background: #3b2146;
+}
+.glow-switch input:checked + span::after {
+  translate: 18px 0;
+}
+.glow-switch input:focus-visible + span {
+  outline: 2px solid #742284;
+  outline-offset: 2px;
+}
+.glow-switch b {
+  display: block;
+  color: #3b2146;
+  font-size: 14px;
+}
+.glow-switch small {
+  color: #857c8a;
+  font-size: 12px;
+}
+.glow-my-orders {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+.glow-my-order,
+.glow-acc-order {
+  min-width: 0;
+}
+.glow-my-order {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #f0e3ea;
+}
+.glow-my-order-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #857c8a;
+}
+.glow-my-order-top b {
+  color: #3b2146;
+  font-size: 15px;
+}
+.glow-my-order-imgs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0;
+}
+.glow-my-order-imgs img {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.glow-my-order-imgs div {
+  margin-left: auto;
+  text-align: right;
+  font-size: 12px;
+  color: #857c8a;
+}
+.glow-my-order-imgs div b {
+  display: block;
+  color: #3b2146;
+  font-size: 17px;
+}
+.glow-my-order-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.glow-my-order-bottom button {
+  border: none;
+  background: none;
+  font-weight: 700;
+  font-size: 13px;
+}
+.glow-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+@media (max-width: 640px) {
+  .glow-heart-btn {
+    width: 34px;
+    height: 34px;
+  }
+  /* En el celular el menú de la cuenta ocupa el ancho de la pantalla,
+     con margen a los lados, justo debajo de la barra. */
+  .glow-menu {
+    position: fixed;
+    top: var(--menu-top, 64px);
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+  }
+  .glow-menu-head small {
+    max-width: none;
+  }
+  .glow-menu button {
+    padding: 13px 12px;
+    font-size: 15px;
+  }
+}
+/* celular: "by Rosalía" pequeño debajo de "Glow" */
+@media (max-width: 640px) {
+  .glow-brand {
+    display: inline-grid;
+    grid-template-columns: auto auto;
+    align-items: start;
+  }
+  .glow-brand-main {
+    grid-row: 1;
+    grid-column: 1;
+    line-height: 1.05;
+  }
+  .glow-brand .glow-sparkle {
+    grid-row: 1;
+    grid-column: 2;
+  }
+  .glow-brand-sub {
+    grid-row: 2;
+    grid-column: 1 / span 2;
+    margin: -6px 0 0 4px;
+    font-size: 14px !important;
+    line-height: 1;
+  }
+}

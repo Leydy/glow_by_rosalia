@@ -1,0 +1,445 @@
+/* ---------- Pantalla de carga ---------- */
+.glow-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  transition: opacity 0.6s ease;
+}
+.glow-loader.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+.glow-loader-stage {
+  position: relative;
+  width: 300px;
+  height: 170px;
+}
+.glow-run-cat {
+  position: absolute;
+  left: 10px;
+  bottom: 12px;
+  width: 280px;
+  overflow: visible;
+}
+.glow-run-bob {
+  animation: glow-run-bob 0.36s ease-in-out infinite;
+}
+@keyframes glow-run-bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -5px; }
+}
+.glow-run-leg {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+  animation: glow-run-leg 0.36s ease-in-out infinite alternate;
+}
+.glow-run-leg.is-b2,
+.glow-run-leg.is-f1 {
+  animation-direction: alternate-reverse;
+}
+@keyframes glow-run-leg {
+  from { rotate: 38deg; }
+  to { rotate: -38deg; }
+}
+.glow-run-tail {
+  transform-box: fill-box;
+  transform-origin: 100% 100%;
+  animation: glow-run-tail 0.72s ease-in-out infinite alternate;
+}
+@keyframes glow-run-tail {
+  from { rotate: -10deg; }
+  to { rotate: 12deg; }
+}
+.glow-loader-ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  height: 3px;
+  background: repeating-linear-gradient(90deg, currentColor 0 18px, transparent 18px 30px);
+  border-radius: 3px;
+  opacity: 0.5;
+  animation: glow-ground 0.4s linear infinite;
+}
+@keyframes glow-ground {
+  to { background-position: -30px 0; }
+}
+.glow-dust {
+  position: absolute;
+  bottom: 14px;
+  left: 60px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e9dfe6;
+  opacity: 0;
+  animation: glow-dust 0.72s ease-out infinite;
+}
+.glow-dust.is-2 { animation-delay: 0.24s; }
+.glow-dust.is-3 { animation-delay: 0.48s; }
+@keyframes glow-dust {
+  0% { opacity: 0.9; translate: 0 0; scale: 0.5; }
+  100% { opacity: 0; translate: -46px -10px; scale: 1.6; }
+}
+.glow-loader-text {
+  margin: 0;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 24px;
+  font-weight: 600;
+}
+.glow-loader-text span {
+  animation: glow-dots 1.2s infinite;
+}
+.glow-loader-text span:nth-child(2) { animation-delay: 0.2s; }
+.glow-loader-text span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes glow-dots {
+  0%, 60%, 100% { opacity: 0.2; }
+  30% { opacity: 1; }
+}
+
+/* ---------- Animaciones del slider ---------- */
+.glow-hero-photo.is-main {
+  animation: glow-bob 6s ease-in-out infinite;
+}
+.glow-hero-photo.is-a {
+  animation: glow-bob 5s ease-in-out -1.5s infinite;
+}
+.glow-hero-photo.is-b {
+  animation: glow-bob 5.5s ease-in-out -3s infinite;
+}
+@keyframes glow-bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -9px; }
+}
+
+/* Gatito: entra con un zoom de rebote; luego aparecen la lupa y el globito */
+/* Se sienta a la izquierda del collage, fuera de las fotos */
+.glow-cat-wrap {
+  position: absolute;
+  z-index: 3;
+  right: 100%;
+  bottom: 0;
+  width: 40%;
+  aspect-ratio: 200 / 250;
+}
+.glow-cat {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 10px 14px rgba(214, 53, 127, 0.25));
+  transform-origin: 50% 100%;
+  opacity: 0;
+  scale: 0.2;
+}
+.is-active .glow-cat {
+  animation: glow-cat-in 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+}
+@keyframes glow-cat-in {
+  0% { opacity: 0; scale: 0.2; rotate: -12deg; }
+  60% { opacity: 1; scale: 1.12; rotate: 4deg; }
+  100% { opacity: 1; scale: 1; rotate: 0deg; }
+}
+
+/* Lupa circular con el accesorio ampliado */
+.glow-cat-zoom {
+  position: absolute;
+  right: 18%;
+  bottom: 128%;
+  width: 62%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle at 35% 30%, #fff, #ffe6f0);
+  border: 5px solid #fff;
+  box-shadow: 0 0 0 3px #f26d9c, 0 14px 30px rgba(214, 53, 127, 0.3);
+  opacity: 0;
+  scale: 0;
+}
+.glow-cat-zoom svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  animation: glow-zoom-pulse 2.8s ease-in-out infinite;
+}
+/* Fotos reales en la lupa: se cruzan con un fundido y un zoom suave */
+.glow-cat-zoom img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  scale: 1.35;
+  transition: opacity 0.5s ease, scale 2s ease-out;
+}
+.glow-cat-zoom img.is-on {
+  opacity: 1;
+  scale: 1.1;
+}
+/* Precio del producto que muestra la lupa */
+.glow-cat-price {
+  position: absolute;
+  z-index: 2;
+  right: 18%;
+  bottom: 128%;
+  translate: 30% 30%;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(214, 53, 127, 0.35);
+  opacity: 0;
+}
+.is-active .glow-cat-price {
+  animation: glow-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 1.3s both;
+}
+.is-active .glow-cat-zoom {
+  animation: glow-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 1.1s both;
+}
+@keyframes glow-pop {
+  0% { opacity: 0; scale: 0; }
+  100% { opacity: 1; scale: 1; }
+}
+@keyframes glow-zoom-pulse {
+  0%, 100% { scale: 1; }
+  50% { scale: 1.12; }
+}
+
+/* Globito de diálogo */
+.glow-cat-say {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  translate: -64% -6px;
+  white-space: nowrap;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(214, 53, 127, 0.2);
+  opacity: 0;
+  scale: 0;
+  transform-origin: 50% 100%;
+}
+.glow-cat-say::after {
+  content: "";
+  position: absolute;
+  left: 64%;
+  top: 100%;
+  margin-left: -7px;
+  border: 7px solid transparent;
+  border-top-color: #fff;
+}
+.is-active .glow-cat-say {
+  animation: glow-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 1.6s both, glow-say-bob 2.2s ease-in-out 2.2s infinite;
+}
+@keyframes glow-say-bob {
+  0%, 100% { translate: -64% -6px; }
+  50% { translate: -64% -11px; }
+}
+
+/* El accesorio se mece; la patita saluda */
+.glow-acc-swing {
+  transform-box: view-box;
+  animation: glow-swing 1.8s ease-in-out infinite;
+}
+.glow-acc-swing.is-late {
+  animation-delay: -0.9s;
+}
+@keyframes glow-swing {
+  0%, 100% { rotate: -12deg; }
+  50% { rotate: 12deg; }
+}
+.glow-cat-wave {
+  transform-box: view-box;
+  transform-origin: 112px 150px;
+  animation: glow-wave 2.4s ease-in-out infinite;
+}
+@keyframes glow-wave {
+  0%, 100% { rotate: 0deg; }
+  25% { rotate: -10deg; }
+  50% { rotate: 6deg; }
+  75% { rotate: -6deg; }
+}
+
+.glow-cat-tail {
+  transform-box: fill-box;
+  transform-origin: 0% 60%;
+  animation: glow-tail 3.2s ease-in-out infinite;
+}
+@keyframes glow-tail {
+  0%, 100% { rotate: -4deg; }
+  50% { rotate: 7deg; }
+}
+.glow-cat-head {
+  transform-box: view-box;
+  transform-origin: 100px 120px;
+  animation: glow-tilt 8s ease-in-out infinite;
+}
+@keyframes glow-tilt {
+  0%, 40%, 100% { rotate: 0deg; }
+  50%, 70% { rotate: -6deg; }
+}
+/* una oreja se mueve de vez en cuando */
+.glow-cat-ear {
+  transform-box: fill-box;
+  transform-origin: 80% 100%;
+  animation: glow-twitch 6s infinite;
+}
+@keyframes glow-twitch {
+  0%, 80%, 88%, 100% { rotate: 0deg; }
+  83% { rotate: -9deg; }
+  85% { rotate: 3deg; }
+}
+.glow-cat-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: glow-blink 5s infinite;
+}
+@keyframes glow-blink {
+  0%, 46%, 52%, 100% { scale: 1 1; }
+  49% { scale: 1 0.06; }
+}
+
+/* Huellitas que suben flotando por el fondo */
+.glow-paw {
+  position: absolute;
+  bottom: -40px;
+  fill: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  animation: glow-paw-up 12s linear infinite;
+}
+@keyframes glow-paw-up {
+  0% { translate: 0 0; rotate: -15deg; opacity: 0; }
+  15% { opacity: 0.16; }
+  50% { translate: 18px -260px; rotate: 10deg; }
+  85% { opacity: 0.16; }
+  100% { translate: -10px -560px; rotate: -10deg; opacity: 0; }
+}
+
+/* Destellos */
+.glow-sparkle {
+  position: absolute;
+  z-index: 4;
+  fill: currentColor;
+  pointer-events: none;
+  animation: glow-twinkle 2.6s ease-in-out infinite;
+}
+@keyframes glow-twinkle {
+  0%, 100% { scale: 0.4; opacity: 0; rotate: 0deg; }
+  50% { scale: 1; opacity: 1; rotate: 45deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-hero * {
+    animation: none !important;
+    transition: none !important;
+  }
+  .glow-cat,
+  .glow-cat-zoom,
+  .glow-cat-say {
+    opacity: 1;
+    scale: 1;
+  }
+  .glow-paw {
+    display: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .glow-hero-star {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .glow-hero {
+    height: 580px;
+  }
+  .glow-hero-left {
+    justify-content: center;
+  }
+  .glow-hero-dots {
+    bottom: 46px;
+  }
+  .glow-ticker {
+    height: 32px;
+  }
+  .glow-ticker span {
+    font-size: 15px;
+  }
+  .glow-yarn {
+    width: 32px;
+    bottom: 36px;
+  }
+  .glow-hero-collage {
+    justify-self: end;
+    margin-right: 4%;
+  }
+  .glow-cat-wrap {
+    width: 36%;
+  }
+  .glow-cat-zoom {
+    right: 12%;
+    bottom: 112%;
+    width: 64%;
+    border-width: 3px;
+  }
+  .glow-cat-say {
+    display: none;
+  }
+  .glow-cat-price {
+    right: 12%;
+    bottom: 112%;
+    font-size: 10px;
+    padding: 2px 7px;
+  }
+  /* Fotos arriba, texto abajo */
+  .glow-hero-inner {
+    grid-template-columns: 1fr;
+    grid-template-rows: 250px auto;
+    align-content: center;
+    gap: 18px;
+    padding: 16px 20px 70px;
+    text-align: center;
+  }
+  .glow-hero-collage {
+    order: -1;
+    height: 100%;
+  }
+  .glow-hero-text {
+    max-width: none;
+  }
+  .glow-hero-rot > span > span {
+    margin-inline: auto;
+  }
+  .glow-hero-title {
+    font-size: 36px;
+    margin: 4px 0 8px;
+  }
+  .glow-hero-desc {
+    font-size: 17px;
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .glow-hero-cta {
+    padding: 11px 22px;
+    font-size: 14px;
+  }
+  /* En el celular se desliza con el dedo */
+  .glow-hero-arrow {
+    display: none;
+  }
+}

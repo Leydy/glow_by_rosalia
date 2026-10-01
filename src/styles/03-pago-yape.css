@@ -1,0 +1,458 @@
+/* ---------- Pago con Yape (carrito) ---------- */
+.glow-pay-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 0;
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(116, 34, 132, 0.25);
+}
+.glow-pay-btn:disabled {
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.glow-link-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 8px 0;
+  border: none;
+  background: none;
+  font-weight: 600;
+}
+.glow-yape {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.glow-yape-label {
+  margin: 10px 0 0;
+  color: #857c8a;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.glow-yape-total {
+  margin: 2px 0 14px;
+  font-family: "Fraunces", serif;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  font-size: 38px;
+  font-weight: 700;
+}
+.glow-yape-qr {
+  width: min(250px, 80%);
+  padding: 10px;
+  border: 3px solid;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(116, 34, 132, 0.15);
+}
+.glow-yape-qr img {
+  width: 100%;
+  display: block;
+  border-radius: 10px;
+}
+.glow-yape-num {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f6eef8;
+  text-align: left;
+}
+.glow-yape-num small {
+  display: block;
+  color: #857c8a;
+  font-size: 12px;
+}
+.glow-yape-num b {
+  display: block;
+  font-size: 20px;
+  letter-spacing: 1px;
+}
+.glow-yape-num span {
+  display: block;
+  font-size: 13px;
+  color: #6b5a63;
+}
+.glow-yape-num button {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border: 2px solid;
+  border-radius: 999px;
+  background: #fff;
+  font-weight: 700;
+  font-size: 13px;
+}
+.glow-yape-steps {
+  width: 100%;
+  margin: 16px 0 18px;
+  padding-left: 22px;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #3b2146;
+}
+
+/* ---------- Pago con Yape: pasos ---------- */
+.glow-steps-dots {
+  display: flex;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+.glow-steps-dots i {
+  width: 26px;
+  height: 4px;
+  border-radius: 4px;
+  background: #eadcef;
+}
+.glow-pay-btn.is-ghost {
+  background: #fff;
+  border: 2px solid;
+  box-shadow: none;
+}
+.glow-drop {
+  width: 100%;
+  min-height: 260px;
+  margin-top: 6px;
+  border: 2.5px dashed #d9c3e3;
+  border-radius: 20px;
+  background: #fbf7fd;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.glow-drop b {
+  color: #3b2146;
+  font-size: 15px;
+}
+.glow-drop small {
+  color: #857c8a;
+}
+.glow-tip {
+  width: 100%;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff6e5;
+  color: #3b2146;
+  font-size: 13px;
+  text-align: left;
+}
+.glow-scan {
+  position: relative;
+  width: min(220px, 70%);
+  margin: 16px auto 8px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+.glow-scan img {
+  width: 100%;
+  display: block;
+}
+.glow-scan span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: #00c4b3;
+  box-shadow: 0 0 14px 5px #00c4b388;
+  animation: glow-scan 1.6s ease-in-out infinite alternate;
+}
+@keyframes glow-scan {
+  to { top: calc(100% - 3px); }
+}
+.glow-reading {
+  font-family: "Cormorant Garamond", serif;
+  font-style: italic;
+  font-size: 19px;
+  margin: 8px 0 0;
+}
+.glow-review-thumb {
+  width: 100%;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 14px;
+  background: #f6f1f8;
+  text-align: left;
+  font-size: 13px;
+}
+.glow-review-thumb img {
+  width: 44px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.glow-review-thumb label {
+  display: block;
+  font-weight: 700;
+  cursor: pointer;
+}
+.glow-checks {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+.glow-checks div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #f6f4f7;
+  font-size: 13px;
+  text-align: right;
+}
+.glow-checks div > span:first-child {
+  color: #857c8a;
+}
+.glow-checks .is-ok {
+  background: #f2fbf6;
+  color: #13744d;
+}
+.glow-checks .is-warn {
+  background: #fff6e5;
+  color: #9a5f00;
+}
+.glow-field-label {
+  width: 100%;
+  margin: 14px 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #3b2146;
+  text-align: left;
+}
+.glow-op-input {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 1.5px solid #e7dceb;
+  background: #fcfafd;
+  font: 700 18px "Courier New", monospace;
+  letter-spacing: 3px;
+  outline: none;
+}
+.glow-hint {
+  width: 100%;
+  margin: 5px 0 0;
+  color: #857c8a;
+  font-size: 12px;
+  text-align: left;
+}
+.glow-err {
+  width: 100%;
+  margin: 10px 0 0;
+  color: #c0392b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Cartita de venta */
+.glow-letter {
+  position: relative;
+  width: 100%;
+  margin-top: 6px;
+  padding: 24px 22px 22px;
+  border-radius: 6px;
+  background-color: #fffdf8;
+  background-image: linear-gradient(#f3e9d9 1px, transparent 1px);
+  background-size: 100% 28px;
+  background-position: 0 86px;
+  box-shadow: 0 12px 26px rgba(80, 40, 120, 0.16);
+  color: #3b2146;
+  text-align: left;
+}
+.glow-letter::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1.5px solid #e6d3b0;
+  border-radius: 4px;
+  pointer-events: none;
+}
+.glow-letter-stamp {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 60px;
+  height: 70px;
+  padding: 4px;
+  background: #fff;
+  border: 3px dotted #e9d8e6;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  rotate: 6deg;
+}
+.glow-letter-stamp div {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: linear-gradient(160deg, #ffe0ec, #ece0ff);
+}
+.glow-letter-stamp svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.glow-letter-hi {
+  margin: 0;
+  font-family: "Cormorant Garamond", serif;
+  font-style: italic;
+  font-size: 18px;
+}
+.glow-letter-title {
+  margin: 0 70px 12px 0;
+  font-family: "Fraunces", serif;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  font-size: 25px;
+  line-height: 1.12;
+}
+.glow-letter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  font-size: 13px;
+}
+.glow-letter-row img,
+.glow-letter-noimg {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #ffe6f0;
+}
+.glow-letter-row div {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.2;
+}
+.glow-letter-row small {
+  display: block;
+  opacity: 0.7;
+}
+.glow-letter-row b,
+.glow-letter-tot {
+  font-family: "Fraunces", serif;
+  white-space: nowrap;
+}
+.glow-letter-tot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1.5px solid #e6d3b0;
+}
+.glow-letter-tot b {
+  font-size: 25px;
+}
+.glow-letter-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #7a6a76;
+}
+.glow-letter-meta dt {
+  font-weight: 700;
+  color: #3b2146;
+}
+.glow-letter-meta dd {
+  margin: 0;
+}
+.glow-letter-meta dd span {
+  font-family: "Courier New", monospace;
+  font-weight: 700;
+  color: #742284;
+  letter-spacing: 1px;
+}
+.glow-letter-verif {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f4ecf8;
+  color: #742284;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.glow-letter-verif i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e8a33b;
+}
+.glow-letter-sign {
+  margin-top: 10px;
+  font-family: "Caveat", cursive;
+  font-size: 23px;
+  color: #d6357f;
+  text-align: right;
+}
+
+/* Panel: pedidos */
+.glow-orders {
+  display: grid;
+  gap: 12px;
+}
+.glow-order {
+  display: flex;
+  gap: 14px;
+  padding: 12px;
+  border-radius: 16px;
+}
+.glow-order-shot {
+  width: 70px;
+  height: 100px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f6f1f8;
+}
+.glow-order-shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.glow-order-info {
+  flex: 1;
+  min-width: 0;
+}
+.glow-order-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: #857c8a;
+}
+.glow-order-head b {
+  color: #3b2146;
+  font-size: 15px;
+}

@@ -1,0 +1,254 @@
+/* ---------- Reseñas ---------- */
+.glow-stars {
+  display: inline-flex;
+  gap: 2px;
+  vertical-align: middle;
+}
+.glow-stars svg {
+  fill: #eadfe6;
+}
+.glow-stars svg.is-on {
+  fill: #e0a526;
+}
+.glow-card-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #3b2146;
+  font-size: 15px;
+}
+.glow-card-write {
+  width: fit-content;
+  margin-top: 6px;
+  padding: 5px 12px;
+  border: 1.5px dashed #c08a2c;
+  border-radius: 999px;
+  background: #fffbef;
+  color: #7a5310;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.glow-card-rating small {
+  color: #857c8a;
+  text-decoration: underline;
+}
+.glow-review-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.glow-review-head img {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.glow-review-head small {
+  display: block;
+  color: #857c8a;
+  font-size: 12px;
+}
+.glow-review-head b {
+  font-family: "Fraunces", serif;
+  font-size: 18px;
+  color: #3b2146;
+}
+.glow-review-stars {
+  display: flex;
+  gap: 4px;
+  margin: 4px 0 10px;
+}
+.glow-review-stars {
+  align-items: center;
+}
+.glow-review-stars button {
+  padding: 0;
+  border: none;
+  background: none;
+  line-height: 0;
+  transition: transform 0.15s;
+}
+.glow-review-stars svg {
+  fill: #eadfe6;
+}
+.glow-review-stars svg.is-on {
+  fill: #e0a526;
+}
+.glow-review-rating-lbl {
+  margin-left: 8px;
+  color: #a8741a;
+  font-weight: 800;
+  font-size: 14px;
+}
+.glow-review-stars button:hover {
+  transform: scale(1.15);
+}
+.glow-review-photo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 12px;
+  border: 2px dashed #e0b85c;
+  border-radius: 14px;
+  background: #fffbef;
+  color: #6b4a10;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.glow-review-photo img {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.glow-review-pts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 10px;
+}
+.glow-review-pts span {
+  padding: 8px;
+  border-radius: 10px;
+  background: #f4ecf3;
+  color: #857c8a;
+  font-size: 12.5px;
+  text-align: center;
+}
+.glow-review-pts span.is-on {
+  background: #3b2146;
+  color: #fff;
+}
+.glow-review-pts span.is-on b {
+  color: #ffd27a;
+}
+.glow-order-reviews {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #efe3ec;
+}
+.glow-order-reviews > p {
+  margin: 0 0 6px;
+  color: #a8741a;
+  font-size: 12px;
+}
+.glow-order-review {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+  font-size: 13px;
+  color: #3b2146;
+}
+.glow-order-review img {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.glow-order-review span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.glow-order-review button {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 999px;
+  background: #3b2146;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.glow-order-review em {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  color: #d48a12;
+}
+.glow-order-review em.is-aprobada {
+  color: #1fa971;
+}
+.glow-order-review em.is-rechazada {
+  color: #c0392b;
+}
+.glow-rev-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  color: #6b5a63;
+  font-size: 15px;
+}
+.glow-rev-summary b {
+  color: #3b2146;
+  font-size: 20px;
+}
+.glow-rev-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.glow-rev-top > div {
+  flex: 1;
+}
+.glow-rev-top b {
+  display: block;
+  font-size: 15.5px;
+}
+.glow-rev-av {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b2146, #7a3f73);
+  color: #fff;
+  font-family: "Fraunces", serif;
+  font-weight: 700;
+}
+.glow-rev-item {
+  padding: 14px 0;
+  border-bottom: 1px solid #f0e3ea;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #3b2146;
+}
+.glow-rev-item small {
+  color: #857c8a;
+}
+.glow-rev-item p {
+  margin: 4px 0;
+}
+.glow-rev-item img {
+  width: 160px;
+  height: 160px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+@media (max-width: 640px) {
+  .glow-hide-sm {
+    display: none;
+  }
+  .glow-card-rating {
+    gap: 4px;
+    font-size: 13px;
+  }
+  .glow-card-rating svg {
+    width: 14px;
+    height: 14px;
+  }
+  .glow-card-write {
+    font-size: 11.5px;
+    padding: 4px 9px;
+  }
+}

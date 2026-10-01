@@ -1,0 +1,323 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Manrope", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+input,
+select,
+button,
+textarea {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* ---------- Catálogo responsivo ----------
+   Los estilos que cambian según el ancho de pantalla viven aquí (los estilos
+   en línea de React no admiten @media). */
+.glow-wrap {
+  width: 100%;
+  padding-left: clamp(12px, 2vw, 32px);
+  padding-right: clamp(12px, 2vw, 32px);
+}
+
+.glow-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.glow-cats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.glow-cats > button {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.glow-search {
+  position: relative;
+  width: 260px;
+}
+.glow-search input {
+  width: 100%;
+}
+
+.glow-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+}
+.glow-card-img {
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+.glow-card-body {
+  padding: 14px;
+}
+.glow-card-name {
+  margin: 3px 0 0;
+  font-size: 19px;
+  width: fit-content;
+  background: linear-gradient(90deg, #d9a441, #f0c96a) no-repeat 0 100% / 0% 2px;
+  transition: background-size 0.35s ease;
+}
+.glow-grid > div:hover .glow-card-name {
+  background-size: 100% 2px;
+}
+/* Nombres de productos y títulos: Fraunces (serif moderna, suave y con
+   curvas juguetonas) en berenjena. */
+.glow-name {
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+.glow-card-cat {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* Textos suaves de la tienda: cursiva elegante en tono ciruela rosado
+   (en vez de gris). La usan el slider, "Más vendidos" y los mensajes. */
+.glow-soft {
+  font-family: "Cormorant Garamond", serif;
+  font-style: italic;
+  font-weight: 500;
+  color: #6b5a63;
+  line-height: 1.35;
+}
+
+/* Descripción: cursiva elegante en tono ciruela rosado (en vez de gris) */
+.glow-card-desc {
+  margin: 6px 0 0;
+  font-family: "Cormorant Garamond", serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 16.5px;
+  line-height: 1.3;
+  color: #6b5a63;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.glow-card-price {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* Barra superior: degradado con el estampado gatuno tenue. Sus colores
+   (--hdr-a / --hdr-b) los pone el slider según la diapositiva visible; al
+   registrarlos como <color> el cambio se anima con un fundido. */
+@property --hdr-a {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #ffe3ef;
+}
+@property --hdr-b {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #f3e6ff;
+}
+.glow-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px clamp(12px, 2vw, 32px);
+  background: linear-gradient(90deg, var(--hdr-a), color-mix(in srgb, var(--hdr-a) 50%, white) 50%, var(--hdr-b));
+  border-bottom: 1px solid color-mix(in srgb, var(--hdr-b) 80%, #d6357f 20%);
+  transition: --hdr-a 0.7s ease, --hdr-b 0.7s ease;
+}
+.glow-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--pat);
+  background-size: 110px 110px;
+  opacity: 0.07;
+  pointer-events: none;
+}
+.glow-header > * {
+  position: relative;
+}
+.glow-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.glow-nav-btn:hover {
+  background: #ffffffb3 !important;
+}
+.glow-nav-btn.is-round {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  justify-content: center;
+  margin-left: 4px;
+}
+
+.glow-brand {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+  white-space: nowrap;
+}
+/* "Glow": script redondeada con degradado fucsia → dorado que brilla */
+.glow-brand-main {
+  font-family: "Pacifico", cursive;
+  font-size: 30px;
+  line-height: 1.3;
+  /* la G y la l de Pacifico sobresalen (izquierda, arriba y la colita de la G
+     abajo): se deja espacio
+     para que el degradado (background-clip: text) no las recorte */
+  padding: 8px 8px 18px 14px;
+  margin: -6px 0 -14px -12px;
+  background: linear-gradient(100deg, #d6357f, #ff3d8b 35%, #f0b429 55%, #ff3d8b 75%, #d6357f);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: glow-brand-shine 6s ease-in-out infinite;
+}
+@keyframes glow-brand-shine {
+  0%, 100% { background-position: 100% 0; }
+  50% { background-position: 0% 0; }
+}
+.glow-brand .glow-sparkle {
+  margin-left: -6px;
+}
+.glow-brand-sub {
+  font-family: "Cormorant Garamond", serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 21px;
+}
+
+@media (max-width: 640px) {
+  .glow-filters {
+    display: block;
+  }
+  /* Categorías en una sola fila deslizable con el dedo */
+  .glow-cats {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+    scrollbar-width: none;
+    margin: 0 -12px;
+    padding: 0 12px 2px;
+  }
+  .glow-cats::-webkit-scrollbar {
+    display: none;
+  }
+  .glow-search {
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  /* Dos productos por fila */
+  .glow-grid {
+    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .glow-card-pad {
+    padding: 6px !important;
+  }
+  .glow-card-body {
+    padding: 8px 10px 10px;
+  }
+  .glow-card-name {
+    font-size: 16px;
+  }
+  .glow-card-desc {
+    font-size: 14.5px;
+    -webkit-line-clamp: 2;
+  }
+  .glow-card-price {
+    font-size: 17px;
+  }
+  .glow-card-btn {
+    font-size: 13px !important;
+    padding: 9px 0 !important;
+  }
+  .glow-card-btn .glow-btn-long {
+    display: none;
+  }
+  .glow-badge {
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+  }
+  /* En tarjetas angostas no caben dos etiquetas arriba: "Disponible" se
+     omite (el botón "Añadir" ya lo dice) y "Agotado" baja a la esquina. */
+  .glow-badge.is-available {
+    display: none;
+  }
+  .glow-badge.is-out {
+    top: auto !important;
+    bottom: 8px;
+    right: auto !important;
+    left: 8px;
+  }
+
+  .glow-header {
+    padding: 10px 12px !important;
+  }
+  .glow-brand-main {
+    font-size: 24px;
+  }
+  .glow-brand-sub {
+    font-size: 17px;
+  }
+}
+
+@media (min-width: 641px) {
+  .glow-card-btn .glow-btn-short {
+    display: none;
+  }
+}
+
+/* Pantallas muy angostas: el selector Tienda/Administración solo con íconos */
+@media (max-width: 420px) {
+  .glow-mode-label {
+    display: none;
+  }
+}
+

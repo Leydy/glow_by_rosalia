@@ -1,0 +1,409 @@
+/* ---------- Portada (slider con fotos reales) ---------- */
+.glow-hero {
+  position: relative;
+  overflow: hidden;
+  height: clamp(420px, 56vh, 520px);
+  border-bottom: 1px solid #f0e3ea;
+}
+.glow-hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.7s ease;
+}
+.glow-hero-slide.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.glow-hero-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.7;
+  pointer-events: none;
+}
+.glow-hero-blob.is-1 {
+  width: 420px;
+  height: 420px;
+  right: 8%;
+  top: -120px;
+}
+.glow-hero-blob.is-2 {
+  width: 320px;
+  height: 320px;
+  left: -80px;
+  bottom: -140px;
+}
+.glow-hero-inner {
+  position: relative;
+  height: 100%;
+  padding: 0 clamp(64px, 5vw, 110px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 40px;
+}
+/* Columna izquierda: texto + tarjeta del producto estrella */
+.glow-hero-left {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-width: 0;
+}
+.glow-hero-text {
+  max-width: 520px;
+  min-width: 0;
+  transform: translateY(14px);
+  opacity: 0;
+  transition: transform 0.7s ease 0.1s, opacity 0.7s ease 0.1s;
+}
+.is-active .glow-hero-text {
+  transform: none;
+  opacity: 1;
+}
+.glow-hero-eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.glow-hero-title {
+  margin: 6px 0 12px;
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  letter-spacing: -0.02em;
+  font-size: clamp(38px, 4.6vw, 64px);
+  line-height: 1;
+}
+.glow-hero-desc {
+  margin: 0 0 24px;
+  font-size: 21px;
+  line-height: 1.35;
+}
+.glow-hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 13px 26px;
+  border: none;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  transition: transform 0.2s ease;
+}
+.glow-hero-cta:hover {
+  transform: translateY(-2px);
+}
+
+/* Collage: foto grande + dos pequeñas superpuestas */
+.glow-hero-collage {
+  position: relative;
+  height: 82%;
+  aspect-ratio: 1 / 1;
+  justify-self: end;
+  transform: scale(0.96);
+  transition: transform 0.9s ease;
+}
+.is-active .glow-hero-collage {
+  transform: none;
+}
+.glow-hero-photo {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 5px solid #fff;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(214, 53, 127, 0.18);
+}
+.glow-hero-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.glow-hero-photo.is-main {
+  inset: 0 18% 12% 6%;
+  transform: rotate(-2deg);
+}
+.glow-hero-photo.is-a {
+  width: 40%;
+  aspect-ratio: 1 / 1;
+  right: 0;
+  top: 6%;
+  transform: rotate(4deg);
+}
+.glow-hero-photo.is-b {
+  width: 36%;
+  aspect-ratio: 1 / 1;
+  right: 10%;
+  bottom: 0;
+  transform: rotate(-3deg);
+}
+
+.glow-hero-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 5;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  background: #ffffffd9;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+.glow-hero-arrow.is-left {
+  left: 16px;
+}
+.glow-hero-arrow.is-right {
+  right: 16px;
+}
+.glow-hero-dots {
+  position: absolute;
+  bottom: 50px;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.glow-hero-dots button {
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+/* Palabra que rota bajo el título */
+.glow-hero-rot {
+  display: block;
+  height: 1.25em;
+  margin-bottom: -0.17em;
+  overflow: hidden;
+  font-style: italic;
+}
+.glow-hero-rot > span {
+  display: block;
+  animation: glow-words 7.5s ease-in-out infinite;
+}
+.glow-hero-rot > span > span {
+  display: block;
+  width: fit-content;
+  padding-right: 0.15em;
+  background: linear-gradient(90deg, #3b2146, #7a3f73 45%, #c08a2c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 500;
+  height: 1.25em;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+@keyframes glow-words {
+  0%, 28% { translate: 0 0; }
+  33%, 61% { translate: 0 -1.25em; }
+  66%, 94% { translate: 0 -2.5em; }
+  100% { translate: 0 -3.75em; }
+}
+
+/* Brillo que recorre el botón */
+.glow-shine {
+  position: relative;
+  overflow: hidden;
+}
+.glow-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, #ffffff99 50%, transparent 70%);
+  translate: -120% 0;
+  animation: glow-shine 3s ease-in-out infinite;
+}
+@keyframes glow-shine {
+  0%, 60% { translate: -120% 0; }
+  100% { translate: 120% 0; }
+}
+
+/* Tarjeta flotante del producto estrella */
+.glow-hero-star {
+  position: relative;
+  flex-shrink: 0;
+  width: clamp(170px, 14vw, 215px);
+  padding: 9px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(120, 60, 160, 0.2);
+  rotate: -3deg;
+  opacity: 0;
+  translate: 0 20px;
+  transition: opacity 0.6s ease 0.4s, translate 0.6s ease 0.4s;
+}
+.is-active .glow-hero-star {
+  opacity: 1;
+  translate: 0 0;
+  animation: glow-bob 4s ease-in-out 1s infinite;
+}
+.glow-hero-star img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+}
+.glow-hero-star-ribbon {
+  position: absolute;
+  z-index: 4; /* por encima de la foto y del corazón */
+  top: 18px;
+  left: -8px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  color: #3a2a00;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+.glow-hero-star h4 {
+  margin: 9px 4px 2px;
+  font-family: "Fraunces", serif;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.glow-hero-star-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px 2px;
+}
+.glow-hero-star-row span {
+  font-size: 17px;
+  font-weight: 800;
+}
+.glow-hero-star-row button {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Ovillo de lana que rueda por abajo */
+.glow-yarn {
+  position: absolute;
+  z-index: 4;
+  bottom: 44px;
+  left: -60px;
+  width: 44px;
+  pointer-events: none;
+  animation: glow-roll 12s linear infinite;
+}
+.glow-yarn svg {
+  width: 100%;
+  display: block;
+  animation: glow-spin 1.6s linear infinite;
+}
+@keyframes glow-roll {
+  0% { left: -60px; opacity: 1; }
+  70% { left: 45%; opacity: 1; }
+  74%, 100% { left: 47%; opacity: 0; }
+}
+@keyframes glow-spin {
+  to { rotate: 360deg; }
+}
+
+/* Cinta de mensajes al pie del slider */
+.glow-ticker {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: #ffffffb3;
+  backdrop-filter: blur(6px);
+  border-top: 1px solid #fff;
+}
+.glow-ticker > div {
+  display: flex;
+  gap: 34px;
+  padding-left: 34px;
+  white-space: nowrap;
+  animation: glow-ticker 26s linear infinite;
+}
+.glow-ticker span {
+  display: inline-flex;
+  align-items: center;
+  gap: 34px;
+  font-family: "Cormorant Garamond", serif;
+  font-style: italic;
+  font-size: 18px;
+  font-weight: 600;
+  color: #6b5a63;
+}
+@keyframes glow-ticker {
+  to { translate: -50% 0; }
+}
+
+/* Corazoncitos que salen de Rosalía */
+.glow-cat-heart {
+  position: absolute;
+  top: -2%;
+  width: 16%;
+  opacity: 0;
+  pointer-events: none;
+}
+.is-active .glow-cat-heart {
+  animation: glow-rise 3.6s ease-out infinite;
+}
+@keyframes glow-rise {
+  0% { translate: 0 0; opacity: 0; scale: 0.5; }
+  15% { opacity: 1; }
+  100% { translate: 20px -130px; opacity: 0; scale: 1.2; }
+}
+
+/* Estampado gatuno de fondo: muy tenue y deslizándose lento */
+.glow-hero-pattern {
+  position: absolute;
+  inset: -140px 0 0 -140px;
+  background-size: 140px 140px;
+  opacity: 0.07;
+  pointer-events: none;
+  animation: glow-pattern 40s linear infinite;
+}
+@keyframes glow-pattern {
+  to { translate: 140px 140px; }
+}
+
+/* Rastro de huellitas que cruza el slider */
+.glow-paw-step {
+  position: absolute;
+  width: 20px;
+  fill: currentColor;
+  opacity: 0;
+  rotate: 90deg;
+  pointer-events: none;
+  animation: glow-step 7s ease-out infinite;
+}
+@keyframes glow-step {
+  0% { opacity: 0; scale: 0.4; }
+  3% { opacity: 0.3; scale: 1.1; }
+  6% { scale: 1; }
+  45% { opacity: 0.3; }
+  65%, 100% { opacity: 0; }
+}
