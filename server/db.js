@@ -195,11 +195,6 @@ export function detailsOf(raw) {
   if (d.usage) out.usage = txt(d.usage, 400);
   if (d.nso) out.nso = txt(d.nso, 40);
   if (d.sizes) out.sizes = list(d.sizes, 14, 8);
-  if (d.fit && typeof d.fit === "object" && d.fit.shape) {
-    out.fit = { shape: txt(d.fit.shape, 20), color: HEX.test(d.fit.color || "") ? d.fit.color : "#FFB3CF", print: txt(d.fit.print || "liso", 12) };
-    // conjuntos: segunda prenda (p. ej. polo + short)
-    if (d.fit.shape2) Object.assign(out.fit, { shape2: txt(d.fit.shape2, 20), color2: HEX.test(d.fit.color2 || "") ? d.fit.color2 : "#8FB3DA", print2: txt(d.fit.print2 || "liso", 12) });
-  }
   return out;
 }
 

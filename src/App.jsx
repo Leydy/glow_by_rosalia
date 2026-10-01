@@ -20,10 +20,10 @@ import { toPng } from "html-to-image";
 import UBIGEO from "./ubigeo.json"; // departamentos → provincias → distritos (INEI)
 import { GUIDES, GUIDE_KEYS } from "./guides.js";
 import {
-  WORLDS, WORLD_KEYS, worldOf, SKIN_TYPES, CONCERNS, ROUTINE_STEPS, BUDGETS, buildRoutine,
-  KID_SIZES, SHOE_SIZES, recommendedSize, fitParts, AGES, SKIN_TONES, HAIR_COLORS, HAIR_STYLES, PRINTS, SHAPES, SHAPE_KEYS, garmentSvg, kidSvg, spaArt,
+  WORLDS, WORLD_KEYS, WORLD_HERO, worldOf, SKIN_TYPES, CONCERNS, ROUTINE_STEPS, BUDGETS, buildRoutine,
+  KID_SIZES, SHOE_SIZES, SIZE_CHART, sizeForHeight, AGE_HEIGHTS, recommendedSize, spaArt,
 } from "./worlds.js";
-import { activeSeason, seasonList, guideArt, inRange, daysUntil, webSvg, SPIDER, catSkullSvg, batSvg, PUMPKIN, WITCH_HAT, GHOST, MOON, garlandSvg, candySvg } from "./seasons.js";
+import { activeSeason, seasonList, guideArt, inRange, daysUntil, webSvg, SPIDER, catSkullSvg, batSvg, PUMPKIN, WITCH_HAT, GHOST, MOON, BLACK_CAT, candySvg } from "./seasons.js";
 
 /* ---------- Carga local (solo el carrito del visitante) ----------
    Los productos y los ajustes ahora viven en la base de datos (Postgres) y se
@@ -1700,11 +1700,9 @@ export default function App() {
     const root = document.documentElement;
     root.dataset.world = world;
     root.style.setProperty("--world-bg", w.bg);
-    root.style.setProperty("--hdr-a", w.hdr[0]);
-    root.style.setProperty("--hdr-b", w.hdr[1]);
     return () => {
       delete root.dataset.world;
-      ["--world-bg", "--hdr-a", "--hdr-b"].forEach((k) => root.style.removeProperty(k));
+      root.style.removeProperty("--world-bg");
     };
   }, [world, view]);
 
@@ -1840,7 +1838,7 @@ export default function App() {
       )}
       <header className="glow-header" style={{ "--pat": catPattern(C.roseDeep) }}>
         <BrandName name={settings.storeName} onClick={goHome} season={view === "shop" ? season : null} />
-        {season?.key === "halloween" && view === "shop" && <HalloweenGarland />}
+        {season?.key === "halloween" && view === "shop" && <HalloweenCat />}
 
         <nav className="glow-nav">
           {/* 1 · navegación */}
@@ -2205,13 +2203,13 @@ const HALLOWEEN = {
   bat2: batSvg("#742284", 0.35),
   batLight: batSvg("#FFB3D0", 0.7),
   batDark: batSvg("#2A1630", 0.8),
-  garland: garlandSvg(24),
+
   candies: ["#F26D9C", "#F7A440", "#B48BE0", "#7BC67E"].map(candySvg),
 };
 
-// Guirnalda de calabacitas colgando bajo la cabecera.
-function HalloweenGarland() {
-  return svg(HALLOWEEN.garland, "glow-hw-garland");
+// Gatito negro que pasea de ida y vuelta por la cabecera.
+function HalloweenCat() {
+  return <span className="glow-hw-cat" aria-hidden="true"><span dangerouslySetInnerHTML={{ __html: BLACK_CAT }} /></span>;
 }
 
 // Bandada de murciélagos que cruza la pantalla de vez en cuando.
@@ -2348,7 +2346,7 @@ function BestSellers({ products, onAdd, favs = [], onToggleFav }) {
 
 // Collage de fotos reales para la portada: una foto grande y hasta dos
 // pequeñas superpuestas, con marco blanco y sombra suave.
-function HeroCollage({ imgs, variant, picks, active }) {
+function HeroCollage({ imgs, variant, picks, active, world = "michi" }) {
   const [main, ...rest] = imgs;
   const photo = (src, cls) => (
     <div className={`glow-hero-photo ${cls}`}>
@@ -2363,7 +2361,7 @@ function HeroCollage({ imgs, variant, picks, active }) {
       <Sparkle style={{ top: "-4%", left: "2%", width: 26, color: C.gold }} />
       <Sparkle style={{ top: "44%", right: "-5%", width: 18, color: C.rose, animationDelay: "1.2s" }} />
       <Sparkle style={{ bottom: "20%", left: "40%", width: 14, color: "#fff", animationDelay: "2.1s" }} />
-      <CatMascot variant={variant} picks={picks} active={active} />
+      <CatMascot variant={variant} picks={picks} active={active} art={world === "skin" ? SPA_ROSALIA : world === "kids" ? GUIDES.cuyito.art : null} say={WORLD_HERO[world]?.say} />
     </div>
   );
 }
@@ -2621,7 +2619,7 @@ const CAT_SAYS = {
   Bolsos: "¡Lista para salir!",
 };
 
-function CatMascot({ variant = "intro", picks = [], active = false }) {
+function CatMascot({ variant = "intro", picks = [], active = false, art = null, say = "" }) {
   const zoom = CAT_ZOOM[variant] || CAT_ZOOM.intro;
   const [n, setN] = useState(0);
 
@@ -2637,28 +2635,32 @@ function CatMascot({ variant = "intro", picks = [], active = false }) {
   const p = picks[cur];
   return (
     <div className="glow-cat-wrap" aria-hidden="true">
-      <svg className="glow-cat" viewBox="0 0 200 250">
-        <CatArt variant={variant} />
-      </svg>
+      {art ? (
+        <span className="glow-cat glow-cat-guide" dangerouslySetInnerHTML={{ __html: art }} />
+      ) : (
+        <svg className="glow-cat" viewBox="0 0 200 250">
+          <CatArt variant={variant} />
+        </svg>
+      )}
       {/* lupa: productos reales de la tienda (o el accesorio ampliado si no hay fotos) */}
       <div className="glow-cat-zoom">
         {picks.length ? (
           picks.map((q, k) => (
             <img key={q.id} src={firstPhoto(q)} alt="" className={k === cur ? "is-on" : ""} />
           ))
-        ) : (
+        ) : art ? null : (
           <svg viewBox={zoom} preserveAspectRatio="xMidYMid slice">
             <CatArt variant={variant} />
           </svg>
         )}
       </div>
-      {p && <span className="glow-cat-price" style={{ background: C.primary }}>{money(p.price)}</span>}
+      {p && <span className="glow-cat-price" style={{ background: `var(--wacc, ${C.primary})` }}>{money(p.price)}</span>}
       {[0, 1, 2].map((k) => (
         <svg key={k} className="glow-cat-heart" viewBox="0 0 24 24" style={{ fill: C.primary, animationDelay: `${k * 1.2}s`, left: `${38 + k * 12}%` }}>
           <path d="M12 21 C4 14 2 10 4 6.5 C6 3.5 10 4 12 7 C14 4 18 3.5 20 6.5 C22 10 20 14 12 21 Z" />
         </svg>
       ))}
-      <span className="glow-cat-say" style={{ color: C.roseDeep }}>{CAT_SAYS[variant] || CAT_SAYS.intro}</span>
+      <span className="glow-cat-say" style={{ color: `var(--wacc, ${C.roseDeep})` }}>{say || CAT_SAYS[variant] || CAT_SAYS.intro}</span>
     </div>
   );
 }
@@ -2742,7 +2744,7 @@ function HeroStar({ p, onAdd, active, fav, onToggleFav }) {
           disabled={out}
           tabIndex={active ? 0 : -1}
           onClick={() => onAdd(p)}
-          style={{ background: out ? C.line : C.primary, color: out ? C.inkSoft : C.primaryInk }}
+          style={{ background: out ? C.line : `var(--wacc, ${C.primary})`, color: out ? C.inkSoft : C.primaryInk }}
         >
           {out ? "Agotado" : "Añadir"}
         </button>
@@ -2757,14 +2759,51 @@ const firstPhoto = (p) => (p.images || []).find(Boolean);
 // Portada: slider con fotos reales de la tienda. Una diapositiva de bienvenida
 // + una por cada categoría que tenga productos. Avanza solo, se pausa al pasar
 // el mouse y en el celular se puede deslizar con el dedo.
-function HeroSlider({ products, settings, onPickCategory, onAdd, favs = [], onToggleFav, season }) {
+// Diapositivas de Glow Skin / Glow Kids: presentación y una por categoría.
+function worldSlides(world, withPhoto, featured) {
+  const W = WORLD_HERO[world];
+  const cats = WORLDS[world].cats.filter((c) => withPhoto.some((p) => p.category === c));
+  return [
+    {
+      key: "intro", eyebrow: W.eyebrow, title: W.title, words: W.words, text: W.text, cta: W.cta, action: W.action, cat: "Todos",
+      star: featured[0], imgs: featured.slice(1, 4).map(firstPhoto), picks: featured.slice(0, 6), grad: W.grads[0],
+    },
+    ...cats.map((c, i) => {
+      const items = withPhoto.filter((p) => p.category === c);
+      const from = Math.min(...items.map((p) => Number(p.price) || 0));
+      const star = items.length > 1 ? items.find((p) => p.bestSeller) || items[0] : null;
+      const rest = star ? items.filter((p) => p !== star) : items;
+      return {
+        key: c, eyebrow: `${items.length} ${items.length === 1 ? "producto" : "productos"} · desde ${money(from)}`,
+        title: c, words: W.catWords, text: W.text, cta: `Ver ${c.toLowerCase()}`, cat: c,
+        star, imgs: (rest.length ? rest : items).slice(0, 3).map(firstPhoto), picks: items, grad: W.grads[(i + 1) % W.grads.length],
+      };
+    }),
+  ];
+}
+
+// Burbujitas (Skin) o globitos (Kids) que suben por la portada.
+const BALLOON_COLORS = ["#FF9EC4", "#7CC4FF", "#FFE07A", "#9EE6B8"];
+function WorldDeco({ world }) {
+  if (world === "skin") {
+    return Array.from({ length: 14 }, (_, i) => (
+      <span key={i} className="glow-wd-bubble" style={{ left: `${(i * 37) % 100}%`, width: 8 + (i % 4) * 7, height: 8 + (i % 4) * 7, animationDuration: `${8 + (i % 5) * 2}s`, animationDelay: `-${i * 1.3}s` }} />
+    ));
+  }
+  return BALLOON_COLORS.concat(BALLOON_COLORS).map((c, i) => (
+    <span key={i} className="glow-wd-balloon" style={{ left: `${(i * 29 + 5) % 100}%`, width: 24 + (i % 3) * 8, animationDuration: `${12 + (i % 4) * 3}s`, animationDelay: `-${i * 2.4}s` }}
+      dangerouslySetInnerHTML={{ __html: `<svg viewBox="0 0 30 62"><ellipse cx="15" cy="15" rx="13" ry="15" fill="${c}"/><ellipse cx="10" cy="9" rx="3" ry="5" fill="#fff" opacity=".55"/><path d="M15 30 l-2 3 h4z" fill="${c}"/><path d="M15 33 q-4 8 0 14 q4 6 0 13" stroke="#9AA3B0" fill="none"/></svg>` }} />
+  ));
+}
+
+function HeroSlider({ products, settings, onPickCategory, onAction, onAdd, favs = [], onToggleFav, season, world = "michi" }) {
   const withPhoto = products.filter(firstPhoto);
   const featured = [
     ...withPhoto.filter((p) => p.bestSeller),
     ...withPhoto.filter((p) => !p.bestSeller),
   ];
 
-  const slides = [
+  const slides = world !== "michi" ? worldSlides(world, withPhoto, featured) : [
     {
       key: "intro",
       eyebrow: "Nueva colección",
@@ -2853,19 +2892,23 @@ function HeroSlider({ products, settings, onPickCategory, onAdd, favs = [], onTo
           aria-hidden={i !== cur}
           style={{ background: `linear-gradient(120deg, ${s.grad[0]}, ${s.grad[1]})` }}
         >
-          <span className="glow-hero-pattern" style={{ backgroundImage: catPattern(C.roseDeep) }} />
+          {world === "michi" && <span className="glow-hero-pattern" style={{ backgroundImage: catPattern(C.roseDeep) }} />}
           <span className="glow-hero-blob is-1" style={{ background: s.grad[1] }} />
           <span className="glow-hero-blob is-2" style={{ background: "#fff" }} />
-          <PawTrail color={C.roseDeep} />
-          {PAWS.map((p, k) => (
-            <Paw key={k} style={{ left: p.left, width: p.size, color: C.roseDeep, animationDelay: p.delay, animationDuration: p.dur }} />
-          ))}
+          {world === "michi" ? (
+            <>
+              <PawTrail color={C.roseDeep} />
+              {PAWS.map((p, k) => (
+                <Paw key={k} style={{ left: p.left, width: p.size, color: C.roseDeep, animationDelay: p.delay, animationDuration: p.dur }} />
+              ))}
+            </>
+          ) : <WorldDeco world={world} />}
 
           <div className="glow-hero-inner">
             <div className="glow-hero-left">
             <div className="glow-hero-text">
-              <p className="glow-hero-eyebrow" style={{ color: C.antique }}>{s.eyebrow}</p>
-              <h2 className="glow-hero-title" style={{ color: C.aubergine }}>
+              <p className="glow-hero-eyebrow" style={{ color: `var(--web, ${C.antique})` }}>{s.eyebrow}</p>
+              <h2 className="glow-hero-title" style={{ color: `var(--wtitle, ${C.aubergine})` }}>
                 {s.title}
                 {s.words?.length > 0 && (
                   <span className="glow-hero-rot">
@@ -2878,20 +2921,20 @@ function HeroSlider({ products, settings, onPickCategory, onAdd, favs = [], onTo
               <button
                 className="glow-hero-cta glow-shine"
                 tabIndex={i === cur ? 0 : -1}
-                onClick={() => onPickCategory(s.cat)}
-                style={{ background: C.primary, color: C.primaryInk, boxShadow: `0 10px 24px ${C.primary}44` }}
+                onClick={() => (s.action && onAction ? onAction(s.action) : onPickCategory(s.cat))}
+                style={{ background: `var(--wacc, ${C.primary})`, color: C.primaryInk, boxShadow: `0 10px 24px color-mix(in srgb, var(--wacc, ${C.primary}) 27%, transparent)` }}
               >
                 {s.cta} <ChevronRight size={18} />
               </button>
             </div>
             {s.star && <HeroStar p={s.star} onAdd={onAdd} active={i === cur} fav={favs.includes(s.star.id)} onToggleFav={onToggleFav} />}
             </div>
-            <HeroCollage imgs={s.imgs} variant={s.key} picks={s.picks} active={i === cur} />
+            <HeroCollage imgs={s.imgs} variant={world === "michi" ? s.key : "intro"} picks={s.picks} active={i === cur} world={world} />
           </div>
         </div>
       ))}
 
-      {season?.key === "halloween" && <HalloweenHero />}
+      {season?.key === "halloween" && world === "michi" && <HalloweenHero />}
       <div className="glow-yarn" aria-hidden="true">
         <svg viewBox="0 0 40 40">
           <circle cx="20" cy="20" r="18" fill={C.rose} />
@@ -2900,8 +2943,8 @@ function HeroSlider({ products, settings, onPickCategory, onAdd, favs = [], onTo
       </div>
       <div className="glow-ticker" aria-label="Novedades de la tienda">
         <div>
-          {[...HERO_TICKER, ...HERO_TICKER].map((t, k) => (
-            <span key={k} aria-hidden={k >= HERO_TICKER.length}>
+          {[...(WORLD_HERO[world]?.ticker || HERO_TICKER), ...(WORLD_HERO[world]?.ticker || HERO_TICKER)].map((t, k) => (
+            <span key={k} aria-hidden={k >= (WORLD_HERO[world]?.ticker || HERO_TICKER).length}>
               <Sparkle style={{ position: "static", width: 12, color: C.primary, animation: "none" }} />
               {t}
             </span>
@@ -2934,59 +2977,30 @@ const scrollToId = (id) => setTimeout(() => document.getElementById(id)?.scrollI
 const SPA_ROSALIA = spaArt(GUIDES.rosalia.art);
 const ART = (html, className = "glow-world-art") => <span className={className} aria-hidden="true" dangerouslySetInnerHTML={{ __html: html }} />;
 
-function WorldSwitcher({ world, onPick }) {
+// "Elige tu mundo": 3 tarjetas con foto real bajo la portada.
+function WorldPortals({ world, products, onPick }) {
+  const photoOf = (k) => {
+    const list = products.filter((p) => worldOf(p.category) === k && firstPhoto(p));
+    return firstPhoto(list.find((p) => p.bestSeller) || list[0] || {});
+  };
+  const tag = { michi: "Accesorios michi", skin: WORLD_HERO.skin.tagline, kids: WORLD_HERO.kids.tagline };
   return (
-    <nav className="glow-worlds" aria-label="Secciones de la tienda">
+    <section className="glow-portals" aria-label="Secciones de la tienda">
+      <h2>Elige tu mundo ✨</h2>
       <div>
-        {WORLD_KEYS.map((k) => (
-          <button key={k} className={world === k ? "is-on" : ""} aria-pressed={world === k} onClick={() => onPick(k)}>
-            <span aria-hidden="true">{WORLDS[k].emoji}</span> {WORLDS[k].name}
-          </button>
-        ))}
-      </div>
-    </nav>
-  );
-}
-
-function SkinHero({ onRoutine, onAll, empty }) {
-  return (
-    <section className="glow-whero is-skin">
-      <div className="glow-whero-text">
-        <span className="glow-whero-eb">Glow Skin · cuidado de la piel</span>
-        <h2>Tu piel también <em>merece mimos</em></h2>
-        <p>Rutinas sencillas con productos originales y con Notificación Sanitaria. Te ayudo a elegir según tu tipo de piel.</p>
-        {!empty && (
-          <div className="glow-whero-btns">
-            <button className="glow-whero-cta" onClick={onRoutine}>Arma tu rutina</button>
-            <button className="glow-whero-ghost" onClick={onAll}>Ver todo</button>
-          </div>
-        )}
-      </div>
-      <div className="glow-whero-mascot">
-        <span className="glow-whero-bubble">Yo también cuido mi piel 🧖‍♀️</span>
-        {ART(SPA_ROSALIA)}
-      </div>
-    </section>
-  );
-}
-
-function KidsHero({ onFit, onAll, empty }) {
-  return (
-    <section className="glow-whero is-kids">
-      <div className="glow-whero-text">
-        <span className="glow-whero-eb">Glow Kids · ropita cute</span>
-        <h2>Ropita linda para <em>tu peque</em></h2>
-        <p>Casual, suave y con mucho estilo. Pruébala en el muñequito antes de comprar y te decimos qué talla le queda.</p>
-        {!empty && (
-          <div className="glow-whero-btns">
-            <button className="glow-whero-cta" onClick={onFit}>Vestir al muñequito 👕</button>
-            <button className="glow-whero-ghost" onClick={onAll}>Ver todo</button>
-          </div>
-        )}
-      </div>
-      <div className="glow-whero-mascot">
-        <span className="glow-whero-bubble">¡Cuí cuí! Te ayudo a elegir la talla 🎈</span>
-        {ART(GUIDES.cuyito.art)}
+        {WORLD_KEYS.map((k) => {
+          const img = photoOf(k);
+          return (
+            <button key={k} className={`glow-portal is-${k}${world === k ? " is-on" : ""}`} onClick={() => onPick(k)} aria-pressed={world === k}>
+              {img ? <img src={img} alt="" loading="lazy" /> : <span className="glow-portal-noimg">{WORLDS[k].emoji}</span>}
+              <span>
+                <b>{WORLDS[k].emoji} {WORLDS[k].name}</b>
+                <small>{world === k ? "Estás aquí" : tag[k]}</small>
+              </span>
+              {world !== k && <ChevronRight size={18} className="glow-portal-go" />}
+            </button>
+          );
+        })}
       </div>
     </section>
   );
@@ -3052,18 +3066,19 @@ function SkinInfo({ p, onClose, onAdd }) {
         {d.ingredients && <p><b>Ingredientes clave:</b> {d.ingredients}</p>}
         {d.usage && <p><b>Modo de uso:</b> {d.usage}</p>}
         {d.nso && <p className="glow-skin-info-nso">✓ Notificación Sanitaria: <b>{d.nso}</b></p>}
-        <button className="glow-whero-cta" disabled={p.stock <= 0} onClick={onAdd} style={{ width: "100%", marginTop: 8 }}>{p.stock > 0 ? "Añadir al carrito" : "Agotado"}</button>
+        <button className="glow-skin-info-btn" disabled={p.stock <= 0} onClick={onAdd}>{p.stock > 0 ? "Añadir al carrito" : "Agotado"}</button>
       </div>
     </div>
   );
 }
 
-// "Arma tu rutina": 3 preguntas y la rutina en orden con productos de la tienda.
+// "Arma tu rutina": 3 preguntas arriba y los 5 pasos en fila con fotos reales.
 function RoutineBuilder({ products, onAddAll }) {
   const [a, setA] = useState({ piel: "Mixta", meta: "Hidratación", budget: BUDGETS[1] });
   const [added, setAdded] = useState(false);
   const steps = buildRoutine(products, a);
-  const total = steps.reduce((t, s) => t + s.product.price, 0);
+  const chosen = steps.filter((s) => s.product);
+  const total = chosen.reduce((t, s) => t + s.product.price, 0);
   const q = (k, label, opts) => (
     <div className="glow-rq">
       <p>{label}</p>
@@ -3072,102 +3087,106 @@ function RoutineBuilder({ products, onAddAll }) {
   );
   return (
     <section id="glow-rutina" className="glow-routine">
-      <div>
+      <div className="glow-wrap">
         <h3>Arma tu rutina 🌿</h3>
-        <span className="glow-routine-sub">Responde 3 preguntas y te digo qué usar y en qué orden.</span>
-        {q("piel", "1. ¿Cómo es tu piel?", SKIN_TYPES.filter((t) => t !== "Todo tipo"))}
-        {q("meta", "2. ¿Qué te gustaría mejorar?", CONCERNS)}
-        {q("budget", "3. ¿Cuánto quieres invertir?", BUDGETS)}
-      </div>
-      <div className="glow-routine-out">
-        <h4>Tu rutina para piel {a.piel.toLowerCase()} ✨</h4>
-        {steps.length === 0 ? (
-          <p className="glow-routine-sub">Aún no tenemos productos para armar esta rutina. ¡Muy pronto!</p>
-        ) : (
-          <>
-            {steps.map(({ step, product }, i) => (
-              <div key={step.key} className="glow-rstep" style={{ animationDelay: `${i * 0.06}s` }}>
-                <i>{i + 1}</i>
-                {product.images?.[0] ? <img src={product.images[0]} alt="" /> : <span className="glow-rstep-emoji">{step.emoji}</span>}
-                <div><b>{step.label}</b><small>{product.name}</small></div>
-                <em>{money(product.price)}</em>
-              </div>
-            ))}
-            <div className="glow-routine-tot">
-              <span>Total: {money(total)} · +{Math.floor(total * 1.25)} Michipuntos</span>
-              <button onClick={() => { onAddAll(steps.map((s) => s.product)); setAdded(true); }}>{added ? "✓ Añadida" : "Añadir la rutina"}</button>
+        <span className="glow-routine-sub">Responde y te armamos la rutina en orden, con productos de la tienda.</span>
+        <div className="glow-rqs">
+          {q("piel", "1. ¿Cómo es tu piel?", SKIN_TYPES.filter((t) => t !== "Todo tipo"))}
+          {q("meta", "2. ¿Qué quieres mejorar?", CONCERNS)}
+          {q("budget", "3. ¿Cuánto quieres invertir?", BUDGETS)}
+        </div>
+        <div className="glow-rpath">
+          {steps.map(({ step, product, skipped }, i) => (
+            <div key={step.key} className={`glow-rstep${product ? "" : " is-empty"}`} style={{ animationDelay: `${i * 0.06}s` }}>
+              <i>{i + 1}</i>
+              {product ? (
+                product.images?.[0] ? <img src={product.images[0]} alt="" loading="lazy" /> : <span className="glow-rstep-ph">{step.emoji}</span>
+              ) : (
+                <span className="glow-rstep-ph">{skipped ? "Opcional" : "Muy pronto ✨"}</span>
+              )}
+              <b>{step.emoji} {step.label}</b>
+              <small>{product ? product.name : skipped ? "Fuera de tu presupuesto" : "Aún sin producto"}</small>
+              {product && <em>{money(product.price)}</em>}
             </div>
-          </>
-        )}
+          ))}
+        </div>
+        <div className="glow-routine-tot">
+          {chosen.length ? (
+            <>
+              <span>Tu rutina: {money(total)} · +{Math.floor(total * 1.25)} Michipuntos</span>
+              <button onClick={() => { onAddAll(chosen.map((s) => s.product)); setAdded(true); }}>{added ? "✓ Añadida" : "Añadir la rutina"}</button>
+            </>
+          ) : <span>Aún no tenemos productos para esta rutina. ¡Muy pronto!</span>}
+        </div>
       </div>
     </section>
   );
 }
 
-// "Viste a tu peque": muñequito ilustrado (sin fotos) que se viste con la
-// ropa de la tienda y recomienda la talla según la edad.
-function KidsFitting({ products, kid, setKid, onAddLook }) {
-  const items = products.filter((p) => SHAPES[p.details?.fit?.shape]);
-  const [look, setLook] = useState({}); // slot → id de producto
+// "Encuentra su talla": las prendas reales en un tablero (como fotos pegadas)
+// y una regla con la estatura del peque que recomienda la talla.
+function SizeBoard({ products, kid, setKid, sizeFor, onAddLook }) {
+  const [sel, setSel] = useState([]); // ids elegidos para el look
   const [added, setAdded] = useState(false);
-  if (!items.length) return null;
-  const byId = (id) => items.find((p) => p.id === id);
-  // Parte de la prenda que va en ese lugar (los conjuntos ocupan dos).
-  const fitOf = (slot) => fitParts(byId(look[slot])?.details.fit).find((x) => x.slot === slot);
-  const toggle = (p) => {
-    const parts = fitParts(p.details.fit);
-    setAdded(false);
-    setLook((l) => {
-      const next = { ...l };
-      const drop = (id) => Object.keys(next).forEach((k) => { if (next[k] === id) delete next[k]; });
-      if (Object.values(l).includes(p.id)) { drop(p.id); return next; }
-      parts.forEach(({ slot }) => { if (next[slot]) drop(next[slot]); }); // saca lo que estaba ahí (todo el conjunto)
-      parts.forEach(({ slot }) => { next[slot] = p.id; });
-      const top = byId(next.top);
-      if (parts.some((x) => SHAPES[x.shape].full) && next.bottom && next.bottom !== p.id) drop(next.bottom); // vestido: cubre arriba y abajo
-      if (parts.some((x) => x.slot === "bottom") && top && top.id !== p.id && fitParts(top.details.fit).some((x) => SHAPES[x.shape].full)) drop(top.id);
-      return next;
-    });
-  };
-  const picked = [...new Set(Object.values(look))].map(byId).filter(Boolean);
+  if (!products.length) return null;
+  const cm = Math.max(80, Math.min(160, Number(kid.cm) || 105));
+  const s = sizeForHeight(cm);
+  const picked = products.filter((p) => sel.includes(p.id));
   const total = picked.reduce((t, p) => t + p.price, 0);
-  const age = AGES[kid.age] || AGES[1];
+  const toggle = (id) => { setAdded(false); setSel((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id])); };
+  const pct = ((cm - 60) / (165 - 60)) * 100; // altura del peque en la regla
   const wa = () => {
-    const msg = `¡Hola! Me gustó este look para mi peque (${age.label}, talla ${age.size}):\n${picked.map((p) => `• ${p.name} — ${money(p.price)}`).join("\n")}\nTotal: ${money(total)}`;
+    const msg = `¡Hola! Mi peque mide ${cm} cm (talla ${s.size}). Me gustó:\n${picked.map((p) => `• ${p.name} (talla ${sizeFor(p) || "?"}) — ${money(p.price)}`).join("\n")}\nTotal: ${money(total)}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
   };
   return (
-    <section id="glow-probador" className="glow-fit">
-      <div className="glow-fit-h"><h3>👕 Viste a tu peque</h3><span>Toca la ropa para probarla. No necesitas subir fotos.</span></div>
-      <div className="glow-fit-b">
-        <div className="glow-fit-stage">
-          <div className="glow-fit-size">📏 Para {age.label} ({age.cm} cm) le recomendamos <b>talla {age.size}</b><small> · calzado {age.shoe}</small></div>
-          <span className="glow-fit-star" style={{ left: "14%", top: "30%" }}>✦</span>
-          <span className="glow-fit-star" style={{ right: "12%", top: "42%", animationDelay: "-1s" }}>✦</span>
-          {ART(kidSvg(kid, { top: fitOf("top"), outer: fitOf("outer"), bottom: fitOf("bottom"), shoes: fitOf("shoes"), hat: fitOf("hat") }), "glow-fit-kid")}
+    <section id="glow-tallas" className="glow-sboard">
+      <div className="glow-wrap">
+        <div className="glow-sboard-h">
+          <h3>📏 Encuentra su talla</h3>
+          <span>Mueve la regla con la estatura de tu peque y toca las prendas que te gusten.</span>
         </div>
-        <div className="glow-fit-ctrl">
-          <div className="glow-fit-row"><label>Tono de piel</label>{SKIN_TONES.map((c, i) => <button key={c} className={`glow-fit-sw${kid.skin === i ? " is-on" : ""}`} style={{ background: c }} onClick={() => setKid({ skin: i })} aria-label={`Tono ${i + 1}`} />)}</div>
-          <div className="glow-fit-row"><label>Peinado</label>{HAIR_STYLES.map((h) => <button key={h} className={`glow-fit-pill${kid.hair === h ? " is-on" : ""}`} onClick={() => setKid({ hair: h })}>{h}</button>)}{HAIR_COLORS.map((c, i) => <button key={c} className={`glow-fit-sw${kid.hairColor === i ? " is-on" : ""}`} style={{ background: c }} onClick={() => setKid({ hairColor: i })} aria-label={`Color de pelo ${i + 1}`} />)}</div>
-          <div className="glow-fit-row"><label>Edad</label>{AGES.map((x, i) => <button key={x.label} className={`glow-fit-pill${kid.age === i ? " is-on" : ""}`} onClick={() => setKid({ age: i })}>{x.label}</button>)}</div>
-          <div className="glow-fit-ward">
-            {items.map((p) => {
-              const on = Object.values(look).includes(p.id);
+        <div className="glow-sboard-b">
+          <div className="glow-sboard-pins">
+            {products.map((p, i) => {
+              const sizes = p.details?.sizes || [];
+              const rec = recommendedSize(sizes, cm);
+              const on = sel.includes(p.id);
               return (
-                <button key={p.id} className={`glow-fit-it${on ? " is-on" : ""}`} onClick={() => toggle(p)} aria-pressed={on}>
-                  {p.images?.[0] ? <img src={p.images[0]} alt="" /> : ART(garmentSvg(p.details.fit), "glow-fit-thumb")}
-                  <b>{p.name}</b><small>{money(p.price)}</small>
+                <button key={p.id} className={`glow-pin${on ? " is-on" : ""}`} style={{ "--r": `${[-3, 2.5, -1.5, 3, -2.5, 1.5][i % 6]}deg` }} onClick={() => toggle(p.id)} aria-pressed={on}>
+                  {p.images?.[0] ? <img src={p.images[0]} alt="" loading="lazy" /> : <span className="glow-pin-noimg">🧸</span>}
+                  <b>{p.name}</b>
+                  <span className="glow-pin-row">
+                    <em>{money(p.price)}</em>
+                    {sizes.length > 0 && (rec ? <small className="is-ok">Talla {rec} ✓</small> : <small className="is-no">Sin talla {s.size}</small>)}
+                  </span>
+                  {on && <span className="glow-pin-heart">💗</span>}
                 </button>
               );
             })}
           </div>
-          <div className="glow-fit-look">
-            <b>Look: {money(total)}</b>
-            <span>{picked.length} prenda{picked.length === 1 ? "" : "s"} · talla {age.size}</span>
-            {picked.length > 0 && <button className="is-wa" onClick={wa}>Enviar por WhatsApp</button>}
-            <button className="is-add" disabled={!picked.length} onClick={() => { onAddLook(picked); setAdded(true); }}>{added ? "✓ Añadido" : "Añadir el look"}</button>
+          <div className="glow-ruler">
+            <div className="glow-ruler-res">Tu peque mide <b>{cm} cm</b><br />→ <b className="is-size">talla {s.size}</b> · calzado {s.shoe}</div>
+            <div className="glow-ruler-body">
+              <div className="glow-ruler-scale">
+                {[80, 100, 120, 140, 160].map((v) => <span key={v} style={{ bottom: `${((v - 60) / (165 - 60)) * 100}%` }}>{v}</span>)}
+              </div>
+              <div className="glow-ruler-kid" style={{ height: `${pct}%` }}>
+                <svg viewBox="0 0 60 160" preserveAspectRatio="none"><circle cx="30" cy="18" r="16" /><path d="M14 42 Q30 34 46 42 L50 94 H42 L40 158 H32 L30 106 L28 158 H20 L18 94 H10 Z" /></svg>
+                <span className="glow-ruler-mark">{cm} cm</span>
+              </div>
+            </div>
+            <input type="range" min="80" max="160" value={cm} onChange={(e) => setKid({ cm: Number(e.target.value) })} aria-label="Estatura en centímetros" />
+            <div className="glow-ruler-ages">
+              {AGE_HEIGHTS.map(([l, v]) => <button key={l} className={Math.abs(cm - v) < 3 ? "is-on" : ""} onClick={() => setKid({ cm: v })}>{l}</button>)}
+            </div>
           </div>
-          <p className="glow-fit-privacy">🔒 No pedimos fotos de tu peque: el muñequito es solo un dibujo.</p>
+        </div>
+        <div className="glow-sboard-look">
+          <b>{picked.length ? `Tu look: ${money(total)}` : "Toca las prendas para armar un look"}</b>
+          {picked.length > 0 && <span>{picked.length} prenda{picked.length === 1 ? "" : "s"} · talla {s.size}</span>}
+          {picked.length > 0 && <button className="is-wa" onClick={wa}>Enviar por WhatsApp</button>}
+          <button className="is-add" disabled={!picked.length} onClick={() => { onAddLook(picked); setAdded(true); }}>{added ? "✓ Añadido" : "Añadir el look"}</button>
         </div>
       </div>
     </section>
@@ -3184,9 +3203,9 @@ function Shop({ products: allProducts, settings, favs = [], onToggleFav, panel, 
   useEffect(() => { setCat("Todos"); }, [world]);
   const worldCats = ["Todos", ...WORLDS[world].cats.filter((c) => products.some((p) => p.category === c))];
   const [skinInfo, setSkinInfo] = useState(null); // producto de Skin con sus detalles abiertos
-  // Peque del probador (edad → talla recomendada en las tarjetas de Kids).
+  // Estatura del peque (cm) → talla recomendada en las tarjetas de Kids.
   const [kid, setKidState] = useState(() => {
-    try { return { skin: 1, hairColor: 0, hair: "colitas", age: 1, ...JSON.parse(localStorage.getItem("glow:peque") || "{}") }; } catch { return { skin: 1, hairColor: 0, hair: "colitas", age: 1 }; }
+    try { return { cm: 105, ...JSON.parse(localStorage.getItem("glow:peque") || "{}") }; } catch { return { cm: 105 }; }
   });
   const setKid = (patch) => setKidState((k) => {
     const next = { ...k, ...patch };
@@ -3198,7 +3217,7 @@ function Shop({ products: allProducts, settings, favs = [], onToggleFav, panel, 
     const sizes = p.details?.sizes || [];
     if (!sizes.length) return "";
     if (sizePick[p.id] && sizes.includes(sizePick[p.id])) return sizePick[p.id];
-    return recommendedSize(sizes, kid.age);
+    return recommendedSize(sizes, kid.cm) || sizes[0];
   };
   const [q, setQ] = useState("");
   const [cart, setCart] = useState(loadCart); // { [productId]: qty }
@@ -3303,15 +3322,9 @@ function Shop({ products: allProducts, settings, favs = [], onToggleFav, panel, 
         <AccountPage customer={customer} favs={favs} products={products} onToggleFav={onToggleFav} onAdd={addToCart} onPanel={onPanel} settings={settings} wallet={wallet} onClaimCredit={onClaimCredit} />
       ) : (
       <>
-      <WorldSwitcher world={world} onPick={onWorld} />
-      {world === "michi" && (
-        <>
-          <HeroSlider products={products} settings={settings} onPickCategory={goToCategory} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} season={season} />
-          {season?.key === "halloween" && <HalloweenBand season={season} onGo={() => goToCategory("Todos")} />}
-        </>
-      )}
-      {world === "skin" && <SkinHero onRoutine={() => scrollToId("glow-rutina")} onAll={() => goToCategory("Todos")} empty={!products.length} />}
-      {world === "kids" && <KidsHero onFit={() => scrollToId("glow-probador")} onAll={() => goToCategory("Todos")} empty={!products.length} />}
+      <HeroSlider key={world} world={world} products={products} settings={settings} onPickCategory={goToCategory} onAction={(a) => scrollToId(a === "rutina" ? "glow-rutina" : "glow-tallas")} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} season={season} />
+      {world === "michi" && season?.key === "halloween" && <HalloweenBand season={season} onGo={() => goToCategory("Todos")} />}
+      <WorldPortals world={world} products={allProducts} onPick={onWorld} />
       {!products.length ? <ComingSoon world={world} onBack={() => onWorld("michi")} /> : (<>
 
       <div id="catalogo" className="glow-wrap" style={{ paddingTop: 28, scrollMarginTop: 70 }}>
@@ -3435,7 +3448,7 @@ function Shop({ products: allProducts, settings, favs = [], onToggleFav, panel, 
 
       {world === "michi" && <CrossToSkin hasSkin={allProducts.some((p) => worldOf(p.category) === "skin")} onGo={() => onWorld("skin")} />}
       {world === "skin" && <RoutineBuilder products={products} onAddAll={(list) => list.forEach((p) => addToCart(p))} />}
-      {world === "kids" && <KidsFitting products={products} kid={kid} setKid={setKid} onAddLook={(list) => list.forEach((p) => addToCart(p, sizeFor(p)))} />}
+      {world === "kids" && <SizeBoard products={products} kid={kid} setKid={setKid} sizeFor={sizeFor} onAddLook={(list) => list.forEach((p) => addToCart(p, sizeFor(p)))} />}
 
       {/* Sección "Más vendidos" */}
       {world === "michi" && <BestSellers products={products} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} />}
@@ -4539,7 +4552,7 @@ function ProductForm({ initial, busy, onSave, onClose }) {
     const d = f.details || {};
     const details = fw === "skin"
       ? { step: d.step, skinTypes: d.skinTypes, concerns: d.concerns, size: d.size, ingredients: d.ingredients, usage: d.usage, nso: d.nso }
-      : fw === "kids" ? { sizes: d.sizes, fit: d.fit?.shape ? d.fit : undefined } : {};
+      : fw === "kids" ? { sizes: d.sizes } : {};
     onSave({ ...f, details, cost: Number(f.cost), price: Number(f.price), stock: Number(f.stock) });
   };
 
@@ -4586,41 +4599,7 @@ function ProductForm({ initial, busy, onSave, onClose }) {
           <div className="glow-pf-extra is-kids">
             <b>🧸 Datos de Glow Kids</b>
             <Field label="Tallas disponibles"><div className="glow-pf-chips">{(f.category === "Zapatitos" ? SHOE_SIZES : KID_SIZES).map((t) => <button type="button" key={t} className={(f.details.sizes || []).includes(t) ? "is-on" : ""} onClick={() => toggleIn("sizes", t)}>{t}</button>)}</div></Field>
-            <Field label="En el muñequito se ve como">
-              <div className="glow-pf-fit">
-                <select value={f.details.fit?.shape || ""} onChange={(e) => setD("fit", e.target.value ? { color: "#FFB3CF", print: "liso", ...f.details.fit, shape: e.target.value } : undefined)} className="glow-pf-select">
-                  <option value="">— No aparece en el probador —</option>
-                  {SHAPE_KEYS.map((k) => <option key={k} value={k}>{SHAPES[k].label}</option>)}
-                </select>
-                {f.details.fit?.shape && (
-                  <>
-                    <input type="color" value={f.details.fit.color || "#FFB3CF"} onChange={(e) => setD("fit", { ...f.details.fit, color: e.target.value })} aria-label="Color" />
-                    <select value={f.details.fit.print || "liso"} onChange={(e) => setD("fit", { ...f.details.fit, print: e.target.value })} className="glow-pf-select" aria-label="Estampado">
-                      {PRINTS.map((x) => <option key={x}>{x}</option>)}
-                    </select>
-                    <span className="glow-pf-preview" dangerouslySetInnerHTML={{ __html: garmentSvg(f.details.fit) }} />
-                  </>
-                )}
-              </div>
-            </Field>
-            {f.details.fit?.shape && (
-              <Field label="¿Es un conjunto? Segunda prenda">
-                <div className="glow-pf-fit">
-                  <select value={f.details.fit.shape2 || ""} onChange={(e) => setD("fit", { color2: "#8FB3DA", print2: "liso", ...f.details.fit, shape2: e.target.value || undefined })} className="glow-pf-select">
-                    <option value="">— No, es una sola prenda —</option>
-                    {SHAPE_KEYS.filter((k) => SHAPES[k].slot !== SHAPES[f.details.fit.shape].slot).map((k) => <option key={k} value={k}>{SHAPES[k].label}</option>)}
-                  </select>
-                  {f.details.fit.shape2 && (
-                    <>
-                      <input type="color" value={f.details.fit.color2 || "#8FB3DA"} onChange={(e) => setD("fit", { ...f.details.fit, color2: e.target.value })} aria-label="Color de la segunda prenda" />
-                      <select value={f.details.fit.print2 || "liso"} onChange={(e) => setD("fit", { ...f.details.fit, print2: e.target.value })} className="glow-pf-select" aria-label="Estampado de la segunda prenda">
-                        {PRINTS.map((x) => <option key={x}>{x}</option>)}
-                      </select>
-                    </>
-                  )}
-                </div>
-              </Field>
-            )}
+            <p className="glow-pf-hint">💡 La tienda recomienda la talla según la estatura del peque (tabla: 2 → hasta 98 cm, 4 → 112, 6 → 124, 8 → 136, 10 → 146).</p>
           </div>
         )}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>

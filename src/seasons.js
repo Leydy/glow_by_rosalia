@@ -129,20 +129,8 @@ export const GHOST = `<svg viewBox="0 0 60 70"><path d="M8 34C8 16 18 8 30 8s22 
 // Luna creciente con brillo.
 export const MOON = `<svg viewBox="0 0 80 80"><defs><radialGradient id="hwglow"><stop offset="0" stop-color="#FFF4C2" stop-opacity=".9"/><stop offset="1" stop-color="#FFF4C2" stop-opacity="0"/></radialGradient></defs><circle cx="40" cy="40" r="40" fill="url(#hwglow)"/><path d="M48 16a24 24 0 1 0 14 38A20 20 0 0 1 48 16z" fill="#FFE9A3"/><circle cx="34" cy="44" r="3" fill="#F2D27A"/><circle cx="28" cy="32" r="2" fill="#F2D27A"/></svg>`;
 
-// Guirnalda de calabacitas para el borde de la cabecera.
-export function garlandSvg(n = 14) {
-  const w = n * 60;
-  let s = `<svg viewBox="0 0 ${w} 34" preserveAspectRatio="none"><path d="M0 4 ${Array.from({ length: n }, (_, i) => `Q${i * 60 + 30} 22 ${(i + 1) * 60} 4`).join(" ")}" fill="none" stroke="#3B2146" stroke-opacity=".45" stroke-width="1.5"/>`;
-  for (let i = 0; i < n; i++) {
-    const x = i * 60 + 30;
-    if (i % 3 === 1) {
-      s += `<path transform="translate(${x - 12} 9)" d="M12 4c1-2 2-3 2-3l.5 3c3-1.5 6.5-2 12.5 1.5-3 0-4.5 1.5-5 4-1.5-1.5-3.5-1.5-4.5.5-1-1.5-3-1.5-4 1l-1.5-2-1.5 2c-1-2.5-3-2.5-4-1-1-2-3-2-4.5-.5-.5-2.5-2-4-5-4C6 2 9.5 2.5 12 4z" fill="#3B2146" fill-opacity=".7"/>`;
-    } else {
-      s += `<g transform="translate(${x - 9} 11)"><path d="M9 3c-.5-2 0-3 1.5-3.4" stroke="#5B7A2E" stroke-width="1.6" fill="none"/><ellipse cx="9" cy="10" rx="9" ry="7.5" fill="#F7A440"/><ellipse cx="9" cy="10" rx="4" ry="7.5" fill="#FFB65C"/><g class="hw-flicker" style="animation-delay:-${(i * 0.37) % 2}s"><path d="M5 8.5l1.5 1.5h-3zM13 8.5l1.5 1.5h-3zM6 12.5q3 2 6 0" fill="#FFE27A" stroke="#FFE27A" stroke-width=".8"/></g></g>`;
-    }
-  }
-  return s + "</svg>";
-}
+// Gatito negro que pasea por la cabecera (patitas que se mueven: clase hw-legs).
+export const BLACK_CAT = `<svg viewBox="0 0 90 60"><path d="M78 20 C88 10 90 28 80 30" stroke="#1E1424" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="50" cy="34" rx="28" ry="13" fill="#1E1424"/><g class="hw-legs"><rect x="28" y="40" width="6" height="16" rx="3" fill="#1E1424"/><rect x="58" y="40" width="6" height="16" rx="3" fill="#1E1424"/></g><g class="hw-legs is-b"><rect x="40" y="42" width="6" height="14" rx="3" fill="#1E1424"/><rect x="68" y="42" width="6" height="14" rx="3" fill="#1E1424"/></g><circle cx="22" cy="26" r="13" fill="#1E1424"/><path d="M12 18 10 4 20 14zM28 14 34 3 34 18z" fill="#1E1424"/><path d="M13 16 12 8 18 13z" fill="#5A3A5E"/><ellipse class="hw-blink" cx="17" cy="25" rx="2.6" ry="3.4" fill="#C6F25B"/><ellipse class="hw-blink" cx="26" cy="25" rx="2.6" ry="3.4" fill="#C6F25B"/><path d="M8 30h-7M8 33l-6 2" stroke="#1E1424" stroke-width="1"/></svg>`;
 
 // Caramelo envuelto.
 export function candySvg(c = "#F26D9C") {
