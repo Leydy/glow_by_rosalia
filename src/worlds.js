@@ -25,10 +25,10 @@ export const WORLD_KEYS = ["michi", "skin", "kids"];
 export const WORLD_HERO = {
   skin: {
     eyebrow: "Glow Skin · cuidado de la piel", title: "Tu piel también", words: ["merece mimos", "brilla", "se cuida"],
-    text: "Sérums, cremas y cuidados elegidos con cariño, con Notificación Sanitaria.", cta: "Arma tu rutina", action: "rutina",
+    text: "Sérums, cremas y cuidados elegidos con cariño para tu rutina de cada día.", cta: "Arma tu rutina", action: "rutina",
     catWords: ["que iluminan", "que hidratan", "que enamoran"], say: "¡Yo también me cuido! 🧖‍♀️",
     grads: [["#F9E6DB", "#EEF3EC"], ["#FBE9DF", "#F6EFE8"], ["#EEF3EC", "#F9EDE4"], ["#F7E3E6", "#F3EFE6"]],
-    ticker: ["Productos originales", "Con Notificación Sanitaria", "Rutinas sencillas", "Envíos a todo el Perú"],
+    ticker: ["Cuida tu piel con cariño", "Rutinas sencillas", "Envíos a todo el Perú", "Entrega gratis en Juliaca"],
     tagline: "Cuida tu piel",
   },
   kids: {

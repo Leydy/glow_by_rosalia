@@ -3196,70 +3196,58 @@ function RoutineBuilder({ products, onAddAll }) {
   );
 }
 
-// "Encuentra su talla": las prendas reales en un tablero (como fotos pegadas)
-// y una regla con la estatura del peque que recomienda la talla.
-function SizeBoard({ products, kid, setKid, sizeFor, onAddLook }) {
-  const [sel, setSel] = useState([]); // ids elegidos para el look
-  const [added, setAdded] = useState(false);
+// "Encuentra su talla": regla con la estatura del peque (al centro) y debajo
+// las prendas como fotos pegadas, cada una con la talla que le corresponde.
+function SizeBoard({ products, kid, setKid, onAdd }) {
+  const [added, setAdded] = useState(""); // id recién añadido (para el ✓)
   if (!products.length) return null;
   const cm = Math.max(80, Math.min(160, Number(kid.cm) || 105));
   const s = sizeForHeight(cm);
-  const picked = products.filter((p) => sel.includes(p.id));
-  const total = picked.reduce((t, p) => t + p.price, 0);
-  const toggle = (id) => { setAdded(false); setSel((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id])); };
   const pct = ((cm - 60) / (165 - 60)) * 100; // altura del peque en la regla
-  const wa = () => {
-    const msg = `¡Hola! Mi peque mide ${cm} cm (talla ${s.size}). Me gustó:\n${picked.map((p) => `• ${p.name} (talla ${sizeFor(p) || "?"}) — ${money(p.price)}`).join("\n")}\nTotal: ${money(total)}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
-  };
   return (
     <section id="glow-tallas" className="glow-sboard">
       <div className="glow-wrap">
         <div className="glow-sboard-h">
           <h3>📏 Encuentra su talla</h3>
-          <span>Mueve la regla con la estatura de tu peque y toca las prendas que te gusten.</span>
+          <span>Mueve la regla con la estatura de tu peque y te decimos qué talla pedir.</span>
         </div>
-        <div className="glow-sboard-b">
-          <div className="glow-sboard-pins">
-            {products.map((p, i) => {
-              const sizes = p.details?.sizes || [];
-              const rec = recommendedSize(sizes, cm);
-              const on = sel.includes(p.id);
-              return (
-                <button key={p.id} className={`glow-pin${on ? " is-on" : ""}`} style={{ "--r": `${[-3, 2.5, -1.5, 3, -2.5, 1.5][i % 6]}deg` }} onClick={() => toggle(p.id)} aria-pressed={on}>
-                  {p.images?.[0] ? <img src={p.images[0]} alt="" loading="lazy" /> : <span className="glow-pin-noimg">🧸</span>}
-                  <b>{p.name}</b>
-                  <span className="glow-pin-row">
-                    <em>{money(p.price)}</em>
-                    {sizes.length > 0 && (rec ? <small className="is-ok">Talla {rec} ✓</small> : <small className="is-no">Sin talla {s.size}</small>)}
-                  </span>
-                  {on && <span className="glow-pin-heart">💗</span>}
-                </button>
-              );
-            })}
-          </div>
-          <div className="glow-ruler">
-            <div className="glow-ruler-res">Tu peque mide <b>{cm} cm</b><br />→ <b className="is-size">talla {s.size}</b> · calzado {s.shoe}</div>
-            <div className="glow-ruler-body">
-              <div className="glow-ruler-scale">
-                {[80, 100, 120, 140, 160].map((v) => <span key={v} style={{ bottom: `${((v - 60) / (165 - 60)) * 100}%` }}>{v}</span>)}
-              </div>
-              <div className="glow-ruler-kid" style={{ height: `${pct}%` }}>
-                <svg viewBox="0 0 60 160" preserveAspectRatio="none"><circle cx="30" cy="18" r="16" /><path d="M14 42 Q30 34 46 42 L50 94 H42 L40 158 H32 L30 106 L28 158 H20 L18 94 H10 Z" /></svg>
-                <span className="glow-ruler-mark">{cm} cm</span>
-              </div>
+        <div className="glow-ruler">
+          <div className="glow-ruler-body">
+            <div className="glow-ruler-scale">
+              {[80, 100, 120, 140, 160].map((v) => <span key={v} style={{ bottom: `${((v - 60) / (165 - 60)) * 100}%` }}>{v}</span>)}
             </div>
+            <div className="glow-ruler-kid" style={{ height: `${pct}%` }}>
+              <svg viewBox="0 0 60 160" preserveAspectRatio="none"><circle cx="30" cy="18" r="16" /><path d="M14 42 Q30 34 46 42 L50 94 H42 L40 158 H32 L30 106 L28 158 H20 L18 94 H10 Z" /></svg>
+              <span className="glow-ruler-mark">{cm} cm</span>
+            </div>
+          </div>
+          <div className="glow-ruler-side">
+            <div className="glow-ruler-res">Tu peque mide <b>{cm} cm</b><br /><b className="is-size">Talla {s.size}</b><small> · calzado {s.shoe}</small></div>
             <input type="range" min="80" max="160" value={cm} onChange={(e) => setKid({ cm: Number(e.target.value) })} aria-label="Estatura en centímetros" />
             <div className="glow-ruler-ages">
               {AGE_HEIGHTS.map(([l, v]) => <button key={l} className={Math.abs(cm - v) < 3 ? "is-on" : ""} onClick={() => setKid({ cm: v })}>{l}</button>)}
             </div>
           </div>
         </div>
-        <div className="glow-sboard-look">
-          <b>{picked.length ? `Tu look: ${money(total)}` : "Toca las prendas para armar un look"}</b>
-          {picked.length > 0 && <span>{picked.length} prenda{picked.length === 1 ? "" : "s"} · talla {s.size}</span>}
-          {picked.length > 0 && <button className="is-wa" onClick={wa}>Enviar por WhatsApp</button>}
-          <button className="is-add" disabled={!picked.length} onClick={() => { onAddLook(picked); setAdded(true); }}>{added ? "✓ Añadido" : "Añadir el look"}</button>
+        <div className="glow-sboard-pins">
+          {products.map((p, i) => {
+            const sizes = p.details?.sizes || [];
+            const rec = recommendedSize(sizes, cm);
+            const out = p.stock <= 0 || (sizes.length > 0 && !rec);
+            return (
+              <div key={p.id} className="glow-pin" style={{ "--r": `${[-2.5, 2, -1.5, 2.5, -2, 1.5][i % 6]}deg` }}>
+                {p.images?.[0] ? <img src={p.images[0]} alt="" loading="lazy" /> : <span className="glow-pin-noimg">🧸</span>}
+                <b>{p.name}</b>
+                <span className="glow-pin-row">
+                  <em>{money(p.price)}</em>
+                  {sizes.length > 0 && (rec ? <small className="is-ok">Talla {rec} ✓</small> : <small className="is-no">Sin talla {s.size}</small>)}
+                </span>
+                <button className="glow-pin-add" disabled={out} onClick={() => { onAdd(p, rec); setAdded(p.id); setTimeout(() => setAdded((x) => (x === p.id ? "" : x)), 1800); }}>
+                  {added === p.id ? "✓ Añadido" : out ? "No disponible" : rec ? `Añadir talla ${rec}` : "Añadir"}
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -3520,7 +3508,7 @@ function Shop({ products: allProducts, settings, favs = [], onToggleFav, panel, 
 
       {world === "michi" && <CrossToSkin hasSkin={allProducts.some((p) => worldOf(p.category) === "skin")} onGo={() => onWorld("skin")} />}
       {world === "skin" && <RoutineBuilder products={products} onAddAll={(list) => list.forEach((p) => addToCart(p))} />}
-      {world === "kids" && <SizeBoard products={products} kid={kid} setKid={setKid} sizeFor={sizeFor} onAddLook={(list) => list.forEach((p) => addToCart(p, sizeFor(p)))} />}
+      {world === "kids" && <SizeBoard products={products} kid={kid} setKid={setKid} onAdd={(p, size) => addToCart(p, size || sizeFor(p))} />}
 
       {/* Sección "Más vendidos" */}
       {world === "michi" && <BestSellers products={products} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} />}

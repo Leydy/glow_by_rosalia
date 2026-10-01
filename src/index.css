@@ -4866,66 +4866,6 @@ button {
   .glow-routine h3 { font-size: 32px; }
 }
 
-/* ---------- Encuentra su talla (tablero + regla) ---------- */
-.glow-sboard { background: #FFFDF7; background-image: radial-gradient(#F1E4C6 1px, transparent 1px); background-size: 18px 18px; color: #24476B; padding: 34px 0 40px; margin-top: 10px; scroll-margin-top: 70px; }
-.glow-sboard-h h3 { margin: 0; font-family: "Fredoka", "Manrope", sans-serif; font-size: 32px; }
-.glow-sboard-h span { color: #56677A; font-size: 14.5px; }
-.glow-sboard-b { display: grid; grid-template-columns: 1fr 260px; gap: 26px; margin-top: 20px; align-items: start; }
-.glow-sboard-pins { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 26px 20px; padding-top: 10px; }
-.glow-pin {
-  position: relative;
-  background: #fff;
-  border: none;
-  padding: 10px 10px 12px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, .12);
-  transform: rotate(var(--r));
-  transition: transform .25s, box-shadow .25s;
-  cursor: pointer;
-  text-align: left;
-  font: inherit;
-  color: inherit;
-}
-.glow-pin::before { content: ""; position: absolute; top: -10px; left: 50%; width: 76px; height: 20px; transform: translateX(-50%) rotate(-3deg); background: rgba(255, 193, 218, .85); }
-.glow-pin:hover { transform: rotate(0) scale(1.03); }
-.glow-pin.is-on { box-shadow: 0 0 0 3px #4AA3F0, 0 12px 26px rgba(74, 163, 240, .3); transform: rotate(0); }
-.glow-pin img, .glow-pin-noimg { display: grid; place-items: center; width: 100%; aspect-ratio: 1; object-fit: cover; background: #F7F3EA; font-size: 40px; }
-.glow-pin b { display: block; font-family: "Fredoka", "Manrope", sans-serif; font-weight: 600; font-size: 15px; margin-top: 8px; line-height: 1.2; }
-.glow-pin-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
-.glow-pin-row em { font-style: normal; font-weight: 800; }
-.glow-pin-row small { font-size: 11.5px; font-weight: 800; padding: 3px 8px; border-radius: 99px; }
-.glow-pin-row small.is-ok { background: #E2F7EC; color: #2E8B57; }
-.glow-pin-row small.is-no { background: #FFE9EC; color: #C0394F; }
-.glow-pin-heart { position: absolute; top: 14px; right: 14px; font-size: 22px; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .2)); }
-.glow-ruler { position: sticky; top: 90px; background: #fff; border-radius: 22px; padding: 14px; box-shadow: 0 10px 26px rgba(36, 71, 107, .1); }
-.glow-ruler-res { font-size: 15px; line-height: 1.5; text-align: center; }
-.glow-ruler-res .is-size { color: #E0527E; font-size: 18px; }
-.glow-ruler-body { position: relative; height: 300px; margin: 12px 0 10px; border-radius: 16px; background: linear-gradient(180deg, #DDF0FF, #FFF8E1); display: flex; justify-content: center; align-items: flex-end; overflow: hidden; }
-.glow-ruler-scale { position: absolute; left: 0; top: 0; bottom: 0; width: 46px; border-right: 2px solid #24476B; background: repeating-linear-gradient(0deg, transparent 0 13px, rgba(36, 71, 107, .35) 13px 14px); }
-.glow-ruler-scale span { position: absolute; left: 4px; transform: translateY(50%); font: 800 11px Manrope, sans-serif; color: #24476B; background: #fff; padding: 0 3px; border-radius: 4px; }
-.glow-ruler-kid { position: relative; width: 64px; transition: height .3s; margin-left: 40px; }
-.glow-ruler-kid svg { width: 100%; height: 100%; fill: #8EC5F5; }
-.glow-ruler-mark { position: absolute; top: -2px; left: 70px; white-space: nowrap; font: 800 12px Manrope, sans-serif; color: #E0527E; background: #fff; padding: 2px 8px; border-radius: 99px; box-shadow: 0 2px 6px rgba(0, 0, 0, .1); }
-.glow-ruler-kid::before { content: ""; position: absolute; top: 0; left: -56px; width: 160px; border-top: 2px dashed #E0527E; }
-.glow-ruler input[type="range"] { width: 100%; accent-color: #4AA3F0; }
-.glow-ruler-ages { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; justify-content: center; }
-.glow-ruler-ages button { border: 1.5px solid #D9E8F5; background: #F5FAFF; border-radius: 99px; padding: 5px 9px; font: 600 12px Manrope, sans-serif; color: #24476B; cursor: pointer; }
-.glow-ruler-ages button.is-on { background: #4AA3F0; border-color: #4AA3F0; color: #fff; }
-.glow-sboard-look { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 24px; padding: 14px 16px; border-radius: 18px; background: #FFF0C2; }
-.glow-sboard-look b { font-family: "Fredoka", "Manrope", sans-serif; font-size: 18px; }
-.glow-sboard-look span { font-size: 13px; color: #56677A; }
-.glow-sboard-look button { border: none; border-radius: 999px; padding: 11px 18px; font-weight: 800; cursor: pointer; color: #fff; }
-.glow-sboard-look .is-add { background: #4AA3F0; }
-.glow-sboard-look .is-add:disabled { opacity: .5; cursor: not-allowed; }
-.glow-sboard-look .is-wa { background: #25D366; }
-@media (max-width: 760px) {
-  .glow-sboard-b { grid-template-columns: 1fr; }
-  .glow-ruler { position: static; order: -1; }
-  .glow-ruler-body { height: 220px; }
-  .glow-sboard-pins { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 14px; }
-  .glow-sboard-look .is-add { margin-left: 0; }
-}
-.glow-pf-hint { font-size: 12.5px; color: #56677A; margin: 0 0 12px; line-height: 1.45; }
-
 /* ---------- Halloween: gatito negro paseando por la cabecera ---------- */
 .glow-hw-cat { position: absolute; left: 0; right: 0; bottom: -2px; height: 30px; pointer-events: none; overflow: hidden; z-index: 1; }
 .glow-hw-cat > span { position: absolute; bottom: 0; width: 36px; animation: glow-hw-walk 34s linear infinite; }
@@ -4947,14 +4887,14 @@ button {
 .glow-skin-info-btn:disabled { opacity: .5; cursor: not-allowed; }
 
 /* botones lejos del carrito y del chat flotantes (abajo a la derecha) */
-.glow-sboard-look, .glow-routine-tot, .glow-rask { padding-right: 96px; }
+.glow-routine-tot, .glow-rask { padding-right: 96px; }
 .glow-routine-tot { justify-content: flex-start; }
 @media (max-width: 760px) {
-  .glow-sboard-look, .glow-routine-tot { padding-right: 74px; padding-bottom: 16px; }
+  .glow-routine-tot { padding-right: 74px; padding-bottom: 16px; }
   .glow-rask { padding-right: 74px; }
   .glow-hw-cat { bottom: -27px; }
-  .glow-sboard-look button, .glow-routine-tot button { flex: 1 1 100%; }
-  .glow-sboard, .glow-routine { padding-bottom: 150px; }
+  .glow-routine-tot button { flex: 1 1 100%; }
+  .glow-routine { padding-bottom: 150px; }
 }
 
 /* ---------- pestañas de mundos en la cabecera ---------- */
@@ -5030,3 +4970,58 @@ button {
 .glow-guide-btn { touch-action: none; cursor: grab; }
 .glow-guide-btn:active { cursor: grabbing; }
 .glow-guide.is-right { flex-direction: row-reverse; }
+
+/* ---------- Encuentra su talla (regla al centro, prendas debajo) ---------- */
+.glow-sboard { background: #FFFDF7; background-image: radial-gradient(#F1E4C6 1px, transparent 1px); background-size: 18px 18px; color: #24476B; padding: 34px 0 44px; margin-top: 10px; scroll-margin-top: 70px; }
+.glow-sboard-h { text-align: center; }
+.glow-sboard-h h3 { margin: 0; font-family: "Fredoka", "Manrope", sans-serif; font-size: 32px; }
+.glow-sboard-h span { color: #56677A; font-size: 14.5px; }
+.glow-ruler {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 22px;
+  align-items: center;
+  max-width: 640px;
+  margin: 18px auto 34px;
+  background: #fff;
+  border-radius: 24px;
+  padding: 16px;
+  box-shadow: 0 12px 30px rgba(36, 71, 107, .1);
+}
+.glow-ruler-body { position: relative; height: 250px; border-radius: 16px; background: linear-gradient(180deg, #DDF0FF, #FFF8E1); display: flex; justify-content: center; align-items: flex-end; overflow: hidden; }
+.glow-ruler-scale { position: absolute; left: 0; top: 0; bottom: 0; width: 44px; border-right: 2px solid #24476B; background: repeating-linear-gradient(0deg, transparent 0 11px, rgba(36, 71, 107, .35) 11px 12px); }
+.glow-ruler-scale span { position: absolute; left: 4px; transform: translateY(50%); font: 800 11px Manrope, sans-serif; color: #24476B; background: #fff; padding: 0 3px; border-radius: 4px; }
+.glow-ruler-kid { position: relative; width: 56px; transition: height .3s; margin-left: 36px; }
+.glow-ruler-kid svg { width: 100%; height: 100%; fill: #8EC5F5; }
+.glow-ruler-kid::before { content: ""; position: absolute; top: 0; left: -50px; width: 150px; border-top: 2px dashed #E0527E; }
+.glow-ruler-mark { position: absolute; top: -12px; left: 58px; white-space: nowrap; font: 800 11.5px Manrope, sans-serif; color: #E0527E; background: #fff; padding: 2px 7px; border-radius: 99px; box-shadow: 0 2px 6px rgba(0, 0, 0, .1); }
+.glow-ruler-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.glow-ruler-res { font-size: 16px; line-height: 1.4; }
+.glow-ruler-res .is-size { color: #E0527E; font-family: "Fredoka", "Manrope", sans-serif; font-size: 30px; }
+.glow-ruler-res small { color: #56677A; font-size: 14px; }
+.glow-ruler input[type="range"] { width: 100%; accent-color: #4AA3F0; }
+.glow-ruler-ages { display: flex; flex-wrap: wrap; gap: 6px; }
+.glow-ruler-ages button { border: 1.5px solid #D9E8F5; background: #F5FAFF; border-radius: 99px; padding: 6px 10px; font: 600 12.5px Manrope, sans-serif; color: #24476B; cursor: pointer; }
+.glow-ruler-ages button.is-on { background: #4AA3F0; border-color: #4AA3F0; color: #fff; }
+.glow-sboard-pins { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 240px)); justify-content: center; gap: 30px 24px; }
+.glow-pin { position: relative; background: #fff; padding: 10px 10px 12px; box-shadow: 0 10px 24px rgba(0, 0, 0, .12); transform: rotate(var(--r)); transition: transform .25s; display: flex; flex-direction: column; }
+.glow-pin::before { content: ""; position: absolute; top: -10px; left: 50%; width: 76px; height: 20px; transform: translateX(-50%) rotate(-3deg); background: rgba(255, 193, 218, .85); }
+.glow-pin:hover { transform: rotate(0) scale(1.02); }
+.glow-pin img, .glow-pin-noimg { display: grid; place-items: center; width: 100%; aspect-ratio: 1; object-fit: cover; background: #F7F3EA; font-size: 40px; }
+.glow-pin b { display: block; font-family: "Fredoka", "Manrope", sans-serif; font-weight: 600; font-size: 15px; margin-top: 8px; line-height: 1.2; }
+.glow-pin-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin: 6px 0 10px; flex-wrap: wrap; }
+.glow-pin-row em { font-style: normal; font-weight: 800; }
+.glow-pin-row small { font-size: 11.5px; font-weight: 800; padding: 3px 8px; border-radius: 99px; }
+.glow-pin-row small.is-ok { background: #E2F7EC; color: #2E8B57; }
+.glow-pin-row small.is-no { background: #FFE9EC; color: #C0394F; }
+.glow-pin-add { margin-top: auto; border: none; border-radius: 12px; padding: 10px; font: 800 14px Manrope, sans-serif; color: #fff; background: #4AA3F0; cursor: pointer; }
+.glow-pin-add:disabled { background: #D9E8F5; color: #56677A; cursor: not-allowed; }
+@media (max-width: 640px) {
+  .glow-ruler { grid-template-columns: 1fr; gap: 14px; margin: 14px 0 26px; }
+  .glow-ruler-body { height: 200px; }
+  .glow-ruler-res { text-align: center; }
+  .glow-ruler-ages { justify-content: center; }
+  .glow-sboard-pins { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 14px; }
+  .glow-pin-add { font-size: 12.5px; padding: 9px 6px; }
+  .glow-sboard { padding-bottom: 120px; }
+}
