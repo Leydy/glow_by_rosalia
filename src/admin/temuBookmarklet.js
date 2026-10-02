@@ -129,7 +129,10 @@ function copyFromTemu() {
   try { lista = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { lista = []; }
   const url = location.origin + location.pathname;
   lista = lista.filter((x) => x.url !== url);
-  lista.push({ nombre, precio, fotos: fotos.slice(0, 20), url });
+  // la ruta de categorías de Temu (Mujer > Ropa > Chaquetas) ayuda a elegir la categoría
+  const bc = document.querySelector("nav[aria-label*='readcrumb'], [class*='readcrumb'], [class*='Breadcrumb']");
+  const ruta = bc ? bc.innerText.replace(/\s+/g, " ").trim().slice(0, 200) : "";
+  lista.push({ nombre, precio, fotos: fotos.slice(0, 20), url, ruta });
   try { localStorage.setItem(KEY, JSON.stringify(lista)); } catch (e) { /* sin almacenamiento: solo este producto */ }
   const texto = JSON.stringify({ glowTemu: 1, productos: lista });
 
@@ -161,6 +164,7 @@ export function parseTemuPaste(text) {
       .filter((p) => p && Array.isArray(p.fotos) && p.fotos.length)
       .map((p) => ({
         nombre: String(p.nombre || "").slice(0, 160),
+        ruta: String(p.ruta || "").slice(0, 200),
         precio: Number(p.precio) > 0 ? Number(p.precio) : null,
         fotos: p.fotos.filter((u) => /^https:\/\/[a-z0-9.-]*kwcdn\.com\//i.test(u)).slice(0, 20),
         url: String(p.url || ""),

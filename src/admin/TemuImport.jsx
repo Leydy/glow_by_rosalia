@@ -34,12 +34,13 @@ export function TemuImport({ onSave, onClose }) {
         sel: true,
         title: p.nombre, // título original de Temu (largo)
         name: suggestName(p.nombre),
-        desc: autoDesc(p.nombre, guessCategory(p.nombre)),
+        desc: autoDesc(p.nombre, guessCategory(p.nombre + " " + p.ruta)),
         descEdited: false,
         cost: p.precio ?? "",
         price: p.precio ? String(Math.ceil(p.precio * 3)) : "",
         stock: "5",
-        category: guessCategory(p.nombre),
+        category: guessCategory(p.nombre + " " + p.ruta), // sugerida: se puede cambiar
+        ruta: p.ruta,
         fotos: p.fotos,
         keep: p.fotos.map(() => true),
         main: 0,
@@ -75,7 +76,7 @@ export function TemuImport({ onSave, onClose }) {
         if (!images.length) throw new Error("no se pudieron traer las fotos");
         await onSave({
           name: it.name.trim(), category: it.category, cost: Number(it.cost) || 0, price: Number(it.price), stock: Number(it.stock) || 0,
-          emoji: "✨", bestSeller: false, images, desc: it.desc.trim(), details: worldOf(it.category) === "kids" ? { sizes: [], gender: guessGender(it.title) } : {},
+          emoji: "✨", bestSeller: false, images, desc: it.desc.trim(), details: worldOf(it.category) === "kids" ? { sizes: [], gender: guessGender(it.title + " " + (it.ruta || "")) } : {},
         });
         setItems((l) => l.filter((x) => x.url !== it.url));
         setDone((d) => d + 1);
