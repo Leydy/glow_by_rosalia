@@ -114,7 +114,7 @@ export function HeroCollage({ imgs, variant, picks, active, world = "michi" }) {
       <Sparkle style={{ top: "-4%", left: "2%", width: 26, color: C.gold }} />
       <Sparkle style={{ top: "44%", right: "-5%", width: 18, color: C.rose, animationDelay: "1.2s" }} />
       <Sparkle style={{ bottom: "20%", left: "40%", width: 14, color: "#fff", animationDelay: "2.1s" }} />
-      <CatMascot variant={variant} picks={picks} active={active} art={world === "skin" ? SPA_ROSALIA : world === "kids" ? GUIDES.cuyito.art : null} say={WORLD_HERO[world]?.say} />
+      <CatMascot variant={variant} picks={picks} active={active} art={world === "skin" ? SPA_ROSALIA : world === "kids" ? GUIDES.cuyito.art : world === "variedades" ? GUIDES.baneco.art : null} say={WORLD_HERO[world]?.say} />
     </div>
   );
 }
@@ -176,6 +176,12 @@ export function worldSlides(world, withPhoto, featured) {
 export const BALLOON_COLORS = ["#FF9EC4", "#7CC4FF", "#FFE07A", "#9EE6B8"];
 
 export function WorldDeco({ world }) {
+  if (world === "variedades") {
+    // brillitos que suben
+    return Array.from({ length: 12 }, (_, i) => (
+      <span key={i} className="glow-wd-spark" style={{ left: `${(i * 41) % 100}%`, fontSize: 12 + (i % 4) * 5, animationDuration: `${9 + (i % 5) * 2}s`, animationDelay: `-${i * 1.4}s` }}>✦</span>
+    ));
+  }
   if (world === "skin") {
     return Array.from({ length: 14 }, (_, i) => (
       <span key={i} className="glow-wd-bubble" style={{ left: `${(i * 37) % 100}%`, width: 8 + (i % 4) * 7, height: 8 + (i % 4) * 7, animationDuration: `${8 + (i % 5) * 2}s`, animationDelay: `-${i * 1.3}s` }} />

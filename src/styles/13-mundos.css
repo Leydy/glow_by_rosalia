@@ -288,3 +288,23 @@
   .glow-pin-add { font-size: 12.5px; padding: 9px 6px; }
   .glow-sboard { padding-bottom: 120px; }
 }
+
+/* ---------- Variedades ---------- */
+:root[data-world="variedades"] { --wacc: #8E5BD9; --web: #D9822B; --wtitle: #3A2856; }
+:root[data-world="variedades"] .glow-hero-rot > span > span { background-image: linear-gradient(90deg, #8E5BD9, #D6357F 55%, #D9822B); }
+.glow-wtabs button.is-variedades.is-on { background: #8E5BD9; }
+.glow-wd-spark { position: absolute; bottom: -30px; color: #fff; text-shadow: 0 0 8px rgba(142, 91, 217, .6); pointer-events: none; z-index: 1; animation: glow-wd-up linear infinite; }
+@media (prefers-reduced-motion: reduce) { .glow-wd-spark { display: none; } }
+.glow-pcard.is-variedades { border-color: #E6DCF7 !important; box-shadow: 0 6px 20px rgba(142, 91, 217, .1) !important; }
+.glow-pcard.is-variedades .glow-card-img { background: linear-gradient(160deg, #F1E9FF, #FFF0E6) !important; box-shadow: 0 0 0 2px #EEE6FF !important; }
+.glow-pcard.is-variedades .glow-card-cat { color: #D9822B !important; }
+.glow-pcard.is-variedades .glow-card-name { color: #3A2856 !important; }
+.glow-pcard.is-variedades .glow-card-btn:not(:disabled) { background: #8E5BD9 !important; }
+/* tallas en las tarjetas de cualquier mundo */
+.glow-pcard:not(.is-kids) .glow-sizes button.is-on { background: var(--wacc, #FF3D8B); border-color: var(--wacc, #FF3D8B); }
+/* 4 mundos: en celular, nombres cortos */
+@media (max-width: 640px) {
+  .glow-wtabs-long { display: none; }
+  .glow-wtabs-short { display: inline; }
+  .glow-wtabs button { padding: 7px 4px; font-size: 12.5px; gap: 3px; }
+}

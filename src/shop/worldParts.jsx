@@ -29,7 +29,7 @@ export function ComingSoon({ world, onBack }) {
   return (
     <div className={`glow-soon is-${world}`}>
       <b>{w.emoji} {w.name} llega muy pronto</b>
-      <p>{world === "skin" ? "Rosalía está eligiendo con cariño los productos para tu piel." : "Estamos preparando ropita linda para los peques."} ¡Vuelve pronto!</p>
+      <p>{world === "skin" ? "Rosalía está eligiendo con cariño los productos para tu piel." : world === "variedades" ? "Estamos eligiendo ropa coreana, relojes y accesorios lindos." : "Estamos preparando ropita linda para los peques."} ¡Vuelve pronto!</p>
       <button onClick={onBack}>Mientras tanto, mira la Michitienda 🐾</button>
     </div>
   );

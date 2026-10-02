@@ -66,6 +66,10 @@ const TPL = {
   "Protector solar": (r) => `Protector solar ${r || "ligero"} para cuidar tu piel del sol todos los días ☀️`,
   Labiales: (r) => `Para unos labios suaves y bonitos${r ? ", " + r : ""}. ¡Ideal para llevar en tu cartera! 💋`,
   Maquillaje: (r) => `Maquillaje ${r || "fácil de usar"} para un look lindo y natural ✨`,
+  "Ropa coreana": (r) => `Prenda estilo coreano ${r || "linda"}, cómoda y fácil de combinar para un look tierno ✨`,
+  Relojes: (r) => `Reloj ${r || "elegante"} que combina con todo y le da un toque lindo a tu muñeca ⌚`,
+  Accesorios: (r) => `Accesorio ${r || "delicado"} para completar tu look con un detalle bonito 💕`,
+  Chompas: (r) => `Chompa ${r || "abrigadita"}, suave y calientita para los días de frío 🧶`,
   Polos: (r) => `Polo ${r || "estampado"}, suavecito y fresco para que tu peque juegue todo el día 🧸`,
   Vestidos: (r) => `Vestido ${r || "cute"}, cómodo y bonito para pasear y celebrar 🎀`,
   Casacas: (r) => `Casaca ${r || "abrigadita"} para que tu peque esté calientito y con estilo 🧥`,
@@ -80,6 +84,38 @@ export function autoDesc(title, category) {
   const r = trait(title);
   const f = TPL[category];
   return f ? f(r) : `Un detalle ${r || "lindo"} elegido con cariño para ti ✨`;
+}
+
+// Categoría sugerida según el título (se puede cambiar antes de crear el producto).
+// La Michitienda es solo para cosas con forma o estampado de michi.
+const CAT_RULES = [
+  [/s[eé]rum/, "Sérums"], [/t[oó]nico/, "Tónicos"], [/limpiador|gel limpiador|espuma limpiadora/, "Limpiadores"],
+  [/protector solar|bloqueador|spf|fps/, "Protector solar"], [/labial|lip|labios/, "Labiales"],
+  [/crema|hidratante|contorno de ojos|eye gel|gel para ojos/, "Cremas"], [/maquillaje|rubor|sombra|base de maquillaje/, "Maquillaje"],
+];
+const KIDS_RULES = [
+  [/chompa|su[eé]ter|sweater/, "Chompas"], [/vestido/, "Vestidos"], [/casaca|chaqueta|abrigo/, "Casacas"],
+  [/pantal[oó]n|jean|short/, "Pantalones"], [/falda/, "Faldas"], [/zapat|tenis|sandalia/, "Zapatitos"],
+  [/gorr|sombrero/, "Gorritos"], [/conjunto|set de|piezas/, "Conjuntos"], [/polo|camiseta|polera/, "Polos"],
+];
+export function guessCategory(title) {
+  const p = plain(title);
+  const michi = /gat|michi|kitty|\bcat\b|kitten|huell|neko|miau/.test(p);
+  const kids = /\bni[nñ]o|\bni[nñ]a|infantil|beb[eé]|kids|\bpeque/.test(p);
+  if (kids) return (KIDS_RULES.find(([re]) => re.test(p)) || [, "Conjuntos"])[1];
+  const skin = CAT_RULES.find(([re]) => re.test(p));
+  if (skin) return skin[1];
+  if (/reloj|watch/.test(p)) return "Relojes";
+  if (michi) {
+    if (/collar|colgante/.test(p)) return "Collares";
+    if (/anillo/.test(p)) return "Anillos";
+    if (/llavero/.test(p)) return "Llaveros";
+    if (/bolso|cartera|mochila/.test(p)) return "Bolsos";
+    if (/polo|camiseta|polera|blusa|chompa|su[eé]ter/.test(p)) return "Ropa";
+    return "Aretes";
+  }
+  if (/chaqueta|c[aá]rdigan|camiseta|blusa|polera|chompa|su[eé]ter|vestido|falda|pantal[oó]n|top\b|camisa/.test(p)) return "Ropa coreana";
+  return "Accesorios";
 }
 
 // Nombre sugerido: el corto y, si queda de una sola palabra, con su rasgo ("Conjunto de dinosaurio").

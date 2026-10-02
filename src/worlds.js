@@ -15,11 +15,21 @@ export const WORLDS = {
   },
   kids: {
     key: "kids", emoji: "🧸", name: "Glow Kids", short: "Kids", logo: "Kids",
-    cats: ["Polos", "Vestidos", "Casacas", "Pantalones", "Faldas", "Zapatitos", "Gorritos", "Conjuntos"],
+    cats: ["Polos", "Chompas", "Vestidos", "Casacas", "Pantalones", "Faldas", "Zapatitos", "Gorritos", "Conjuntos"],
     bg: "#F5FAFF", hdr: ["#DDF0FF", "#FFF6D6"],
   },
+  // Lo que no es de michi: ropa coreana, relojes y accesorios de moda.
+  variedades: {
+    key: "variedades", emoji: "🛍️", name: "Variedades", short: "Variedades", logo: "Variedades",
+    cats: ["Ropa coreana", "Relojes", "Accesorios"],
+    bg: "#FAF7FF", hdr: ["#EEE6FF", "#FFEDE3"],
+  },
 };
-export const WORLD_KEYS = ["michi", "skin", "kids"];
+export const WORLD_KEYS = ["michi", "skin", "kids", "variedades"];
+
+// Ropa de adulto con tallas (la de Kids usa tallas por edad).
+export const ADULT_SIZE_CATS = ["Ropa coreana", "Ropa"];
+export const ADULT_SIZES = ["XS", "S", "M", "L", "XL", "Talla única"];
 
 // Portada (slider) de Glow Skin y Glow Kids.
 export const WORLD_HERO = {
@@ -38,6 +48,14 @@ export const WORLD_HERO = {
     grads: [["#DDF0FF", "#FFF4CC"], ["#E2F7EC", "#DDF0FF"], ["#FFF4CC", "#FFE3EE"], ["#E7E2FF", "#DDF0FF"]],
     ticker: ["Ropita suave y cómoda", "Tallas según su estatura", "Envíos a todo el Perú", "Entrega gratis en Juliaca"],
     tagline: "Ropita cute",
+  },
+  variedades: {
+    eyebrow: "Variedades · moda y detalles", title: "Lo que te", words: ["hace brillar", "encanta", "combina"],
+    text: "Ropa coreana, relojes y accesorios elegidos con cariño para completar tu look.", cta: "Ver todo",
+    catWords: ["que enamoran", "con estilo", "para combinar"], say: "¡Combina colores conmigo! 🧶",
+    grads: [["#EEE6FF", "#FFEDE3"], ["#FFE9F1", "#EEE6FF"], ["#FFF1DD", "#F1E9FF"], ["#E8F4FF", "#F6E9FF"]],
+    ticker: ["Ropa coreana", "Relojes", "Accesorios de moda", "Envíos a todo el Perú"],
+    tagline: "Moda y detalles",
   },
 };
 

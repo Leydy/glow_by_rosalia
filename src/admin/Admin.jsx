@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Image as ImageIcon, Lock, LogOut, Package, Pencil, Plus, Settings as SettingsIcon, Sparkles, Trash2, TrendingUp, Wallet, X } from "lucide-react";
 import { checkPin, deleteTestOrders, getAdminReviews, getConfig, getCustomers, getOrders, sendWelcomeMail, setAdminPin, setOrderStatus, setReviewStatus, uploadImages } from "../api.js";
 import { C, money } from "../theme.js";
-import { CONCERNS, KID_SIZES, ROUTINE_STEPS, SHOE_SIZES, SKIN_TYPES, WORLDS, WORLD_KEYS, worldOf } from "../worlds.js";
+import { CONCERNS, KID_SIZES, ROUTINE_STEPS, SHOE_SIZES, SKIN_TYPES, WORLDS, WORLD_KEYS, worldOf, ADULT_SIZE_CATS, ADULT_SIZES } from "../worlds.js";
 import { daysUntil, inRange, seasonList } from "../seasons.js";
 import { DAY_SHORT, HALF_HOURS, REVIEW_PTS, fileToDataURL, fmtPts, hour12, readBrowserProducts, readBrowserSettings, whenText, imgUrl } from "../lib/util.js";
 import { CatAvatar, Field, Inp, Stars, Thumb, YapeMark } from "../components/ui.jsx";
@@ -337,7 +337,7 @@ export function ProductForm({ initial, busy, onSave, onClose }) {
     const d = f.details || {};
     const details = fw === "skin"
       ? { step: d.step, skinTypes: d.skinTypes, concerns: d.concerns, size: d.size, ingredients: d.ingredients, usage: d.usage, nso: d.nso }
-      : fw === "kids" ? { sizes: d.sizes } : {};
+      : fw === "kids" || ADULT_SIZE_CATS.includes(f.category) ? { sizes: d.sizes } : {};
     onSave({ ...f, details, cost: Number(f.cost), price: Number(f.price), stock: Number(f.stock) });
   };
 
@@ -385,6 +385,13 @@ export function ProductForm({ initial, busy, onSave, onClose }) {
             <b>🧸 Datos de Glow Kids</b>
             <Field label="Tallas disponibles"><div className="glow-pf-chips">{(f.category === "Zapatitos" ? SHOE_SIZES : KID_SIZES).map((t) => <button type="button" key={t} className={(f.details.sizes || []).includes(t) ? "is-on" : ""} onClick={() => toggleIn("sizes", t)}>{t}</button>)}</div></Field>
             <p className="glow-pf-hint">💡 La tienda recomienda la talla según la estatura del peque (tabla: 2 → hasta 98 cm, 4 → 112, 6 → 124, 8 → 136, 10 → 146).</p>
+          </div>
+        )}
+        {ADULT_SIZE_CATS.includes(f.category) && (
+          <div className="glow-pf-extra is-kids">
+            <b>👗 Tallas</b>
+            <Field label="Tallas disponibles"><div className="glow-pf-chips">{ADULT_SIZES.map((t) => <button type="button" key={t} className={(f.details.sizes || []).includes(t) ? "is-on" : ""} onClick={() => toggleIn("sizes", t)}>{t}</button>)}</div></Field>
+            <p className="glow-pf-hint">La clienta elige su talla en la tarjeta del producto antes de añadirlo al carrito.</p>
           </div>
         )}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>

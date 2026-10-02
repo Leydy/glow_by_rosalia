@@ -84,6 +84,7 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
     const sizes = p.details?.sizes || [];
     if (!sizes.length) return "";
     if (sizePick[p.id] && sizes.includes(sizePick[p.id])) return sizePick[p.id];
+    if (worldOf(p.category) !== "kids") return sizes[0];
     return recommendedSize(sizes, kid.cm) || sizes[0];
   };
   const [q, setQ] = useState("");
@@ -276,7 +277,7 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
                   )}
                   {world === "skin" && <SkinTags p={p} onInfo={() => setSkinInfo(p)} />}
                   <p className="glow-card-desc">{p.desc}</p>
-                  {world === "kids" && p.details?.sizes?.length > 0 && (
+                  {p.details?.sizes?.length > 0 && (
                     <div className="glow-sizes" role="group" aria-label="Talla">
                       {p.details.sizes.map((t) => (
                         <button key={t} className={sizeFor(p) === t ? "is-on" : ""} onClick={(e) => { e.stopPropagation(); setSizePick((m) => ({ ...m, [p.id]: t })); }}>{t}</button>
@@ -289,7 +290,7 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
                   <div style={{ marginTop: 12 }}>
                     <button
                       disabled={out}
-                      onClick={() => addToCart(p, world === "kids" ? sizeFor(p) : "")}
+                      onClick={() => addToCart(p, sizeFor(p))}
                       className="glow-card-btn"
                       style={{
                         width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,

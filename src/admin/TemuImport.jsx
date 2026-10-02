@@ -6,9 +6,8 @@ import { C, money } from "../theme.js";
 import { WORLDS, WORLD_KEYS, worldOf } from "../worlds.js";
 import { importImages } from "../api.js";
 import { temuBookmarklet, parseTemuPaste } from "./temuBookmarklet.js";
-import { suggestName, autoDesc } from "./temuText.js";
+import { suggestName, autoDesc, guessCategory } from "./temuText.js";
 
-const DEFAULT_CAT = { michi: "Aretes", skin: "Sérums", kids: "Conjuntos" };
 
 export function TemuImport({ onSave, onClose }) {
   const [items, setItems] = useState([]);
@@ -35,12 +34,12 @@ export function TemuImport({ onSave, onClose }) {
         sel: true,
         title: p.nombre, // título original de Temu (largo)
         name: suggestName(p.nombre),
-        desc: autoDesc(p.nombre, DEFAULT_CAT.michi),
+        desc: autoDesc(p.nombre, guessCategory(p.nombre)),
         descEdited: false,
         cost: p.precio ?? "",
         price: p.precio ? String(Math.ceil(p.precio * 3)) : "",
         stock: "5",
-        category: DEFAULT_CAT.michi,
+        category: guessCategory(p.nombre),
         fotos: p.fotos,
         keep: p.fotos.map(() => true),
         main: 0,
