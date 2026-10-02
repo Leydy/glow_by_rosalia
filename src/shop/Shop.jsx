@@ -2,7 +2,7 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react
 import { Search, ShoppingCart, X } from "lucide-react";
 import { getConfig, getMyOrders, getMyReviews } from "../api.js";
 import { C, money } from "../theme.js";
-import { WORLDS, recommendedSize, worldOf } from "../worlds.js";
+import { WORLDS, recommendedSize, worldOf, fitsGender } from "../worlds.js";
 import { SPIDER } from "../seasons.js";
 import { REVIEW_PTS, loadCart, markSeen, scheduleText, scrollToId } from "../lib/util.js";
 import { BestSellers, HeroSlider } from "./hero.jsx";
@@ -68,7 +68,10 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
   // Solo los productos del mundo elegido (el carrito usa todos).
   const products = useMemo(() => allProducts.filter((p) => worldOf(p.category) === world), [allProducts, world]);
   useEffect(() => { setCat("Todos"); }, [world]);
-  const worldCats = ["Todos", ...WORLDS[world].cats.filter((c) => products.some((p) => p.category === c))];
+  // Kids: filtro Niña / Niño (las prendas para ambos salen en los dos).
+  const [gender, setGender] = useState("");
+  useEffect(() => { setGender(""); }, [world]);
+  const worldCats = ["Todos", ...WORLDS[world].cats.filter((c) => products.some((p) => p.category === c && fitsGender(p, gender)))];
   const [skinInfo, setSkinInfo] = useState(null); // producto de Skin con sus detalles abiertos
   // Estatura del peque (cm) → talla recomendada en las tarjetas de Kids.
   const [kid, setKidState] = useState(() => {
@@ -116,11 +119,11 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
   const visible = useMemo(
     () =>
       products.filter((p) => {
-        const okCat = cat === "Todos" || p.category === cat;
+        const okCat = (cat === "Todos" || p.category === cat) && fitsGender(p, gender);
         const okQ = p.name.toLowerCase().includes(q.toLowerCase());
         return okCat && okQ;
       }),
-    [products, cat, q]
+    [products, cat, q, gender]
   );
 
   // Líneas del carrito (resuelve cada id contra el producto actual y respeta el stock).
@@ -200,6 +203,13 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
       <div id="catalogo" className="glow-wrap" style={{ paddingTop: 28, scrollMarginTop: 70 }}>
         {/* filtros */}
         <div className="glow-filters">
+          {world === "kids" && (
+            <div className="glow-gender" role="group" aria-label="Para quién">
+              {[["", "Todos"], ["niña", "👧 Niña"], ["niño", "👦 Niño"]].map(([k, l]) => (
+                <button key={k || "todos"} className={gender === k ? "is-on" : ""} aria-pressed={gender === k} onClick={() => { setGender(k); setCat("Todos"); }}>{l}</button>
+              ))}
+            </div>
+          )}
           <div className="glow-cats">
             {worldCats.map((c) => (
               <button

@@ -196,7 +196,8 @@ export function detailsOf(raw) {
   if (d.ingredients) out.ingredients = txt(d.ingredients, 400);
   if (d.usage) out.usage = txt(d.usage, 400);
   if (d.nso) out.nso = txt(d.nso, 40);
-  if (d.sizes) out.sizes = list(d.sizes, 14, 8);
+  if (d.sizes) out.sizes = list(d.sizes, 20, 12);
+  if (["niña", "niño", "unisex"].includes(d.gender)) out.gender = d.gender;
   return out;
 }
 

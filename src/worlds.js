@@ -15,7 +15,7 @@ export const WORLDS = {
   },
   kids: {
     key: "kids", emoji: "🧸", name: "Glow Kids", short: "Kids", logo: "Kids",
-    cats: ["Polos", "Chompas", "Vestidos", "Casacas", "Pantalones", "Faldas", "Zapatitos", "Gorritos", "Conjuntos"],
+    cats: ["Polos", "Poleras", "Chompas", "Casacas", "Vestidos", "Pantalones", "Faldas", "Conjuntos", "Zapatos", "Zapatillas", "Botines", "Gorritos"],
     bg: "#F5FAFF", hdr: ["#DDF0FF", "#FFF6D6"],
   },
   // Lo que no es de michi: ropa coreana, relojes y accesorios de moda.
@@ -108,6 +108,10 @@ export function buildRoutine(products, { piel, meta = [], budget }) {
 /* ---------- Glow Kids: tallas según la estatura ---------- */
 export const KID_SIZES = ["2", "4", "6", "8", "10", "12", "14"];
 export const SHOE_SIZES = Array.from({ length: 17 }, (_, k) => String(20 + k)); // calzado 20 a 36
+export const SHOE_CATS = ["Zapatos", "Zapatillas", "Botines"];
+// Para quién es la prenda de Kids (sin marcar = para ambos).
+export const GENDERS = [["niña", "👧 Niña"], ["niño", "👦 Niño"], ["unisex", "Para ambos"]];
+export const fitsGender = (p, g) => !g || !p.details?.gender || p.details.gender === "unisex" || p.details.gender === g;
 
 // Tabla de tallas: hasta qué estatura (cm) va cada talla y su calzado aproximado.
 export const SIZE_CHART = [

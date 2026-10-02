@@ -75,7 +75,10 @@ const TPL = {
   Casacas: (r) => `Casaca ${r || "abrigadita"} para que tu peque esté calientito y con estilo 🧥`,
   Pantalones: (r) => `Pantalón ${r || "cómodo"} para jugar y pasear sin parar 🧸`,
   Faldas: (r) => `Falda ${r || "linda"} para que tu peque brille en cada salida 🎀`,
-  Zapatitos: (r) => `Zapatitos ${r || "cómodos"} y livianos para cada aventura de tu peque 👟`,
+  Poleras: (r) => `Polera ${r || "abrigadita"}, suave y cómoda para jugar todo el día 🧸`,
+  Zapatos: (r) => `Zapatos ${r || "cómodos"} y lindos para cada salida de tu peque 👞`,
+  Zapatillas: (r) => `Zapatillas ${r || "livianas"} y cómodas para correr y jugar sin parar 👟`,
+  Botines: (r) => `Botines ${r || "abrigaditos"}, cómodos y con mucho estilo para los días de frío 🥾`,
   Gorritos: (r) => `Gorrito ${r || "tierno"} que abriga y se ve súper cute 🧶`,
   Conjuntos: (r) => `Conjunto ${r || "lindo"}, suave y cómodo para que tu peque juegue todo el día 🧸`,
 };
@@ -94,14 +97,17 @@ const CAT_RULES = [
   [/crema|hidratante|contorno de ojos|eye gel|gel para ojos/, "Cremas"], [/maquillaje|rubor|sombra|base de maquillaje/, "Maquillaje"],
 ];
 const KIDS_RULES = [
+  [/conjunto|set de|piezas/, "Conjuntos"],
   [/chompa|su[eé]ter|sweater/, "Chompas"], [/vestido/, "Vestidos"], [/casaca|chaqueta|abrigo/, "Casacas"],
-  [/pantal[oó]n|jean|short/, "Pantalones"], [/falda/, "Faldas"], [/zapat|tenis|sandalia/, "Zapatitos"],
-  [/gorr|sombrero/, "Gorritos"], [/conjunto|set de|piezas/, "Conjuntos"], [/polo|camiseta|polera/, "Polos"],
+  [/pantal[oó]n|jean|short/, "Pantalones"], [/falda/, "Faldas"],
+  [/botin|bota\b|botas/, "Botines"], [/zapatilla|tenis|deportiv/, "Zapatillas"], [/zapat|sandalia|mocas/, "Zapatos"],
+  [/polera|sudadera|hoodie/, "Poleras"],
+  [/gorr|sombrero/, "Gorritos"], [/polo|camiseta|polera/, "Polos"],
 ];
 export function guessCategory(title) {
   const p = plain(title);
   const michi = /gat|michi|kitty|\bcat\b|kitten|huell|neko|miau/.test(p);
-  const kids = /\bni[nñ]o|\bni[nñ]a|infantil|beb[eé]|kids|\bpeque/.test(p);
+  const kids = /\bni[nñ]o|\bni[nñ]a|infantil|beb[eé]|kids|\bpeque|\bgirl|\bboy/.test(p);
   if (kids) return (KIDS_RULES.find(([re]) => re.test(p)) || [, "Conjuntos"])[1];
   const skin = CAT_RULES.find(([re]) => re.test(p));
   if (skin) return skin[1];
@@ -123,4 +129,12 @@ export function suggestName(title) {
   const n = shortName(title);
   const r = trait(title);
   return n.split(" ").length < 2 && r ? `${n} ${r}` : n;
+}
+
+// Para quién es una prenda de Kids, según el título.
+export function guessGender(title) {
+  const p = plain(title);
+  if (/\bni[nñ]as?\b|\bgirls?\b|princesa/.test(p)) return "niña";
+  if (/\bni[nñ]os?\b|\bboys?\b/.test(p)) return "niño";
+  return "unisex";
 }

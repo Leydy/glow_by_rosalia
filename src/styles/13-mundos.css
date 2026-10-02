@@ -308,3 +308,8 @@
   .glow-wtabs-short { display: inline; }
   .glow-wtabs button { padding: 7px 4px; font-size: 12.5px; gap: 3px; }
 }
+
+/* Kids: filtro Niña / Niño */
+.glow-gender { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; margin-bottom: 4px; }
+.glow-gender button { border: 1.5px solid #D9E8F5; background: #fff; border-radius: 999px; padding: 7px 16px; font: 800 14px Manrope, sans-serif; color: #24476B; cursor: pointer; }
+.glow-gender button.is-on { background: #24476B; border-color: #24476B; color: #fff; }

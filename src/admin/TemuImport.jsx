@@ -6,7 +6,7 @@ import { C, money } from "../theme.js";
 import { WORLDS, WORLD_KEYS, worldOf } from "../worlds.js";
 import { importImages } from "../api.js";
 import { temuBookmarklet, parseTemuPaste } from "./temuBookmarklet.js";
-import { suggestName, autoDesc, guessCategory } from "./temuText.js";
+import { suggestName, autoDesc, guessCategory, guessGender } from "./temuText.js";
 
 
 export function TemuImport({ onSave, onClose }) {
@@ -75,7 +75,7 @@ export function TemuImport({ onSave, onClose }) {
         if (!images.length) throw new Error("no se pudieron traer las fotos");
         await onSave({
           name: it.name.trim(), category: it.category, cost: Number(it.cost) || 0, price: Number(it.price), stock: Number(it.stock) || 0,
-          emoji: "✨", bestSeller: false, images, desc: it.desc.trim(), details: worldOf(it.category) === "kids" ? { sizes: [] } : {},
+          emoji: "✨", bestSeller: false, images, desc: it.desc.trim(), details: worldOf(it.category) === "kids" ? { sizes: [], gender: guessGender(it.title) } : {},
         });
         setItems((l) => l.filter((x) => x.url !== it.url));
         setDone((d) => d + 1);
