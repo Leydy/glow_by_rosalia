@@ -478,7 +478,8 @@ app.post("/api/customers/welcome", requirePin, async (req, res, next) => {
 });
 
 /* ---------- Salud ---------- */
-app.get("/api/health", (_req, res) => res.json({ ok: true }));
+// "images" dice dónde se guardan las fotos: cloudinary (bien) o disco (se pierden en Render).
+app.get("/api/health", (_req, res) => res.json({ ok: true, images: usingCloudinary ? "cloudinary" : "disco" }));
 
 /* ---------- Autenticación del panel ---------- */
 app.post("/api/auth", async (req, res, next) => {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Image as ImageIcon, Lock, LogOut, Package, Pencil, Plus, Settings as SettingsIcon, Sparkles, Trash2, TrendingUp, Wallet, X } from "lucide-react";
-import { checkPin, deleteTestOrders, getAdminReviews, getConfig, getCustomers, getOrders, sendWelcomeMail, setAdminPin, setOrderStatus, setReviewStatus, uploadImages } from "../api.js";
+import { checkPin, getHealth, deleteTestOrders, getAdminReviews, getConfig, getCustomers, getOrders, sendWelcomeMail, setAdminPin, setOrderStatus, setReviewStatus, uploadImages } from "../api.js";
 import { C, money } from "../theme.js";
 import { CONCERNS, KID_SIZES, ROUTINE_STEPS, SHOE_SIZES, SKIN_TYPES, WORLDS, WORLD_KEYS, worldOf, ADULT_SIZE_CATS, ADULT_SIZES } from "../worlds.js";
 import { daysUntil, inRange, seasonList } from "../seasons.js";
@@ -12,6 +12,12 @@ import { TemuImport } from "./TemuImport.jsx";
    VISTA ADMINISTRACIÓN — inventario, márgenes, ganancias, stock
 ========================================================================= */
 export function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSaveSettings, onSaveSeasons, onImportFromBrowser, onAuthed }) {
+  // Aviso si el servidor publicado guarda las fotos en su disco (se pierden en cada reinicio de Render).
+  const [diskWarn, setDiskWarn] = useState(false);
+  useEffect(() => {
+    if (/^(localhost|127.)/.test(window.location.hostname)) return;
+    getHealth().then((h) => setDiskWarn(h.images === "disco")).catch(() => {});
+  }, []);
   const [temu, setTemu] = useState(false); // ventana "Importar de Temu"
   const [authed, setAuthed] = useState(false);
   const [pin, setPin] = useState("");
@@ -141,6 +147,12 @@ export function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSa
         <Card icon={<AlertTriangle size={18} />} label="Stock bajo" value={String(stats.low)} sub={`≤ ${settings.lowStock} unid.`} warn={stats.low > 0} />
       </div>
 
+      {diskWarn && (
+        <div className="glow-disk-warn" role="alert">
+          <b>⚠ Las fotos no se están guardando en Cloudinary</b>
+          <span>En Render falta la variable <code>CLOUDINARY_URL</code> (o está mal escrita). Mientras tanto no se pueden subir fotos nuevas. Revísala en Render → Environment.</span>
+        </div>
+      )}
       <div className="glow-admin-tabs">
         {[["inventario", "Inventario"], ["pedidos", "Pedidos"], ["clientas", "Clientas"], ["resenas", "Reseñas"], ["temporadas", "Temporadas"], ["ajustes", "Ajustes"]].map(([k, l]) => (
           <button

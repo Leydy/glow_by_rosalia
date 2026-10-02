@@ -9,10 +9,16 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const cfg = (() => {
-  const m = /^cloudinary:\/\/([^:]+):([^@]+)@(.+)$/.exec(process.env.CLOUDINARY_URL || "");
+  // Tolera errores comunes al pegarla en Render: "CLOUDINARY_URL=" delante,
+  // comillas o espacios.
+  const raw = String(process.env.CLOUDINARY_URL || "").trim().replace(/^CLOUDINARY_URL\s*=\s*/i, "").replace(/^["']|["']$/g, "").trim();
+  const m = /^cloudinary:\/\/([^:\s]+):([^@\s]+)@([^\s/]+)\/?$/.exec(raw);
   return m ? { key: m[1], secret: m[2], cloud: m[3] } : null;
 })();
 export const usingCloudinary = !!cfg;
+// En Render la carpeta del servidor se borra en cada reinicio: ahí no se
+// guardan fotos en disco (se perderían). Mejor avisar que falta Cloudinary.
+const EPHEMERAL = !!process.env.RENDER;
 
 let uploadsDir = "";
 export function setUploadsDir(dir) {
@@ -44,6 +50,9 @@ export async function saveImage(dataUrl, folder = "productos", maxBytes = 8 * 10
   const buf = Buffer.from(m[2], "base64");
   if (buf.length > maxBytes) throw Object.assign(new Error("La imagen es demasiado grande."), { status: 413 });
   if (cfg) return cloudUpload(dataUrl, folder);
+  if (EPHEMERAL) {
+    throw Object.assign(new Error("Las fotos no se pueden guardar: falta conectar Cloudinary en Render (variable CLOUDINARY_URL)."), { status: 503 });
+  }
   const ext = m[1].toLowerCase() === "jpeg" ? "jpg" : m[1].toLowerCase();
   const name = `${folder === "yape" ? "yape-" : ""}${crypto.randomUUID()}.${ext}`;
   await fs.writeFile(path.join(uploadsDir, name), buf);

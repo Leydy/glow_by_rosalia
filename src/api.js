@@ -206,6 +206,11 @@ export async function setOrderStatus(id, status) {
 }
 
 /* ---------- Ajustes ---------- */
+// Estado del servidor (y dónde guarda las fotos).
+export async function getHealth() {
+  return handle(await fetch("/api/health"));
+}
+
 export async function getSettings() {
   return handle(await fetch("/api/settings"));
 }
