@@ -279,7 +279,7 @@ export function YapeCheckout({ settings, lines, total: itemsTotal, discount = 0,
         app: read.app, amount: read.amount, amountOk: verdict.amountOk, toMe: read.toMe, dateOk: verdict.dateOk,
         date: read.date ? read.date.toISOString().slice(0, 10) : "",
       };
-      const o = await createOrder({ items: lines.map((l) => ({ id: l.id, qty: l.qty, size: l.size || "" })), yapeOp: op, capture, test: TEST_MODE, reward, delivery, useCredit, payCheck });
+      const o = await createOrder({ items: lines.map((l) => ({ id: l.id, qty: l.qty, size: l.size || "", color: l.color || "" })), yapeOp: op, capture, test: TEST_MODE, reward, delivery, useCredit, payCheck });
       creditsChanged();
       onDone(o);
       setStep("done");

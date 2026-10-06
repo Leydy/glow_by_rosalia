@@ -289,6 +289,46 @@ export function Card({ icon, label, value, sub, accent, warn }) {
   );
 }
 
+// Colores (variantes): cada color con su nombre y la foto que lo muestra.
+const COLOR_IDEAS = ["Dorado", "Plateado", "Oro rosa", "Negro", "Blanco", "Rosa"];
+function ColorEditor({ colors, images, onChange }) {
+  const [open, setOpen] = useState(colors.length > 0);
+  const set = (i, patch) => onChange(colors.map((c, k) => (k === i ? { ...c, ...patch } : c)));
+  const add = (name = "") => onChange([...colors, { name, img: images[colors.length] || images[0] || "" }]);
+  if (!open) {
+    return (
+      <button type="button" className="glow-colors-open" onClick={() => { setOpen(true); if (!colors.length) add(); }}>
+        🎨 ¿Lo tienes en varios colores? (ej. dorado y plateado)
+      </button>
+    );
+  }
+  return (
+    <div className="glow-pf-extra glow-colors-ed">
+      <b>🎨 Colores</b>
+      <p className="glow-pf-hint">Escribe cada color y toca la foto que lo muestra. La clienta elegirá el color antes de añadirlo al carrito.</p>
+      {colors.map((c, i) => (
+        <div key={i} className="glow-color-row">
+          <input value={c.name} onChange={(e) => set(i, { name: e.target.value })} placeholder="Ej. Dorado" maxLength={30} />
+          <div className="glow-color-pics">
+            {images.length ? images.map((u) => (
+              <button type="button" key={u} className={c.img === u ? "is-on" : ""} onClick={() => set(i, { img: u })} title="Esta foto muestra el color">
+                <img src={imgUrl(u, 90)} alt="" />
+              </button>
+            )) : <small>Sube fotos del producto para elegir la de cada color.</small>}
+          </div>
+          <button type="button" className="glow-color-del" onClick={() => onChange(colors.filter((_, k) => k !== i))} aria-label="Quitar color">✕</button>
+        </div>
+      ))}
+      <div className="glow-color-ideas">
+        <button type="button" onClick={() => add()}>+ Otro color</button>
+        {COLOR_IDEAS.filter((n) => !colors.some((c) => c.name.toLowerCase() === n.toLowerCase())).slice(0, 6).map((n) => (
+          <button type="button" key={n} className="is-idea" onClick={() => add(n)}>+ {n}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ProductForm({ initial, busy, onSave, onClose }) {
   const [f, setF] = useState({
     id: initial.id || "",
@@ -351,6 +391,8 @@ export function ProductForm({ initial, busy, onSave, onClose }) {
       ? { step: d.step, skinTypes: d.skinTypes, concerns: d.concerns, size: d.size, ingredients: d.ingredients, usage: d.usage, nso: d.nso }
       : fw === "kids" ? { sizes: d.sizes, gender: d.gender || "unisex" }
       : ADULT_SIZE_CATS.includes(f.category) ? { sizes: d.sizes } : {};
+    const colors = (d.colors || []).filter((c) => c.name.trim()).map((c) => ({ name: c.name.trim(), img: f.images.includes(c.img) ? c.img : "" }));
+    if (colors.length) details.colors = colors;
     onSave({ ...f, details, cost: Number(f.cost), price: Number(f.price), stock: Number(f.stock) });
   };
 
@@ -443,6 +485,11 @@ export function ProductForm({ initial, busy, onSave, onClose }) {
             </button>
           </div>
         </Field>
+        <ColorEditor
+          colors={f.details.colors || []}
+          images={f.images}
+          onChange={(colors) => setD("colors", colors)}
+        />
         <Field label="Descripción"><Inp value={f.desc} onChange={(v) => set("desc", v)} placeholder="Acabado mate de larga duración." /></Field>
         <label className="glow-switch" style={{ marginBottom: 12 }}>
           <input type="checkbox" checked={!!f.doublePoints} onChange={(e) => set("doublePoints", e.target.checked)} />

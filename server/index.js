@@ -681,7 +681,11 @@ app.post("/api/orders", async (req, res, next) => {
       if (!p) return res.status(400).json({ error: "Un producto del carrito ya no existe." });
       // Ropa de Kids: la talla elegida va en el nombre para que se vea en todos lados.
       const size = String(it.size ?? "").trim().slice(0, 12);
-      lines.push({ id: p.id, name: size ? `${p.name} · Talla ${size}` : p.name, qty, price: Number(p.price), image: (p.images || [])[0] || "", double: !!p.double_points, ...(size ? { size } : {}) });
+      // Color elegido: solo uno de los colores del producto.
+      const colors = Array.isArray(p.details?.colors) ? p.details.colors : [];
+      const col = colors.find((c) => c.name === String(it.color ?? "").trim());
+      const extra = [size ? `Talla ${size}` : "", col ? `Color ${col.name}` : ""].filter(Boolean).join(" · ");
+      lines.push({ id: p.id, name: extra ? `${p.name} · ${extra}` : p.name, qty, price: Number(p.price), image: (col && col.img) || (p.images || [])[0] || "", ...(col ? { color: col.name } : {}), double: !!p.double_points, ...(size ? { size } : {}) });
     }
     const subtotal = lines.reduce((s, l) => s + l.qty * l.price, 0);
 

@@ -198,6 +198,14 @@ export function detailsOf(raw) {
   if (d.nso) out.nso = txt(d.nso, 40);
   if (d.sizes) out.sizes = list(d.sizes, 20, 12);
   if (["niña", "niño", "unisex"].includes(d.gender)) out.gender = d.gender;
+  // Colores (variantes): nombre + foto que lo muestra.
+  if (Array.isArray(d.colors)) {
+    const seen = new Set();
+    out.colors = d.colors
+      .map((c) => ({ name: txt(c && c.name, 30), img: txt(c && c.img, 400) }))
+      .filter((c) => c.name && !seen.has(c.name.toLowerCase()) && seen.add(c.name.toLowerCase()))
+      .slice(0, 16);
+  }
   return out;
 }
 

@@ -65,3 +65,29 @@
   .glow-pv-thumbs button { flex-basis: 56px; height: 56px; }
   .glow-pv-info { padding-top: 0; }
 }
+
+/* colores (variantes) */
+.glow-pv-colors p { margin: 0 0 6px; font-weight: 700; font-size: 14px; color: #6B5A63; }
+.glow-pv-colors > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.glow-pv-colors button { width: 58px; height: 58px; padding: 0; border-radius: 12px; border: 2px solid #E5D8E0; background: #fff; overflow: hidden; cursor: pointer; }
+.glow-pv-colors button img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.glow-pv-colors button.is-on { border-color: var(--wacc, #FF3D8B); box-shadow: 0 0 0 2px color-mix(in srgb, var(--wacc, #FF3D8B) 30%, transparent); }
+.glow-pv-colorname { font-size: 11px; font-weight: 800; padding: 2px; }
+.glow-card-colors { display: flex; align-items: center; gap: 3px; margin: 2px 0 4px; padding: 0; border: 0; background: none; cursor: pointer; }
+.glow-card-colors img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1.5px solid #fff; box-shadow: 0 0 0 1px #E5D8E0; }
+.glow-card-colors span { margin-left: 4px; font-size: 12px; font-weight: 700; color: #6B5A63; }
+/* panel: editor de colores */
+.glow-colors-open { width: 100%; margin-bottom: 12px; border: 1.5px dashed #E5D2DD; border-radius: 12px; padding: 10px; background: #FFFBFD; font: 700 14px Manrope, sans-serif; color: #3B2146; cursor: pointer; }
+.glow-colors-ed { background: #FBF7FF; }
+.glow-color-row { display: grid; grid-template-columns: 120px 1fr 30px; gap: 8px; align-items: center; margin-bottom: 10px; }
+.glow-color-row input { border: 1.5px solid #E5D8E0; border-radius: 10px; padding: 8px 10px; font: 600 14px Manrope, sans-serif; min-width: 0; }
+.glow-color-pics { display: flex; gap: 5px; overflow-x: auto; }
+.glow-color-pics button { flex: 0 0 44px; height: 44px; padding: 0; border-radius: 8px; border: 2px solid transparent; overflow: hidden; cursor: pointer; background: #fff; opacity: .55; }
+.glow-color-pics button.is-on { border-color: #FF3D8B; opacity: 1; }
+.glow-color-pics img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.glow-color-pics small { color: #6B5A63; }
+.glow-color-del { border: 0; background: #F3E9EF; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: 800; color: #8E2236; }
+.glow-color-ideas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.glow-color-ideas button { border: 1.5px solid #3B2146; background: #3B2146; color: #fff; border-radius: 99px; padding: 5px 11px; font: 700 12.5px Manrope, sans-serif; cursor: pointer; }
+.glow-color-ideas button.is-idea { background: #fff; color: #3B2146; border-color: #E5D8E0; }
+@media (max-width: 520px) { .glow-color-row { grid-template-columns: 1fr 30px; } .glow-color-pics { grid-column: span 2; grid-row: 2; } }

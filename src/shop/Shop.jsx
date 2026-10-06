@@ -4,7 +4,7 @@ import { getConfig, getMyOrders, getMyReviews } from "../api.js";
 import { C, money } from "../theme.js";
 import { WORLDS, recommendedSize, worldOf, fitsGender } from "../worlds.js";
 import { SPIDER } from "../seasons.js";
-import { REVIEW_PTS, loadCart, markSeen, scheduleText, scrollToId } from "../lib/util.js";
+import { REVIEW_PTS, loadCart, markSeen, scheduleText, scrollToId, imgUrl } from "../lib/util.js";
 import { BestSellers, HeroSlider } from "./hero.jsx";
 import { HALLOWEEN, HalloweenBand } from "./halloween.jsx";
 import { ComingSoon, CrossToSkin, RoutineBuilder, SizeBoard, SkinInfo, SkinTags } from "./worldParts.jsx";
@@ -129,15 +129,21 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
   );
 
   // Líneas del carrito (resuelve cada id contra el producto actual y respeta el stock).
-  // La clave es el id, o "id::talla" en la ropa de Kids.
+  // La clave es el id, o "id::talla::color" cuando hay talla o color.
   const cartLines = useMemo(
     () =>
       Object.entries(cart)
         .map(([key, qty]) => {
-          const [id, size = ""] = key.split("::");
+          const [id, size = "", color = ""] = key.split("::");
           const p = allProducts.find((x) => x.id === id);
           if (!p) return null;
-          return { ...p, key, size, name: size ? `${p.name} · Talla ${size}` : p.name, qty: Math.min(qty, p.stock) };
+          const col = (p.details?.colors || []).find((c) => c.name === color);
+          const extra = [size ? `Talla ${size}` : "", col ? `Color ${col.name}` : ""].filter(Boolean).join(" · ");
+          return {
+            ...p, key, size, color: col ? col.name : "",
+            images: col?.img ? [col.img, ...(p.images || [])] : p.images, // la foto del color elegido
+            name: extra ? `${p.name} · ${extra}` : p.name, qty: Math.min(qty, p.stock),
+          };
         })
         .filter((l) => l && l.qty > 0),
     [cart, allProducts]
@@ -147,13 +153,15 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
   const cartTotal = cartLines.reduce((n, l) => n + l.price * l.qty, 0);
 
   const [guideEvent, setGuideEvent] = useState(null);
-  const addToCart = (p, size = "") => {
+  const addToCart = (p, size = "", color = "") => {
+    // con colores hay que elegir uno: se abre la vista del producto
+    if (p.details?.colors?.length && !color) return setViewing(p);
     setGuideEvent({ type: "added", product: p, at: Date.now() });
-    addToCartRaw(p, size);
+    addToCartRaw(p, size, color);
   };
-  const addToCartRaw = (p, size = "") =>
+  const addToCartRaw = (p, size = "", color = "") =>
     setCart((c) => {
-      const key = size ? `${p.id}::${size}` : p.id;
+      const key = size || color ? [p.id, size, color].join("::").replace(/::$/, "") : p.id;
       const next = Math.min((c[key] || 0) + 1, p.stock);
       return { ...c, [key]: next };
     });
@@ -289,6 +297,12 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
                   )}
                   {world === "skin" && <SkinTags p={p} onInfo={() => setSkinInfo(p)} />}
                   <p className="glow-card-desc">{p.desc}</p>
+                  {p.details?.colors?.length > 1 && (
+                    <button className="glow-card-colors" onClick={() => setViewing(p)} title="Ver colores">
+                      {p.details.colors.slice(0, 5).map((c) => (c.img ? <img key={c.name} src={imgUrl(c.img, 60)} alt="" /> : null))}
+                      <span>{p.details.colors.length} colores</span>
+                    </button>
+                  )}
                   {p.details?.sizes?.length > 0 && (
                     <div className="glow-sizes" role="group" aria-label="Talla">
                       {p.details.sizes.map((t) => (
@@ -339,7 +353,7 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
           p={viewing}
           fav={favs.includes(viewing.id)}
           onToggleFav={onToggleFav}
-          onAdd={(prod, size) => addToCart(prod, size)}
+          onAdd={(prod, size, color) => addToCart(prod, size, color)}
           onClose={() => setViewing(null)}
           onReviews={(prod) => { setViewing(null); setReviewing(prod); }}
           initialSize={(viewing.details?.sizes || []).length === 1 ? viewing.details.sizes[0] : worldOf(viewing.category) === "kids" ? sizeFor(viewing) : ""}

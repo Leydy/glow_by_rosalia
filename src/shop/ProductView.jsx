@@ -12,6 +12,8 @@ export function ProductView({ p, fav, onToggleFav, onAdd, onClose, onReviews, in
   const imgs = (p.images || []).filter(Boolean);
   const [i, setI] = useState(0);
   const [size, setSize] = useState(initialSize);
+  const colors = (p.details?.colors || []).filter((c) => c.name);
+  const [color, setColor] = useState(colors.length === 1 ? colors[0].name : "");
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [zoom, setZoom] = useState(null); // {x, y} en % mientras el mouse está sobre la foto
@@ -21,6 +23,13 @@ export function ProductView({ p, fav, onToggleFav, onAdd, onClose, onReviews, in
   const d = p.details || {};
   const out = p.stock <= 0;
   const needSize = sizes.length > 0 && !size;
+  const needColor = colors.length > 0 && !color;
+  // al elegir un color se muestra su foto
+  const pickColor = (c) => {
+    setColor(c.name);
+    const k = imgs.indexOf(c.img);
+    if (k >= 0) show(k);
+  };
 
   // La página de atrás no se mueve mientras la vista está abierta.
   useEffect(() => {
@@ -53,8 +62,8 @@ export function ProductView({ p, fav, onToggleFav, onAdd, onClose, onReviews, in
   };
 
   const add = () => {
-    if (needSize || out) return;
-    for (let k = 0; k < qty; k++) onAdd(p, size);
+    if (needSize || needColor || out) return;
+    for (let k = 0; k < qty; k++) onAdd(p, size, color);
     setAdded(true);
     setTimeout(() => setAdded(false), 1800);
   };
@@ -137,6 +146,19 @@ export function ProductView({ p, fav, onToggleFav, onAdd, onClose, onReviews, in
             </dl>
           )}
 
+          {colors.length > 0 && (
+            <div className="glow-pv-colors">
+              <p>Color{color ? <>: <b>{color}</b></> : ""}</p>
+              <div>
+                {colors.map((c) => (
+                  <button key={c.name} className={color === c.name ? "is-on" : ""} aria-pressed={color === c.name} onClick={() => pickColor(c)} title={c.name}>
+                    {c.img ? <img src={imgUrl(c.img, 120)} alt="" /> : <span className="glow-pv-colorname">{c.name}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {sizes.length > 0 && (
             <div className="glow-pv-sizes">
               <p>Talla{size ? <>: <b>{size}</b></> : ""}</p>
@@ -155,8 +177,8 @@ export function ProductView({ p, fav, onToggleFav, onAdd, onClose, onReviews, in
               <b>{qty}</b>
               <button onClick={() => setQty((q) => Math.min(p.stock, q + 1))} disabled={qty >= p.stock} aria-label="Agregar uno"><Plus size={16} /></button>
             </div>
-            <button className="glow-pv-add" disabled={out || needSize} onClick={add}>
-              <ShoppingCart size={18} /> {out ? "Agotado" : needSize ? "Elige tu talla" : added ? "✓ Añadido al carrito" : "Añadir al carrito"}
+            <button className="glow-pv-add" disabled={out || needSize || needColor} onClick={add}>
+              <ShoppingCart size={18} /> {out ? "Agotado" : needColor ? "Elige un color" : needSize ? "Elige tu talla" : added ? "✓ Añadido al carrito" : "Añadir al carrito"}
             </button>
           </div>
           <p className="glow-pv-stock">{out ? "Sin stock por ahora" : p.stock <= 3 ? `¡Quedan solo ${p.stock}!` : "Disponible"}</p>
