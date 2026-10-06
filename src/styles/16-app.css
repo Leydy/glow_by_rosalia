@@ -59,3 +59,13 @@
 .glow-game-win { font-size: 17px; color: #2E8B57 !important; }
 .glow-game-end, .glow-game-intro { display: grid; gap: 12px; }
 @media (max-width: 520px) { .glow-game-bg { padding: 0; align-items: flex-end; } .glow-game { border-radius: 22px 22px 0 0; } .glow-game-banner b { font-size: 16px; } }
+
+/* ---------- Botón flotante del carrito (compacto) ---------- */
+.glow-cart-fab { position: fixed; z-index: 55; right: 20px; bottom: 90px; display: flex; align-items: center; gap: 8px; padding: 12px 16px; border: 0; border-radius: 999px; background: #FF3D8B; color: #fff; font: 700 15px Manrope, sans-serif; cursor: pointer; box-shadow: 0 8px 22px rgba(242, 109, 156, .45); }
+.glow-cart-fab-count { min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: #fff; color: #D6357F; font-size: 12px; font-weight: 800; display: grid; place-items: center; }
+/* en el celular: un círculo pequeño con el número, sin el total */
+@media (max-width: 640px) {
+  .glow-cart-fab { width: 52px; height: 52px; padding: 0; justify-content: center; right: 16px; bottom: 84px; }
+  .glow-cart-fab-total { display: none; }
+  .glow-cart-fab-count { position: absolute; top: -4px; right: -4px; box-shadow: 0 0 0 2px #FF3D8B; }
+}

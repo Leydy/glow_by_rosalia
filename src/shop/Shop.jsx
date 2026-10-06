@@ -424,28 +424,10 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
 
       {/* Botón flotante del carrito (encima del botón del chat) */}
       {cartCount > 0 && (
-        <button
-          onClick={() => setCartOpen(true)}
-          aria-label="Abrir carrito"
-          style={{
-            position: "fixed", bottom: 90, right: 20, zIndex: 55,
-            display: "flex", alignItems: "center", gap: 8, padding: "14px 20px",
-            borderRadius: 999, border: "none", color: C.primaryInk, background: C.primary,
-            fontWeight: 600, fontSize: 15, cursor: "pointer",
-            boxShadow: `0 8px 24px ${C.rose}66`,
-          }}
-        >
+        <button className="glow-cart-fab" onClick={() => setCartOpen(true)} aria-label={`Abrir carrito: ${cartCount} producto${cartCount === 1 ? "" : "s"}, ${money(cartTotal)}`}>
           <ShoppingCart size={20} />
-          <span>{money(cartTotal)}</span>
-          <span
-            style={{
-              minWidth: 22, height: 22, padding: "0 6px", borderRadius: 999,
-              background: "#fff", color: C.roseDeep, fontSize: 13, fontWeight: 700,
-              display: "grid", placeItems: "center",
-            }}
-          >
-            {cartCount}
-          </span>
+          <span className="glow-cart-fab-total">{money(cartTotal)}</span>
+          <span className="glow-cart-fab-count">{cartCount}</span>
         </button>
       )}
 
