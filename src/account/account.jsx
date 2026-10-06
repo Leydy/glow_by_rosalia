@@ -36,6 +36,7 @@ export function AccountMenu({ customer, onPick, onLogout, onClose }) {
       {item("perfil", <SettingsIcon size={17} />, "Mi perfil")}
       {item("pedidos", <Package size={17} />, "Mis pedidos")}
       {item("favoritos", <HeartIcon size={17} />, "Mis favoritos")}
+      <button role="menuitem" onClick={() => { onClose(); window.dispatchEvent(new Event("glow:game")); }}><span aria-hidden="true">🎮</span><span>Juego del día</span></button>
       <div className="glow-menu-extra"><NotifyButton text="🔔 Activar avisos" className="glow-menu-notify" /></div>
       {canInstall() && <button role="menuitem" onClick={() => { installApp(); onClose(); }}><span aria-hidden="true">📲</span><span>Instalar la app</span></button>}
       <button role="menuitem" className="is-out" onClick={onLogout}><LogOut size={17} /><span>Cerrar sesión</span></button>

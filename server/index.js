@@ -1025,6 +1025,30 @@ app.post("/api/upload", requirePin, async (req, res, next) => {
   }
 });
 
+/* ---------- Juego del día «Atrapa al michi» ---------- */
+// Día en hora de Perú (el juego se renueva a medianoche de Lima).
+const limaDay = () => new Date(Date.now() - 5 * 3600e3).toISOString().slice(0, 10);
+app.get("/api/me/game", requireCustomer, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query("SELECT amount FROM points WHERE email=$1 AND ref=$2", [req.customerEmail, `juego-${limaDay()}`]);
+    res.json({ played: rows.length > 0, points: rows[0]?.amount || 0 });
+  } catch (e) {
+    next(e);
+  }
+});
+app.post("/api/me/game", requireCustomer, async (req, res, next) => {
+  try {
+    const score = Math.max(0, Math.min(200, Math.floor(Number(req.body?.score) || 0)));
+    const pts = Math.max(0, Math.min(10, Math.ceil(score / 3)));
+    const ref = `juego-${limaDay()}`;
+    if (await hasRef(req.customerEmail, ref)) return res.json({ already: true, points: 0 });
+    if (pts > 0) await addPoints(req.customerEmail, pts, "juego", ref, `Juego «Atrapa al michi» (${score})`);
+    res.json({ points: pts });
+  } catch (e) {
+    next(e);
+  }
+});
+
 /* ---------- Notificaciones (Web Push) ---------- */
 app.get("/api/push/key", (_req, res) => res.json({ key: pushKey() }));
 app.post("/api/push/subscribe", async (req, res, next) => {

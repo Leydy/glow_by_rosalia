@@ -206,6 +206,14 @@ export async function setOrderStatus(id, status) {
 }
 
 /* ---------- Ajustes ---------- */
+/* ---------- Juego del día ---------- */
+export async function getGameToday() {
+  return handle(await fetch("/api/me/game", { headers: customerHeaders() }));
+}
+export async function sendGameScore(score) {
+  return handle(await fetch("/api/me/game", { method: "POST", headers: customerHeaders(), body: JSON.stringify({ score }) }));
+}
+
 /* ---------- Notificaciones ---------- */
 export async function getPushKey() {
   return handle(await fetch("/api/push/key"));

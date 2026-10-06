@@ -15,6 +15,7 @@ import { ProductView } from "./ProductView.jsx";
 // Se descargan recién cuando se usan (la tienda carga más rápido).
 const CartDrawer = lazy(() => import("../checkout/checkout.jsx").then((m) => ({ default: m.CartDrawer })));
 const AccountPage = lazy(() => import("../account/AccountPage.jsx").then((m) => ({ default: m.AccountPage })));
+import { CatchGame, GameBanner } from "./CatchGame.jsx";
 
 // Ventanita pública: puntos de encuentro en Juliaca y tarifas Shalom.
 export function ShippingInfo({ settings, onClose }) {
@@ -75,6 +76,12 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
   const worldCats = ["Todos", ...WORLDS[world].cats.filter((c) => products.some((p) => p.category === c && fitsGender(p, gender)))];
   const [skinInfo, setSkinInfo] = useState(null); // producto de Skin con sus detalles abiertos
   const [viewing, setViewing] = useState(null); // producto abierto en grande
+  const [playing, setPlaying] = useState(false); // juego del día abierto
+  useEffect(() => {
+    const open = () => setPlaying(true);
+    window.addEventListener("glow:game", open);
+    return () => window.removeEventListener("glow:game", open);
+  }, []);
   // Estatura del peque (cm) → talla recomendada en las tarjetas de Kids.
   const [kid, setKidState] = useState(() => {
     try { return { cm: 105, ...JSON.parse(localStorage.getItem("glow:peque") || "{}") }; } catch { return { cm: 105 }; }
@@ -210,6 +217,7 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
       <>
       <HeroSlider key={world} world={world} products={products} settings={settings} onPickCategory={goToCategory} onAction={(a) => { if (a === "rutina") window.dispatchEvent(new Event("glow:rutina")); scrollToId(a === "rutina" ? "glow-rutina" : "glow-tallas"); }} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} season={season} />
       {world === "michi" && season?.key === "halloween" && <HalloweenBand season={season} onGo={() => goToCategory("Todos")} />}
+      {world === "michi" && <div className="glow-wrap" style={{ paddingTop: 18 }}><GameBanner onPlay={() => setPlaying(true)} /></div>}
       {world === "skin" && products.length > 0 && <RoutineBuilder products={products} onAddAll={(list) => list.forEach((p) => addToCart(p))} />}
       {!products.length ? <ComingSoon world={world} onBack={() => onWorld("michi")} /> : (<>
 
@@ -352,6 +360,7 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
       {/* Sección "Más vendidos" */}
       {world === "michi" && <BestSellers products={products} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} />}
       </>)}
+      {playing && <CatchGame customer={customer} onClose={() => setPlaying(false)} onJoin={onJoin} />}
       {viewing && (
         <ProductView
           p={viewing}
