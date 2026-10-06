@@ -7,6 +7,7 @@ import { money } from "../theme.js";
 import { WORLDS, worldOf, ROUTINE_STEPS, sizeForHeight } from "../worlds.js";
 import { imgUrl } from "../lib/util.js";
 import { FavButton, Stars } from "../components/ui.jsx";
+import { TryOn } from "./TryOn.jsx";
 
 export function ProductView({ p, fav, onToggleFav, onAdd, onClose, onReviews, initialSize = "", kidCm }) {
   const imgs = (p.images || []).filter(Boolean);
@@ -19,7 +20,8 @@ export function ProductView({ p, fav, onToggleFav, onAdd, onClose, onReviews, in
   const maxQty = chosen && colorLeft(chosen) !== null ? colorLeft(chosen) : p.stock;
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
-  const [zoom, setZoom] = useState(null); // {x, y} en % mientras el mouse está sobre la foto
+  const [zoom, setZoom] = useState(null);
+  const [trying, setTrying] = useState(false); // probador con cámara abierto // {x, y} en % mientras el mouse está sobre la foto
   const track = useRef(null);
   const w = worldOf(p.category);
   const sizes = p.details?.sizes || [];
@@ -77,7 +79,8 @@ export function ProductView({ p, fav, onToggleFav, onAdd, onClose, onReviews, in
   const kidRec = w === "kids" && kidCm ? sizeForHeight(kidCm) : null;
 
   return (
-    <div className="glow-modal-bg glow-pv-bg" onClick={onClose}>
+    <div className="glow-modal-bg glow-pv-bg" onClick={() => { if (!trying) onClose(); }}>
+      {trying && <TryOn product={p} onClose={() => setTrying(false)} onAdd={out ? null : () => { setTrying(false); add(); }} />}
       <div className={`glow-pv is-${w}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label={p.name}>
         <button className="glow-pv-x" onClick={onClose} aria-label="Cerrar"><X size={22} /></button>
 
@@ -137,6 +140,9 @@ export function ProductView({ p, fav, onToggleFav, onAdd, onClose, onReviews, in
             </button>
           )}
           <div className="glow-pv-price">{money(p.price)}</div>
+          {d.tryon && (
+            <button className="glow-pv-try" onClick={() => setTrying(true)}>✨ Pruébatelo con tu cámara</button>
+          )}
           <p className="glow-pv-earn">🧶 Ganas <b>{Math.floor(p.price * 1.25)} Michipuntos</b> con esta compra</p>
           {p.desc && <p className="glow-pv-desc">{p.desc}</p>}
 

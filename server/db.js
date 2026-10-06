@@ -196,6 +196,8 @@ export function detailsOf(raw) {
   if (d.ingredients) out.ingredients = txt(d.ingredients, 400);
   if (d.usage) out.usage = txt(d.usage, 400);
   if (d.nso) out.nso = txt(d.nso, 40);
+  // foto del arete sin fondo para el probador con cámara
+  if (typeof d.tryon === "string" && /^https:\/\/res\.cloudinary\.com\//.test(d.tryon)) out.tryon = d.tryon.slice(0, 400);
   if (d.sizes) out.sizes = list(d.sizes, 20, 12);
   if (["niña", "niño", "unisex"].includes(d.gender)) out.gender = d.gender;
   // Colores (variantes): nombre + foto que lo muestra.

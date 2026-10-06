@@ -7,6 +7,7 @@ import { daysUntil, inRange, seasonList } from "../seasons.js";
 import { DAY_SHORT, HALF_HOURS, REVIEW_PTS, fileToDataURL, fmtPts, hour12, readBrowserProducts, readBrowserSettings, whenText, imgUrl } from "../lib/util.js";
 import { CatAvatar, Field, Inp, Stars, Thumb, YapeMark } from "../components/ui.jsx";
 import { TemuImport } from "./TemuImport.jsx";
+import { TryOnPrep } from "./TryOnPrep.jsx";
 
 /* =========================================================================
    VISTA ADMINISTRACIÓN — inventario, márgenes, ganancias, stock
@@ -291,6 +292,9 @@ export function Card({ icon, label, value, sub, accent, warn }) {
   );
 }
 
+// Categorías que se pueden probar con la cámara (aretes).
+const TRYON_CATS = ["Aretes", "Accesorios"];
+
 // Colores (variantes): cada color con su nombre y la foto que lo muestra.
 const COLOR_IDEAS = ["Dorado", "Plateado", "Oro rosa", "Negro", "Blanco", "Rosa"];
 function ColorEditor({ colors, images, onChange }) {
@@ -401,6 +405,7 @@ export function ProductForm({ initial, busy, onSave, onClose }) {
       ...(c.stock !== "" && c.stock != null && Number.isFinite(Number(c.stock)) ? { stock: Math.max(0, Math.floor(Number(c.stock))) } : {}),
     }));
     if (colors.length) details.colors = colors;
+    if (d.tryon && TRYON_CATS.includes(f.category)) details.tryon = d.tryon; // foto para «Pruébatelo»
     // con stock por color, el stock total es la suma
     const perColor = colors.length && colors.every((c) => Number.isInteger(c.stock));
     onSave({ ...f, details, cost: Number(f.cost), price: Number(f.price), stock: perColor ? colors.reduce((s, c) => s + c.stock, 0) : Number(f.stock) });
@@ -497,6 +502,9 @@ export function ProductForm({ initial, busy, onSave, onClose }) {
             </button>
           </div>
         </Field>
+        {TRYON_CATS.includes(f.category) && f.images.length > 0 && (
+          <TryOnPrep images={f.images} value={f.details.tryon || ""} onChange={(u) => setD("tryon", u)} />
+        )}
         <ColorEditor
           colors={f.details.colors || []}
           images={f.images}

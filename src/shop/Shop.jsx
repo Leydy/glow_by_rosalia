@@ -267,6 +267,7 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
                     {season?.key === "halloween" && world === "michi" && svg(HALLOWEEN.cardWeb, "glow-card-web")}
                     {season?.key === "halloween" && world === "michi" && svg(SPIDER, "glow-card-spider")}
                     {p.details?.nso && <span className="glow-nso">NSO ✓</span>}
+                    {p.details?.tryon && <span className="glow-try-badge">✨ Pruébatelo</span>}
                     <FavButton active={favs.includes(p.id)} onClick={() => onToggleFav(p.id)} style={{ bottom: 8, right: 8 }} />
                     {p.doublePoints && <span className="glow-x2 is-card">×2 Michipuntos</span>}
                     {p.bestSeller && (
