@@ -11,6 +11,7 @@ import { ComingSoon, CrossToSkin, RoutineBuilder, SizeBoard, SkinInfo, SkinTags 
 import { FavButton, ProductGallery, Stars, svg } from "../components/ui.jsx";
 import { AccountDrawer, ProductReviews, ReviewModal } from "../account/account.jsx";
 import { ShopGuide } from "../components/guide.jsx";
+import { ProductView } from "./ProductView.jsx";
 // Se descargan recién cuando se usan (la tienda carga más rápido).
 const CartDrawer = lazy(() => import("../checkout/checkout.jsx").then((m) => ({ default: m.CartDrawer })));
 const AccountPage = lazy(() => import("../account/AccountPage.jsx").then((m) => ({ default: m.AccountPage })));
@@ -73,6 +74,7 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
   useEffect(() => { setGender(""); }, [world]);
   const worldCats = ["Todos", ...WORLDS[world].cats.filter((c) => products.some((p) => p.category === c && fitsGender(p, gender)))];
   const [skinInfo, setSkinInfo] = useState(null); // producto de Skin con sus detalles abiertos
+  const [viewing, setViewing] = useState(null); // producto abierto en grande
   // Estatura del peque (cm) → talla recomendada en las tarjetas de Kids.
   const [kid, setKidState] = useState(() => {
     try { return { cm: 105, ...JSON.parse(localStorage.getItem("glow:peque") || "{}") }; } catch { return { cm: 105 }; }
@@ -249,7 +251,7 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
               <div key={p.id} id={`prod-${p.id}`} className={`glow-pcard is-${world}`} onPointerEnter={(e) => { if (e.pointerType === "mouse") e.currentTarget._seen = setTimeout(() => markSeen(p.id), 1000); }} onPointerLeave={(e) => clearTimeout(e.currentTarget._seen)} onClick={() => markSeen(p.id)} style={{ borderRadius: 18, overflow: "hidden", display: "flex", flexDirection: "column", background: C.surface, border: `1px solid ${C.line}`, boxShadow: "0 6px 20px rgba(214,53,127,0.08)" }}>
                 {/* foto con marco kawaii */}
                 <div className="glow-card-pad" style={{ padding: 10 }}>
-                  <div className="glow-card-img" style={{ position: "relative", overflow: "hidden", display: "grid", placeItems: "center", borderRadius: 14, background: `linear-gradient(135deg, ${C.blush}, ${C.bg})`, border: "2px solid #fff", boxShadow: `0 0 0 2px ${C.blush}` }}>
+                  <div className="glow-card-img" onClick={() => setViewing(p)} title="Ver en grande" style={{ cursor: "zoom-in", position: "relative", overflow: "hidden", display: "grid", placeItems: "center", borderRadius: 14, background: `linear-gradient(135deg, ${C.blush}, ${C.bg})`, border: "2px solid #fff", boxShadow: `0 0 0 2px ${C.blush}` }}>
                     <ProductGallery images={p.images} alt={p.name} />
                     {season?.key === "halloween" && world === "michi" && svg(HALLOWEEN.cardWeb, "glow-card-web")}
                     {season?.key === "halloween" && world === "michi" && svg(SPIDER, "glow-card-spider")}
@@ -274,7 +276,7 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
                 </div>
                 <div className="glow-card-body" style={{ display: "flex", flexDirection: "column", flex: 1 }}>
                   <p className="glow-card-cat" style={{ color: C.antique }}>{p.category}</p>
-                  <h3 className="glow-card-name glow-name" style={{ color: C.aubergine }}>{p.name}</h3>
+                  <h3 className="glow-card-name glow-name" style={{ color: C.aubergine, cursor: "pointer" }} onClick={() => setViewing(p)}>{p.name}</h3>
                   {p.reviews > 0 && (
                     <button className="glow-card-rating" onClick={(e) => { e.stopPropagation(); setReviewing(p); }}>
                       <Stars value={p.rating} size={18} /> <b>{p.rating}</b> <small>({p.reviews}<span className="glow-hide-sm"> reseña{p.reviews === 1 ? "" : "s"}</span>)</small>
@@ -332,6 +334,18 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
       {/* Sección "Más vendidos" */}
       {world === "michi" && <BestSellers products={products} onAdd={addToCart} favs={favs} onToggleFav={onToggleFav} />}
       </>)}
+      {viewing && (
+        <ProductView
+          p={viewing}
+          fav={favs.includes(viewing.id)}
+          onToggleFav={onToggleFav}
+          onAdd={(prod, size) => addToCart(prod, size)}
+          onClose={() => setViewing(null)}
+          onReviews={(prod) => { setViewing(null); setReviewing(prod); }}
+          initialSize={(viewing.details?.sizes || []).length === 1 ? viewing.details.sizes[0] : worldOf(viewing.category) === "kids" ? sizeFor(viewing) : ""}
+          kidCm={kid.cm}
+        />
+      )}
       {skinInfo && <SkinInfo p={skinInfo} onClose={() => setSkinInfo(null)} onAdd={() => { addToCart(skinInfo); setSkinInfo(null); }} />}
       </>
       )}

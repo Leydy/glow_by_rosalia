@@ -46,7 +46,8 @@ const TRAITS = [
   [/dorad|oro\b|gold/, "dorado"],
 ];
 function trait(title) {
-  const p = plain(title);
+  // "ojo de gato" / "cat eye" es un tipo de piedra, no un michi
+  const p = plain(title).replace(/ojo de gato|cat.?s? ?eye/g, "piedra");
   const t = TRAITS.find(([re]) => re.test(p));
   return t ? t[1] : "";
 }
@@ -105,7 +106,7 @@ const KIDS_RULES = [
   [/gorr|sombrero/, "Gorritos"], [/polo|camiseta|polera/, "Polos"],
 ];
 export function guessCategory(title) {
-  const p = plain(title);
+  const p = plain(title).replace(/ojo de gato|cat.?s? ?eye/g, "piedra"); // piedra "ojo de gato", no un michi
   const michi = /gat|michi|kitty|\bcat\b|kitten|huell|neko|miau/.test(p);
   const kids = /\bni[nñ]o|\bni[nñ]a|infantil|beb[eé]|kids|\bpeque|\bgirl|\bboy/.test(p);
   if (kids) return (KIDS_RULES.find(([re]) => re.test(p)) || [, "Conjuntos"])[1];
