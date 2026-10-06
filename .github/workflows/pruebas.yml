@@ -1,0 +1,23 @@
+# Cada vez que se sube código a GitHub: instala, corre las pruebas y arma la tienda.
+# Si algo falla, GitHub lo marca con ✗ en el commit (gratis en repos públicos).
+name: Pruebas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Pruebas automáticas
+        run: npm test
+      - name: Armar la tienda
+        run: npm run build
