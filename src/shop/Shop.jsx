@@ -142,7 +142,9 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
           return {
             ...p, key, size, color: col ? col.name : "",
             images: col?.img ? [col.img, ...(p.images || [])] : p.images, // la foto del color elegido
-            name: extra ? `${p.name} · ${extra}` : p.name, qty: Math.min(qty, p.stock),
+            // con stock por color, el máximo es el de ese color
+            stock: Number.isInteger(col?.stock) ? col.stock : p.stock,
+            name: extra ? `${p.name} · ${extra}` : p.name, qty: Math.min(qty, Number.isInteger(col?.stock) ? col.stock : p.stock),
           };
         })
         .filter((l) => l && l.qty > 0),
@@ -162,7 +164,8 @@ export function Shop({ products: allProducts, settings, favs = [], onToggleFav, 
   const addToCartRaw = (p, size = "", color = "") =>
     setCart((c) => {
       const key = size || color ? [p.id, size, color].join("::").replace(/::$/, "") : p.id;
-      const next = Math.min((c[key] || 0) + 1, p.stock);
+      const col = (p.details?.colors || []).find((x) => x.name === color);
+      const next = Math.min((c[key] || 0) + 1, Number.isInteger(col?.stock) ? col.stock : p.stock);
       return { ...c, [key]: next };
     });
   const setQty = (id, qty) =>

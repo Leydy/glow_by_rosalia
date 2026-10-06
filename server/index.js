@@ -531,10 +531,29 @@ async function saveDoublePoints(row, p) {
     row = rows[0];
   }
   if ("details" in p) {
-    const { rows } = await pool.query("UPDATE products SET details=$2::jsonb WHERE id=$1 RETURNING *", [row.id, JSON.stringify(detailsOf(p.details))]);
+    const d = detailsOf(p.details);
+    // con stock por color, el stock del producto es la suma de sus colores
+    const perColor = d.colors?.length && d.colors.every((c) => Number.isInteger(c.stock));
+    const { rows } = perColor
+      ? await pool.query("UPDATE products SET details=$2::jsonb, stock=$3 WHERE id=$1 RETURNING *", [row.id, JSON.stringify(d), d.colors.reduce((s, c) => s + c.stock, 0)])
+      : await pool.query("UPDATE products SET details=$2::jsonb WHERE id=$1 RETURNING *", [row.id, JSON.stringify(d)]);
     row = rows[0];
   }
   return row;
+}
+
+// Suma o resta stock de un color (si el producto lleva stock por color).
+// Devuelve false si no alcanza. Debe ir dentro de una transacción.
+async function moveColorStock(client, id, color, delta) {
+  if (!color) return true;
+  const { rows } = await client.query("SELECT details FROM products WHERE id=$1 FOR UPDATE", [id]);
+  const d = rows[0]?.details || {};
+  const c = (d.colors || []).find((x) => x.name === color);
+  if (!c || !Number.isInteger(c.stock)) return true; // sin stock por color
+  if (c.stock + delta < 0) return false;
+  c.stock += delta;
+  await client.query("UPDATE products SET details=$2::jsonb WHERE id=$1", [id, JSON.stringify(d)]);
+  return true;
 }
 
 app.post("/api/products", requirePin, async (req, res, next) => {
@@ -768,7 +787,7 @@ app.post("/api/orders", async (req, res, next) => {
       if (takeStock) {
         for (const l of lines) {
           const r = await client.query("UPDATE products SET stock = stock - $2 WHERE id=$1 AND stock >= $2", [l.id, l.qty]);
-          if (!r.rowCount) {
+          if (!r.rowCount || !(await moveColorStock(client, l.id, l.color, -l.qty))) {
             await client.query("ROLLBACK");
             return res.status(409).json({ error: `Lo sentimos, «${l.name}» ya no tiene stock suficiente.` });
           }
@@ -866,7 +885,10 @@ app.put("/api/orders/:id", requirePin, async (req, res, next) => {
     const code = "#GLW-" + String(id).padStart(4, "0");
     if (status === "rechazado" && o.stock_taken) {
       // pago no válido → los productos vuelven al stock
-      for (const l of o.items || []) await pool.query("UPDATE products SET stock = stock + $2 WHERE id=$1", [l.id, Number(l.qty) || 0]);
+      for (const l of o.items || []) {
+        await pool.query("UPDATE products SET stock = stock + $2 WHERE id=$1", [l.id, Number(l.qty) || 0]);
+        if (l.color) await moveColorStock(pool, l.id, l.color, Number(l.qty) || 0);
+      }
       await pool.query("UPDATE orders SET stock_taken=false WHERE id=$1", [id]);
     }
     if (o.customer_email) {

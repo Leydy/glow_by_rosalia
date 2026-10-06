@@ -305,10 +305,13 @@ function ColorEditor({ colors, images, onChange }) {
   return (
     <div className="glow-pf-extra glow-colors-ed">
       <b>🎨 Colores</b>
-      <p className="glow-pf-hint">Escribe cada color y toca la foto que lo muestra. La clienta elegirá el color antes de añadirlo al carrito.</p>
+      <p className="glow-pf-hint">Escribe cada color, su stock y toca la foto que lo muestra. La clienta elegirá el color antes de añadirlo al carrito. El stock total del producto será la suma de los colores.</p>
       {colors.map((c, i) => (
         <div key={i} className="glow-color-row">
-          <input value={c.name} onChange={(e) => set(i, { name: e.target.value })} placeholder="Ej. Dorado" maxLength={30} />
+          <div className="glow-color-name">
+            <input value={c.name} onChange={(e) => set(i, { name: e.target.value })} placeholder="Ej. Dorado" maxLength={30} />
+            <label>Stock <input type="number" min="0" value={c.stock ?? ""} onChange={(e) => set(i, { stock: e.target.value === "" ? "" : Math.max(0, Number(e.target.value)) })} placeholder="0" /></label>
+          </div>
           <div className="glow-color-pics">
             {images.length ? images.map((u) => (
               <button type="button" key={u} className={c.img === u ? "is-on" : ""} onClick={() => set(i, { img: u })} title="Esta foto muestra el color">
@@ -391,9 +394,14 @@ export function ProductForm({ initial, busy, onSave, onClose }) {
       ? { step: d.step, skinTypes: d.skinTypes, concerns: d.concerns, size: d.size, ingredients: d.ingredients, usage: d.usage, nso: d.nso }
       : fw === "kids" ? { sizes: d.sizes, gender: d.gender || "unisex" }
       : ADULT_SIZE_CATS.includes(f.category) ? { sizes: d.sizes } : {};
-    const colors = (d.colors || []).filter((c) => c.name.trim()).map((c) => ({ name: c.name.trim(), img: f.images.includes(c.img) ? c.img : "" }));
+    const colors = (d.colors || []).filter((c) => c.name.trim()).map((c) => ({
+      name: c.name.trim(), img: f.images.includes(c.img) ? c.img : "",
+      ...(c.stock !== "" && c.stock != null && Number.isFinite(Number(c.stock)) ? { stock: Math.max(0, Math.floor(Number(c.stock))) } : {}),
+    }));
     if (colors.length) details.colors = colors;
-    onSave({ ...f, details, cost: Number(f.cost), price: Number(f.price), stock: Number(f.stock) });
+    // con stock por color, el stock total es la suma
+    const perColor = colors.length && colors.every((c) => Number.isInteger(c.stock));
+    onSave({ ...f, details, cost: Number(f.cost), price: Number(f.price), stock: perColor ? colors.reduce((s, c) => s + c.stock, 0) : Number(f.stock) });
   };
 
   return (
@@ -453,7 +461,9 @@ export function ProductForm({ initial, busy, onSave, onClose }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
           <Field label="P. compra (S/)"><Inp type="number" value={f.cost} onChange={(v) => set("cost", v)} placeholder="8" /></Field>
           <Field label="P. venta (S/)"><Inp type="number" value={f.price} onChange={(v) => set("price", v)} placeholder="18" /></Field>
-          <Field label="Stock"><Inp type="number" value={f.stock} onChange={(v) => set("stock", v)} placeholder="12" /></Field>
+          {(f.details.colors || []).length > 0 && (f.details.colors || []).every((c) => c.stock !== "" && c.stock != null)
+            ? <Field label="Stock (suma de colores)"><div className="glow-stock-sum">{(f.details.colors || []).reduce((t, c) => t + (Number(c.stock) || 0), 0)}</div></Field>
+            : <Field label="Stock"><Inp type="number" value={f.stock} onChange={(v) => set("stock", v)} placeholder="12" /></Field>}
         </div>
         <Field label="Imágenes del producto (opcional)">
           {f.images.length > 0 && (

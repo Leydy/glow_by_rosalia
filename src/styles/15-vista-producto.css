@@ -91,3 +91,14 @@
 .glow-color-ideas button { border: 1.5px solid #3B2146; background: #3B2146; color: #fff; border-radius: 99px; padding: 5px 11px; font: 700 12.5px Manrope, sans-serif; cursor: pointer; }
 .glow-color-ideas button.is-idea { background: #fff; color: #3B2146; border-color: #E5D8E0; }
 @media (max-width: 520px) { .glow-color-row { grid-template-columns: 1fr 30px; } .glow-color-pics { grid-column: span 2; grid-row: 2; } }
+
+/* stock por color */
+.glow-pv-colors button.is-out { opacity: .35; cursor: not-allowed; position: relative; }
+.glow-pv-colors button.is-out::after { content: ""; position: absolute; left: -4px; right: -4px; top: 50%; border-top: 2px solid #8E2236; transform: rotate(-35deg); }
+.glow-pv-colors button { position: relative; }
+.glow-pv-left { color: #C0394F; font-weight: 800; }
+.glow-color-row { grid-template-columns: 140px 1fr 30px; }
+.glow-color-name { display: grid; gap: 4px; }
+.glow-color-name label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #6B5A63; }
+.glow-color-name label input { width: 64px; padding: 6px 8px; }
+.glow-stock-sum { padding: 10px 12px; border-radius: 12px; background: #F2FAF5; border: 1px solid #CBEBD8; font-weight: 800; color: #2E8B57; }

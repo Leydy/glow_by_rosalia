@@ -13,7 +13,10 @@ export function ProductView({ p, fav, onToggleFav, onAdd, onClose, onReviews, in
   const [i, setI] = useState(0);
   const [size, setSize] = useState(initialSize);
   const colors = (p.details?.colors || []).filter((c) => c.name);
-  const [color, setColor] = useState(colors.length === 1 ? colors[0].name : "");
+  const colorLeft = (c) => (Number.isInteger(c.stock) ? c.stock : null); // null = sin stock por color
+  const [color, setColor] = useState(colors.length === 1 && colorLeft(colors[0]) !== 0 ? colors[0].name : "");
+  const chosen = colors.find((c) => c.name === color);
+  const maxQty = chosen && colorLeft(chosen) !== null ? colorLeft(chosen) : p.stock;
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [zoom, setZoom] = useState(null); // {x, y} en % mientras el mouse está sobre la foto
@@ -26,7 +29,9 @@ export function ProductView({ p, fav, onToggleFav, onAdd, onClose, onReviews, in
   const needColor = colors.length > 0 && !color;
   // al elegir un color se muestra su foto
   const pickColor = (c) => {
+    if (colorLeft(c) === 0) return; // agotado en ese color
     setColor(c.name);
+    setQty(1);
     const k = imgs.indexOf(c.img);
     if (k >= 0) show(k);
   };
@@ -148,10 +153,10 @@ export function ProductView({ p, fav, onToggleFav, onAdd, onClose, onReviews, in
 
           {colors.length > 0 && (
             <div className="glow-pv-colors">
-              <p>Color{color ? <>: <b>{color}</b></> : ""}</p>
+              <p>Color{color ? <>: <b>{color}</b>{chosen && colorLeft(chosen) !== null && colorLeft(chosen) <= 3 ? <span className="glow-pv-left"> · ¡quedan {colorLeft(chosen)}!</span> : null}</> : ""}</p>
               <div>
                 {colors.map((c) => (
-                  <button key={c.name} className={color === c.name ? "is-on" : ""} aria-pressed={color === c.name} onClick={() => pickColor(c)} title={c.name}>
+                  <button key={c.name} className={`${color === c.name ? "is-on" : ""}${colorLeft(c) === 0 ? " is-out" : ""}`} aria-pressed={color === c.name} onClick={() => pickColor(c)} title={colorLeft(c) === 0 ? `${c.name} · agotado` : c.name}>
                     {c.img ? <img src={imgUrl(c.img, 120)} alt="" /> : <span className="glow-pv-colorname">{c.name}</span>}
                   </button>
                 ))}
@@ -175,7 +180,7 @@ export function ProductView({ p, fav, onToggleFav, onAdd, onClose, onReviews, in
             <div className="glow-pv-qty" aria-label="Cantidad">
               <button onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1} aria-label="Quitar uno"><Minus size={16} /></button>
               <b>{qty}</b>
-              <button onClick={() => setQty((q) => Math.min(p.stock, q + 1))} disabled={qty >= p.stock} aria-label="Agregar uno"><Plus size={16} /></button>
+              <button onClick={() => setQty((q) => Math.min(maxQty, q + 1))} disabled={qty >= maxQty} aria-label="Agregar uno"><Plus size={16} /></button>
             </div>
             <button className="glow-pv-add" disabled={out || needSize || needColor} onClick={add}>
               <ShoppingCart size={18} /> {out ? "Agotado" : needColor ? "Elige un color" : needSize ? "Elige tu talla" : added ? "✓ Añadido al carrito" : "Añadir al carrito"}
