@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 
 const isStandalone = () => window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true;
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+const isMobile = () => /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
 const seenRecently = () => {
   try { return Date.now() - Number(localStorage.getItem("glow:app-visto") || 0) < 5 * 86400e3; } catch { return true; }
 };
@@ -32,7 +33,7 @@ if (typeof window !== "undefined") {
 
 // Para botones de "Instalar la app" en otros lugares (menú de cuenta).
 export function canInstall() {
-  return !isStandalone() && (!!deferred || isIOS());
+  return !isStandalone() && (!!deferred || isMobile());
 }
 export async function installApp() {
   if (deferred) {
@@ -41,6 +42,7 @@ export async function installApp() {
     deferred = null;
     return r?.outcome === "accepted";
   }
+  // sin el aviso automático del navegador: se muestran los pasos para hacerlo a mano
   window.dispatchEvent(new Event("glow:install-ios"));
   return false;
 }
@@ -51,9 +53,9 @@ export function InstallApp() {
 
   useEffect(() => {
     if (isStandalone()) return;
-    const offer = () => { if (!seenRecently() && (deferred || isIOS())) setShow(true); };
-    // se ofrece después de un ratito, para no interrumpir la llegada
-    const t = setTimeout(offer, 25000);
+    const offer = () => { if (!seenRecently() && (deferred || isMobile())) setShow(true); };
+    // se ofrece a los pocos segundos de llegar (en celular, aunque el navegador no dé su botón)
+    const t = setTimeout(offer, 6000);
     listeners.add(offer);
     const openIos = () => { setIos(true); setShow(true); };
     window.addEventListener("glow:install-ios", openIos);
@@ -63,7 +65,7 @@ export function InstallApp() {
   if (!show) return null;
   const close = () => { markSeen(); setShow(false); setIos(false); };
   const install = async () => {
-    if (isIOS() && !deferred) return setIos(true);
+    if (!deferred) return setIos(true);
     await installApp();
     close();
   };
@@ -72,10 +74,17 @@ export function InstallApp() {
     <div className="glow-install" role="dialog" aria-label="Instalar la app">
       <img src="/icons/icon-192.png" alt="" />
       {ios ? (
-        <div>
-          <b>Instala Glow en tu iPhone</b>
-          <span>Toca <b>Compartir</b> <span aria-hidden="true">⬆️</span> abajo en Safari y luego <b>«Añadir a pantalla de inicio»</b>.</span>
-        </div>
+        isIOS() ? (
+          <div>
+            <b>Instala Glow en tu iPhone</b>
+            <span>Toca <b>Compartir</b> <span aria-hidden="true">⬆️</span> abajo en Safari y luego <b>«Añadir a pantalla de inicio»</b>.</span>
+          </div>
+        ) : (
+          <div>
+            <b>Instala Glow en tu celular</b>
+            <span>Toca los <b>⋮</b> arriba a la derecha de Chrome y luego <b>«Instalar app»</b> o <b>«Agregar a pantalla principal»</b>.</span>
+          </div>
+        )
       ) : (
         <div>
           <b>📲 Instala Glow en tu celular</b>
