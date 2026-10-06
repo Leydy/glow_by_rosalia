@@ -1,0 +1,15 @@
+/* ---------- Instalar la app (PWA) ---------- */
+.glow-install {
+  position: fixed; z-index: 70; left: 50%; transform: translateX(-50%);
+  top: calc(76px + env(safe-area-inset-top, 0px)); width: min(440px, calc(100% - 24px));
+  display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px;
+  background: #fff; border-radius: 18px; box-shadow: 0 16px 40px rgba(59, 33, 70, .22); border: 1px solid #F3DDE8;
+  animation: glow-install-in .35s ease-out;
+}
+@keyframes glow-install-in { from { opacity: 0; transform: translate(-50%, -10px); } }
+.glow-install img { width: 46px; height: 46px; border-radius: 12px; flex: none; }
+.glow-install > div { flex: 1; min-width: 0; display: grid; gap: 2px; font-size: 13px; color: #6B5A63; line-height: 1.4; }
+.glow-install > div b:first-child { color: #3B2146; font-size: 14.5px; }
+.glow-install-go { border: 0; border-radius: 99px; padding: 9px 16px; background: #FF3D8B; color: #fff; font: 800 14px Manrope, sans-serif; cursor: pointer; }
+.glow-install-x { border: 0; background: none; color: #6B5A63; cursor: pointer; padding: 4px; }
+@media (max-width: 640px) { .glow-install { top: calc(118px + env(safe-area-inset-top, 0px)); } }

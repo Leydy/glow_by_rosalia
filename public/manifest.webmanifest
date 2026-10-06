@@ -1,0 +1,23 @@
+{
+  "name": "Glow by Rosalía",
+  "short_name": "Glow",
+  "description": "Accesorios michi, cuidado de la piel, ropita para peques y más. Envíos a todo el Perú.",
+  "lang": "es-PE",
+  "start_url": "/?app=1",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF7FB",
+  "theme_color": "#FF3D8B",
+  "categories": ["shopping", "lifestyle"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Michitienda", "url": "/?mundo=michi", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Glow Skin", "url": "/?mundo=skin", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Glow Kids", "url": "/?mundo=kids", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

@@ -10,6 +10,7 @@ import { WorldTabs } from "./shop/worldParts.jsx";
 import { HalloweenCat, HalloweenFlock } from "./shop/halloween.jsx";
 import { AccountMenu, ClaimModal, JoinModal } from "./account/account.jsx";
 import { ShippingInfo, Shop } from "./shop/Shop.jsx";
+import { InstallApp } from "./components/InstallApp.jsx";
 // Se descargan recién cuando se usan (la tienda carga más rápido).
 const ChatBot = lazy(() => import("./ChatBot.jsx"));
 const Admin = lazy(() => import("./admin/Admin.jsx").then((m) => ({ default: m.Admin })));
@@ -22,6 +23,9 @@ export default function App() {
   // Mundo de la tienda (Michitienda · Glow Skin · Glow Kids); se recuerda.
   const [world, setWorldState] = useState(() => {
     try {
+      // ?mundo=kids (accesos directos de la app y enlaces compartidos) manda sobre lo guardado
+      const q = new URLSearchParams(window.location.search).get("mundo");
+      if (WORLDS[q]) { localStorage.setItem("glow:mundo", q); return q; }
       const w = localStorage.getItem("glow:mundo");
       return WORLDS[w] ? w : "michi";
     } catch {
@@ -404,6 +408,7 @@ export default function App() {
 
       {/* Asistente de la tienda (solo para los clientes, no en el panel). */}
       {view === "shop" && <Suspense fallback={null}><ChatBot products={products} settings={settings} /></Suspense>}
+      {view === "shop" && <InstallApp />}
       {season?.key === "halloween" && view === "shop" && <HalloweenFlock />}
     </div>
   );

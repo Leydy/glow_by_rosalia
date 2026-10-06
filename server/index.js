@@ -1023,7 +1023,8 @@ if (hasDist) {
   app.use(express.static(distDir, {
     index: false,
     maxAge: "7d",
-    setHeaders: (res, p) => { if (p.endsWith(".html")) res.setHeader("Cache-Control", "no-cache"); },
+    // la página, el Service Worker y el manifiesto siempre se revisan (para que la app se actualice)
+    setHeaders: (res, p) => { if (/\.(html|webmanifest)$|[\\/]sw\.js$/.test(p)) res.setHeader("Cache-Control", "no-cache"); },
   }));
   app.get(/^\/(?!api\/|uploads\/).*/, (_req, res) => {
     res.setHeader("Cache-Control", "no-cache");
