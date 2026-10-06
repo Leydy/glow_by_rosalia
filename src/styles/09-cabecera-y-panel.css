@@ -267,3 +267,44 @@
 
 .glow-disk-warn { display: grid; gap: 4px; margin: 0 0 14px; padding: 12px 16px; border-radius: 14px; background: #FFF0F2; border: 1.5px solid #F5B5C0; color: #8E2236; font-size: 14px; line-height: 1.45; }
 .glow-disk-warn code { background: #fff; padding: 1px 6px; border-radius: 6px; }
+
+/* ---------- Panel: Ventas ---------- */
+.glow-admin-wa { display: inline-flex; align-items: center; gap: 4px; padding: 7px 12px; border-radius: 10px; background: #E7F9EE; color: #1E7A47; font-weight: 800; font-size: 13px; text-decoration: none; }
+.glow-sales { display: grid; gap: 16px; }
+.glow-sales-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.glow-sales-kpis > div { background: #fff; border: 1px solid #F0E3EA; border-radius: 16px; padding: 14px; display: grid; gap: 2px; }
+.glow-sales-kpis span { font-size: 12.5px; color: #6B5A63; font-weight: 700; }
+.glow-sales-kpis b { font-size: 24px; color: #3B2146; font-variant-numeric: tabular-nums; }
+.glow-sales-kpis b.is-good { color: #2E8B57; }
+.glow-sales-kpis small { color: #8E7F88; font-size: 12px; }
+.glow-sales-card { background: #fff; border: 1px solid #F0E3EA; border-radius: 18px; padding: 16px; min-width: 0; }
+.glow-sales-card h3 { margin: 0 0 12px; font-family: "Fraunces", serif; color: #3B2146; font-size: 19px; }
+.glow-sales-card h4 { margin: 16px 0 8px; font-size: 14px; color: #6B5A63; }
+.glow-sales-h { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.glow-sales-range { display: flex; gap: 4px; }
+.glow-sales-range button { border: 1px solid #E5D8E0; background: #fff; border-radius: 99px; padding: 5px 10px; font: 700 12px Manrope, sans-serif; cursor: pointer; }
+.glow-sales-range button.is-on { background: #3B2146; border-color: #3B2146; color: #fff; }
+.glow-sales-chart { display: flex; align-items: flex-end; gap: 6px; height: 220px; padding-top: 18px; border-bottom: 1px solid #F0E3EA; background-image: linear-gradient(#F6EEF2 1px, transparent 1px); background-size: 100% 25%; }
+.glow-sales-bar { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; min-width: 0; }
+.glow-sales-bar i { width: 100%; max-width: 46px; border-radius: 8px 8px 0 0; background: linear-gradient(180deg, #FF8DB5, #FF3D8B); min-height: 2px; }
+.glow-sales-bar i.is-now { background: linear-gradient(180deg, #B48BE0, #742284); }
+.glow-sales-val { font-size: 11px; font-weight: 800; color: #6B5A63; margin-bottom: 3px; font-variant-numeric: tabular-nums; }
+.glow-sales-bar small { position: absolute; bottom: -22px; font-size: 11px; color: #8E7F88; white-space: nowrap; }
+.glow-sales-chart { margin-bottom: 24px; }
+.glow-sales-empty { color: #6B5A63; margin: 0; }
+.glow-sales-two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.glow-sales-top, .glow-sales-restock { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.glow-sales-top li, .glow-sales-restock li { display: flex; gap: 10px; align-items: center; padding: 6px; border-radius: 12px; }
+.glow-sales-top img, .glow-sales-restock img, .glow-sales-top li > span, .glow-sales-restock li > span { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; background: #FBF7FA; flex: none; }
+.glow-sales-top div, .glow-sales-restock div { display: grid; min-width: 0; }
+.glow-sales-top b, .glow-sales-restock b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.glow-sales-top small, .glow-sales-restock small { color: #6B5A63; font-size: 12.5px; }
+.glow-sales-restock li.is-out { background: #FFF0F2; }
+.glow-sales-restock li.is-out small { color: #C0394F; font-weight: 800; }
+.glow-sales-restock li.is-soon { background: #FFF8E5; }
+.glow-sales-worlds { display: grid; gap: 6px; }
+.glow-sales-worlds div { display: grid; grid-template-columns: 130px 1fr 40px; gap: 8px; align-items: center; font-size: 13px; }
+.glow-sales-worlds i { height: 10px; border-radius: 99px; background: #FF3D8B; }
+.glow-sales-worlds b { text-align: right; font-variant-numeric: tabular-nums; }
+.glow-sales-note { margin: 12px 0 0; font-size: 13px; color: #6B5A63; background: #FBF7FA; border-radius: 12px; padding: 10px; }
+@media (max-width: 760px) { .glow-sales-kpis { grid-template-columns: 1fr 1fr; } .glow-sales-two { grid-template-columns: 1fr; } .glow-sales-worlds div { grid-template-columns: 100px 1fr 36px; } }

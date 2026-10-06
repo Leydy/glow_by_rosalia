@@ -8,6 +8,7 @@ import { DAY_SHORT, HALF_HOURS, REVIEW_PTS, fileToDataURL, fmtPts, hour12, readB
 import { CatAvatar, Field, Inp, Stars, Thumb, YapeMark } from "../components/ui.jsx";
 import { TemuImport } from "./TemuImport.jsx";
 import { TryOnPrep } from "./TryOnPrep.jsx";
+import { SalesPanel } from "./SalesPanel.jsx";
 
 /* =========================================================================
    VISTA ADMINISTRACIÓN — inventario, márgenes, ganancias, stock
@@ -155,7 +156,7 @@ export function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSa
         </div>
       )}
       <div className="glow-admin-tabs">
-        {[["inventario", "Inventario"], ["pedidos", "Pedidos"], ["clientas", "Clientas"], ["resenas", "Reseñas"], ["temporadas", "Temporadas"], ["avisos", "Avisos"], ["ajustes", "Ajustes"]].map(([k, l]) => (
+        {[["inventario", "Inventario"], ["ventas", "Ventas"], ["pedidos", "Pedidos"], ["clientas", "Clientas"], ["resenas", "Reseñas"], ["temporadas", "Temporadas"], ["avisos", "Avisos"], ["ajustes", "Ajustes"]].map(([k, l]) => (
           <button
             key={k}
             onClick={() => setTab(k)}
@@ -265,6 +266,8 @@ export function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSa
         <ReviewsPanel />
       ) : tab === "clientas" ? (
         <CustomersPanel />
+      ) : tab === "ventas" ? (
+        <SalesPanel products={products} />
       ) : tab === "avisos" ? (
         <PushPanel />
       ) : tab === "temporadas" ? (
@@ -556,6 +559,23 @@ export function PayCheck({ c }) {
   );
 }
 
+// Mensaje de WhatsApp listo para la clienta, según el estado del pedido.
+function waLink(o) {
+  const tel = String(o.delivery?.phone || "").replace(/\D/g, "").replace(/^51(?=9\d{8}$)/, "");
+  if (!/^9\d{8}$/.test(tel)) return "";
+  const name = String(o.delivery?.name || "").split(" ")[0];
+  const hi = `¡Hola${name ? " " + name : ""}! 🐾 Te escribimos de Glow by Rosalía.`;
+  const d = o.delivery || {};
+  const where = d.type === "juliaca" ? `Te esperamos en ${d.point}${d.date ? ` el ${whenText(d.date, d.time)}` : ""}.` : `Va por Shalom a ${d.district || d.city || d.department}${d.agency ? ` (agencia ${d.agency})` : ""}.`;
+  const msg = {
+    pendiente: `${hi} Recibimos tu pedido #${o.code} por ${money(o.total)}. Estamos revisando tu pago y te avisamos apenas lo confirmemos.`,
+    verificado: `${hi} ¡Tu pago del pedido #${o.code} está confirmado! ✅ ${where} ¡Gracias por tu compra!`,
+    enviado: `${hi} ¡Tu pedido #${o.code} ya salió! 📦 ${where}`,
+    rechazado: `${hi} No pudimos confirmar el pago de tu pedido #${o.code}. ¿Nos envías de nuevo la captura del Yape para revisarlo?`,
+  }[o.status];
+  return msg ? `https://wa.me/51${tel}?text=${encodeURIComponent(msg)}` : "";
+}
+
 export function OrdersPanel() {
   const [orders, setOrders] = useState(null);
   const [err, setErr] = useState("");
@@ -639,6 +659,7 @@ export function OrdersPanel() {
                 {o.status === "verificado" && (
                   <button className="glow-admin-ship" onClick={() => change(o.id, "enviado")}>📦 Marcar como enviado</button>
                 )}
+                {waLink(o) && <a className="glow-admin-wa" href={waLink(o)} target="_blank" rel="noreferrer">💬 Avisar por WhatsApp</a>}
                 <span style={{ fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 999, color: st.color, background: st.bg }}>{st.label}</span>
                 <select value={o.status} disabled={o.status === "rechazado"} onChange={(e) => change(o.id, e.target.value)} style={{ padding: "6px 8px", borderRadius: 8, border: `1px solid ${C.line}`, background: C.bg, fontSize: 13 }}>
                   {Object.entries(STATUS_INFO).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
