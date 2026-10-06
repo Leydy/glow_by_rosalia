@@ -206,6 +206,20 @@ export async function setOrderStatus(id, status) {
 }
 
 /* ---------- Ajustes ---------- */
+/* ---------- Notificaciones ---------- */
+export async function getPushKey() {
+  return handle(await fetch("/api/push/key"));
+}
+export async function savePushSub(subscription) {
+  return handle(await fetch("/api/push/subscribe", { method: "POST", headers: customerHeaders(), body: JSON.stringify({ subscription }) }));
+}
+export async function getPushStats() {
+  return handle(await fetch("/api/admin/push", { headers: writeHeaders() }));
+}
+export async function sendPush(msg) {
+  return handle(await fetch("/api/admin/push", { method: "POST", headers: writeHeaders(), body: JSON.stringify(msg) }));
+}
+
 // Estado del servidor (y dónde guarda las fotos).
 export async function getHealth() {
   return handle(await fetch("/api/health"));

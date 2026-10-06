@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Image as ImageIcon, Lock, LogOut, Package, Pencil, Plus, Settings as SettingsIcon, Sparkles, Trash2, TrendingUp, Wallet, X } from "lucide-react";
-import { checkPin, getHealth, deleteTestOrders, getAdminReviews, getConfig, getCustomers, getOrders, sendWelcomeMail, setAdminPin, setOrderStatus, setReviewStatus, uploadImages } from "../api.js";
+import { checkPin, getHealth, getPushStats, sendPush, deleteTestOrders, getAdminReviews, getConfig, getCustomers, getOrders, sendWelcomeMail, setAdminPin, setOrderStatus, setReviewStatus, uploadImages } from "../api.js";
 import { C, money } from "../theme.js";
 import { CONCERNS, KID_SIZES, ROUTINE_STEPS, SHOE_SIZES, SKIN_TYPES, WORLDS, WORLD_KEYS, worldOf, ADULT_SIZE_CATS, ADULT_SIZES, SHOE_CATS, GENDERS } from "../worlds.js";
 import { daysUntil, inRange, seasonList } from "../seasons.js";
@@ -154,7 +154,7 @@ export function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSa
         </div>
       )}
       <div className="glow-admin-tabs">
-        {[["inventario", "Inventario"], ["pedidos", "Pedidos"], ["clientas", "Clientas"], ["resenas", "Reseñas"], ["temporadas", "Temporadas"], ["ajustes", "Ajustes"]].map(([k, l]) => (
+        {[["inventario", "Inventario"], ["pedidos", "Pedidos"], ["clientas", "Clientas"], ["resenas", "Reseñas"], ["temporadas", "Temporadas"], ["avisos", "Avisos"], ["ajustes", "Ajustes"]].map(([k, l]) => (
           <button
             key={k}
             onClick={() => setTab(k)}
@@ -264,6 +264,8 @@ export function Admin({ products, settings, onSaveProduct, onRemoveProduct, onSa
         <ReviewsPanel />
       ) : tab === "clientas" ? (
         <CustomersPanel />
+      ) : tab === "avisos" ? (
+        <PushPanel />
       ) : tab === "temporadas" ? (
         <SeasonsPanel settings={settings} onSave={onSaveSeasons} />
       ) : (
@@ -896,6 +898,59 @@ export function ReviewsPanel() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// Pestaña "Avisos": notificación al celular de todas las que activaron avisos.
+const PUSH_IDEAS = [
+  ["🆕 Llegaron novedades", "Nuevos aretes y collares michi en la tienda. ¡Corre a verlos! 🐾", "/?mundo=michi"],
+  ["✨ Glow Skin", "Tu piel también merece mimos: mira los nuevos sérums y cremas.", "/?mundo=skin"],
+  ["🧸 Ropita para peques", "Nuevos conjuntos y casacas para tu peque. Tallas según su estatura.", "/?mundo=kids"],
+  ["🎁 ¡Oferta por pocos días!", "Usa tus Michipuntos y llévate un regalito sorpresa.", "/"],
+];
+function PushPanel() {
+  const [stats, setStats] = useState(null);
+  const [f, setF] = useState({ title: "", body: "", url: "/" });
+  const [state, setState] = useState("");
+  useEffect(() => { getPushStats().then(setStats).catch(() => setStats({ total: 0, customers: 0 })); }, []);
+  const send = async () => {
+    setState("sending");
+    try {
+      const r = await sendPush(f);
+      setState(`✓ Enviado a ${r.sent} celular${r.sent === 1 ? "" : "es"}${r.failed ? ` (${r.failed} ya no estaban activos)` : ""}`);
+      getPushStats().then(setStats).catch(() => {});
+    } catch (e) {
+      setState("⚠ " + e.message);
+    }
+  };
+  return (
+    <div className="glow-push">
+      <div className="glow-push-stats">
+        <div><b>{stats ? stats.total : "…"}</b><span>celulares con avisos</span></div>
+        <div><b>{stats ? stats.customers : "…"}</b><span>de clientas registradas</span></div>
+      </div>
+      <p className="glow-pf-hint">Además, cada clienta recibe un aviso automático cuando confirmas su pago, cuando marcas su pedido como enviado o si rechazas un pago.</p>
+      <h3>Enviar un aviso a todas</h3>
+      <div className="glow-push-ideas">
+        {PUSH_IDEAS.map(([t, b, u]) => <button key={t} onClick={() => { setF({ title: t, body: b, url: u }); setState(""); }}>{t}</button>)}
+      </div>
+      <Field label="Título"><Inp value={f.title} onChange={(v) => setF((x) => ({ ...x, title: v.slice(0, 60) }))} placeholder="🎃 ¡Llegó Halloween!" /></Field>
+      <Field label="Mensaje"><Inp value={f.body} onChange={(v) => setF((x) => ({ ...x, body: v.slice(0, 180) }))} placeholder="Nuevos aretes michi con calabacitas 🐾" /></Field>
+      <Field label="Al tocarlo abre">
+        <select value={f.url} onChange={(e) => setF((x) => ({ ...x, url: e.target.value }))} className="glow-pf-select">
+          <option value="/">La tienda</option>
+          {WORLD_KEYS.map((k) => <option key={k} value={`/?mundo=${k}`}>{WORLDS[k].emoji} {WORLDS[k].name}</option>)}
+        </select>
+      </Field>
+      <div className="glow-push-preview">
+        <img src="/icons/icon-192.png" alt="" />
+        <div><b>{f.title || "Título del aviso"}</b><span>{f.body || "Así se verá en el celular de tus clientas."}</span></div>
+      </div>
+      <button className="glow-push-send" disabled={!f.title.trim() || state === "sending" || !stats?.total} onClick={send}>
+        {state === "sending" ? "Enviando…" : `Enviar a ${stats?.total || 0} celular${stats?.total === 1 ? "" : "es"}`}
+      </button>
+      {state && state !== "sending" && <p className="glow-push-msg">{state}</p>}
     </div>
   );
 }

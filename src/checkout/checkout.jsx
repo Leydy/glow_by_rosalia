@@ -9,6 +9,7 @@ import { checkYape, makeSampleCapture, parseYapeText, readYapeCapture } from "./
 import { NoteLetter } from "../components/note.jsx";
 import { Thumb, YapeMark } from "../components/ui.jsx";
 import { RewardPicker } from "../account/account.jsx";
+import { NotifyButton } from "../components/NotifyButton.jsx";
 
 // Pago con Yape en 5 pasos: pagar → subir captura → leerla → revisar → notita.
 // Paso 1 del pago: cómo recibe su pedido (gratis en Juliaca o envío Shalom).
@@ -468,6 +469,7 @@ export function YapeCheckout({ settings, lines, total: itemsTotal, discount = 0,
           })()}
           <NoteLetter order={order} ref={noteRef} />
           {willEarn > 0 && <p className="glow-earn" style={{ marginTop: 14 }}>🧶 Cuando confirmemos tu pago sumarás <b>{fmtPts(willEarn)} Michipuntos</b></p>}
+          <NotifyButton />
           <button className="glow-pay-btn" onClick={download} style={{ background: C.primary, boxShadow: "none", marginTop: 16 }}>Descargar mi notita</button>
           <button className="glow-pay-btn is-ghost" onClick={whatsapp} style={{ color: C.yape, borderColor: C.yape, marginTop: 8 }}>
             <MessageCircle size={18} /> Enviar a la tienda por WhatsApp

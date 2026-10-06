@@ -15,6 +15,9 @@
 //   PUT    /api/seasons           → guarda las temporadas        (requiere PIN)
 //   POST   /api/upload            → sube imágenes (base64) y devuelve sus URLs (requiere PIN)
 //   POST   /api/import-images     → trae fotos de Temu y las sube a la tienda (requiere PIN)
+//   GET    /api/push/key          → llave pública para activar notificaciones
+//   POST   /api/push/subscribe    → guarda un celular que activó los avisos
+//   POST   /api/admin/push        → envía un aviso a todas (requiere PIN)
 //   GET    /api/config            → datos públicos de configuración (ID de Google)
 //   GET    /api/shalom/agencies   → agencias Shalom de un departamento (si hay SHALOM_API_KEY)
 //   POST   /api/customers/google  → registro/inicio de sesión con Google (opcional)
@@ -47,6 +50,7 @@ import { pool, initSchema, rowToProduct, rowToSettings, rowToOrder, rowToCustome
 import { RULES, addPoints, hasRef, balance, yearSpend, levelFor, orderPoints, maybeBirthday, pickSurprise } from "./points.js";
 import { CREDIT, grantCredit, revokeCredit, claimCredit, wallet, spendCredit } from "./credits.js";
 import { saveImage, deleteImage, setUploadsDir, usingCloudinary } from "./storage.js";
+import { initPush, pushKey, subscribe, unsubscribe, pushToAll, pushToCustomer, pushCount } from "./push.js";
 import { mailEnabled, welcomeEmail, sendMail } from "./mail.js";
 import { SEED_PRODUCTS, DEFAULT_SETTINGS } from "../src/data.js";
 
@@ -906,6 +910,13 @@ app.put("/api/orders/:id", requirePin, async (req, res, next) => {
         if (o.reward_points > 0) await addPoints(o.customer_email, o.reward_points, "devolucion", `devol-${id}`, `Devolución del canje de ${code}`);
         await revokeCredit(o);
       }
+      // aviso al celular de la clienta (si activó las notificaciones)
+      const msg = {
+        verificado: ["✅ ¡Pago confirmado!", `Tu pedido ${code} ya está confirmado. ¡Gracias por comprar en Glow! 🐾`],
+        enviado: ["📦 ¡Tu pedido va en camino!", `Tu pedido ${code} ya salió. Pronto lo tendrás contigo.`],
+        rechazado: ["⚠️ Revisamos tu pago", `No pudimos confirmar el pago de ${code}. Escríbenos por WhatsApp y lo vemos.`],
+      }[status];
+      if (msg) pushToCustomer(o.customer_email, { title: msg[0], body: msg[1], url: "/", tag: `pedido-${id}` }).catch(() => {});
     }
     res.json(rowToOrder(o));
   } catch (e) {
@@ -1014,6 +1025,48 @@ app.post("/api/upload", requirePin, async (req, res, next) => {
   }
 });
 
+/* ---------- Notificaciones (Web Push) ---------- */
+app.get("/api/push/key", (_req, res) => res.json({ key: pushKey() }));
+app.post("/api/push/subscribe", async (req, res, next) => {
+  try {
+    // si la clienta inició sesión, el aviso queda ligado a su cuenta (avisos de sus pedidos)
+    const email = readSession(req.get("x-customer-token")) || null;
+    await subscribe(req.body?.subscription, email);
+    res.json({ ok: true });
+  } catch (e) {
+    if (e.status) return res.status(e.status).json({ error: e.message });
+    next(e);
+  }
+});
+app.post("/api/push/unsubscribe", async (req, res, next) => {
+  try {
+    await unsubscribe(req.body?.endpoint);
+    res.json({ ok: true });
+  } catch (e) {
+    next(e);
+  }
+});
+app.get("/api/admin/push", requirePin, async (_req, res, next) => {
+  try {
+    res.json(await pushCount());
+  } catch (e) {
+    next(e);
+  }
+});
+app.post("/api/admin/push", requirePin, async (req, res, next) => {
+  try {
+    const clip = (v, n) => String(v ?? "").trim().slice(0, n);
+    const title = clip(req.body?.title, 60);
+    const body = clip(req.body?.body, 180);
+    if (!title) return res.status(400).json({ error: "Escribe un título." });
+    const url = clip(req.body?.url, 200).startsWith("/") ? clip(req.body?.url, 200) : "/";
+    const image = /^https:\/\/res\.cloudinary\.com\//.test(req.body?.image || "") ? req.body.image : undefined;
+    res.json(await pushToAll({ title, body, url, image, tag: "glow-aviso" }));
+  } catch (e) {
+    next(e);
+  }
+});
+
 /* ---------- La tienda (publicada) ----------
    Tras "npm run build", el mismo servidor entrega la página: una sola
    dirección para la tienda, el panel (/#admin) y la API. */
@@ -1081,6 +1134,7 @@ async function main() {
   await fs.mkdir(uploadsDir, { recursive: true });
   await initSchema();
   await seedIfEmpty();
+  await initPush().catch((e) => console.error("Notificaciones no disponibles:", e.message));
   app.listen(PORT, () => {
     console.log(`\n✅ Servidor de Glow listo en http://localhost:${PORT}`);
     console.log(`   Imágenes en: ${usingCloudinary ? "Cloudinary" : uploadsDir}`);

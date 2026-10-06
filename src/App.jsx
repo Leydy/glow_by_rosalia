@@ -14,6 +14,7 @@ import { InstallApp } from "./components/InstallApp.jsx";
 // Se descargan recién cuando se usan (la tienda carga más rápido).
 const ChatBot = lazy(() => import("./ChatBot.jsx"));
 const Admin = lazy(() => import("./admin/Admin.jsx").then((m) => ({ default: m.Admin })));
+import { refreshPush } from "./components/notify.js";
 
 export default function App() {
   const [view, setView] = useState("shop"); // 'shop' | 'admin'
@@ -93,6 +94,7 @@ export default function App() {
   }, []);
   const onJoined = useCallback((c) => {
     setCustomerToken(c.token);
+    refreshPush();
     onCustomer(c);
     setJoinOpen(false);
     setTimeout(creditsChanged, 0);
@@ -121,6 +123,7 @@ export default function App() {
       return;
     }
     setCustomerToken(c.token);
+    refreshPush();
     getMe()
       .then((me) => {
         onCustomer(me);

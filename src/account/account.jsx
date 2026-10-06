@@ -5,6 +5,8 @@ import { createReview, getMe, getMyOrders, getMyReviews, getProductReviews, goog
 import { CatAvatar, CreditCoin, FavButton, Field, HeartIcon, Inp, PawIcon, PawMark, Stars, Thumb, YarnBasket } from "../components/ui.jsx";
 import { CREDIT_MIN, CREDIT_SHARE, ORDER_STEP, REVIEW_PTS, TEST_MODE, fileToDataURL, fmtPts, loadGoogleScript, round2, timeLeft, imgUrl } from "../lib/util.js";
 import { NoteLetter, RosaliaFace } from "../components/note.jsx";
+import { NotifyButton } from "../components/NotifyButton.jsx";
+import { canInstall, installApp } from "../components/InstallApp.jsx";
 
 // Menú de la cuenta (se abre al tocar el avatar).
 export function AccountMenu({ customer, onPick, onLogout, onClose }) {
@@ -34,6 +36,8 @@ export function AccountMenu({ customer, onPick, onLogout, onClose }) {
       {item("perfil", <SettingsIcon size={17} />, "Mi perfil")}
       {item("pedidos", <Package size={17} />, "Mis pedidos")}
       {item("favoritos", <HeartIcon size={17} />, "Mis favoritos")}
+      <div className="glow-menu-extra"><NotifyButton text="🔔 Activar avisos" className="glow-menu-notify" /></div>
+      {canInstall() && <button role="menuitem" onClick={() => { installApp(); onClose(); }}><span aria-hidden="true">📲</span><span>Instalar la app</span></button>}
       <button role="menuitem" className="is-out" onClick={onLogout}><LogOut size={17} /><span>Cerrar sesión</span></button>
     </div>
   );
